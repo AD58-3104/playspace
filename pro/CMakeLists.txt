@@ -1,0 +1,7 @@
+project(proto)
+cmake_minimum_required(version 3.10)
+add_compile_options("-g -Wall -std=c++11")
+add_subdirectory(proto)
+target_include_directories(PUBLIC /usr/local/include/google/protobuf)
+add_executable(send procpp.cpp)
+target_link_libraries(send proto /usr/local/lib)
