@@ -68,9 +68,7 @@ namespace tutorial {
 enum Person_PhoneType : int {
   Person_PhoneType_MOBILE = 0,
   Person_PhoneType_HOME = 1,
-  Person_PhoneType_WORK = 2,
-  Person_PhoneType_Person_PhoneType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
-  Person_PhoneType_Person_PhoneType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
+  Person_PhoneType_WORK = 2
 };
 bool Person_PhoneType_IsValid(int value);
 constexpr Person_PhoneType Person_PhoneType_PhoneType_MIN = Person_PhoneType_MOBILE;
@@ -117,6 +115,13 @@ class Person PROTOBUF_FINAL :
       CopyFrom(from);
     }
     return *this;
+  }
+
+  inline const ::PROTOBUF_NAMESPACE_ID::UnknownFieldSet& unknown_fields() const {
+    return _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance);
+  }
+  inline ::PROTOBUF_NAMESPACE_ID::UnknownFieldSet* mutable_unknown_fields() {
+    return _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
   }
 
   static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
@@ -242,7 +247,11 @@ class Person PROTOBUF_FINAL :
     kEmailFieldNumber = 3,
     kIdFieldNumber = 2,
   };
-  // string name = 1;
+  // optional string name = 1;
+  bool has_name() const;
+  private:
+  bool _internal_has_name() const;
+  public:
   void clear_name();
   const std::string& name() const;
   void set_name(const std::string& value);
@@ -258,7 +267,11 @@ class Person PROTOBUF_FINAL :
   std::string* _internal_mutable_name();
   public:
 
-  // string email = 3;
+  // optional string email = 3;
+  bool has_email() const;
+  private:
+  bool _internal_has_email() const;
+  public:
   void clear_email();
   const std::string& email() const;
   void set_email(const std::string& value);
@@ -274,7 +287,11 @@ class Person PROTOBUF_FINAL :
   std::string* _internal_mutable_email();
   public:
 
-  // int32 id = 2;
+  // optional int32 id = 2;
+  bool has_id() const;
+  private:
+  bool _internal_has_id() const;
+  public:
   void clear_id();
   ::PROTOBUF_NAMESPACE_ID::int32 id() const;
   void set_id(::PROTOBUF_NAMESPACE_ID::int32 value);
@@ -290,10 +307,11 @@ class Person PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr email_;
   ::PROTOBUF_NAMESPACE_ID::int32 id_;
-  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_pro_2eproto;
 };
 // ===================================================================
@@ -307,9 +325,17 @@ class Person PROTOBUF_FINAL :
 #endif  // __GNUC__
 // Person
 
-// string name = 1;
+// optional string name = 1;
+inline bool Person::_internal_has_name() const {
+  bool value = (_has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Person::has_name() const {
+  return _internal_has_name();
+}
 inline void Person::clear_name() {
   name_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000001u;
 }
 inline const std::string& Person::name() const {
   // @@protoc_insertion_point(field_get:tutorial.Person.name)
@@ -327,50 +353,62 @@ inline const std::string& Person::_internal_name() const {
   return name_.Get();
 }
 inline void Person::_internal_set_name(const std::string& value) {
-  
+  _has_bits_[0] |= 0x00000001u;
   name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArena());
 }
 inline void Person::set_name(std::string&& value) {
-  
+  _has_bits_[0] |= 0x00000001u;
   name_.Set(
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::move(value), GetArena());
   // @@protoc_insertion_point(field_set_rvalue:tutorial.Person.name)
 }
 inline void Person::set_name(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
-  
+  _has_bits_[0] |= 0x00000001u;
   name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(value), GetArena());
   // @@protoc_insertion_point(field_set_char:tutorial.Person.name)
 }
 inline void Person::set_name(const char* value,
     size_t size) {
-  
+  _has_bits_[0] |= 0x00000001u;
   name_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
   // @@protoc_insertion_point(field_set_pointer:tutorial.Person.name)
 }
 inline std::string* Person::_internal_mutable_name() {
-  
+  _has_bits_[0] |= 0x00000001u;
   return name_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArena());
 }
 inline std::string* Person::release_name() {
   // @@protoc_insertion_point(field_release:tutorial.Person.name)
-  return name_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  if (!_internal_has_name()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000001u;
+  return name_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
 inline void Person::set_allocated_name(std::string* name) {
   if (name != nullptr) {
-    
+    _has_bits_[0] |= 0x00000001u;
   } else {
-    
+    _has_bits_[0] &= ~0x00000001u;
   }
   name_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), name,
       GetArena());
   // @@protoc_insertion_point(field_set_allocated:tutorial.Person.name)
 }
 
-// int32 id = 2;
+// optional int32 id = 2;
+inline bool Person::_internal_has_id() const {
+  bool value = (_has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool Person::has_id() const {
+  return _internal_has_id();
+}
 inline void Person::clear_id() {
   id_ = 0;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline ::PROTOBUF_NAMESPACE_ID::int32 Person::_internal_id() const {
   return id_;
@@ -380,7 +418,7 @@ inline ::PROTOBUF_NAMESPACE_ID::int32 Person::id() const {
   return _internal_id();
 }
 inline void Person::_internal_set_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
-  
+  _has_bits_[0] |= 0x00000004u;
   id_ = value;
 }
 inline void Person::set_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
@@ -388,9 +426,17 @@ inline void Person::set_id(::PROTOBUF_NAMESPACE_ID::int32 value) {
   // @@protoc_insertion_point(field_set:tutorial.Person.id)
 }
 
-// string email = 3;
+// optional string email = 3;
+inline bool Person::_internal_has_email() const {
+  bool value = (_has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool Person::has_email() const {
+  return _internal_has_email();
+}
 inline void Person::clear_email() {
   email_.ClearToEmpty();
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline const std::string& Person::email() const {
   // @@protoc_insertion_point(field_get:tutorial.Person.email)
@@ -408,41 +454,45 @@ inline const std::string& Person::_internal_email() const {
   return email_.Get();
 }
 inline void Person::_internal_set_email(const std::string& value) {
-  
+  _has_bits_[0] |= 0x00000002u;
   email_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, value, GetArena());
 }
 inline void Person::set_email(std::string&& value) {
-  
+  _has_bits_[0] |= 0x00000002u;
   email_.Set(
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::move(value), GetArena());
   // @@protoc_insertion_point(field_set_rvalue:tutorial.Person.email)
 }
 inline void Person::set_email(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
-  
+  _has_bits_[0] |= 0x00000002u;
   email_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(value), GetArena());
   // @@protoc_insertion_point(field_set_char:tutorial.Person.email)
 }
 inline void Person::set_email(const char* value,
     size_t size) {
-  
+  _has_bits_[0] |= 0x00000002u;
   email_.Set(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
   // @@protoc_insertion_point(field_set_pointer:tutorial.Person.email)
 }
 inline std::string* Person::_internal_mutable_email() {
-  
+  _has_bits_[0] |= 0x00000002u;
   return email_.Mutable(::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::EmptyDefault{}, GetArena());
 }
 inline std::string* Person::release_email() {
   // @@protoc_insertion_point(field_release:tutorial.Person.email)
-  return email_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  if (!_internal_has_email()) {
+    return nullptr;
+  }
+  _has_bits_[0] &= ~0x00000002u;
+  return email_.ReleaseNonDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
 inline void Person::set_allocated_email(std::string* email) {
   if (email != nullptr) {
-    
+    _has_bits_[0] |= 0x00000002u;
   } else {
-    
+    _has_bits_[0] &= ~0x00000002u;
   }
   email_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), email,
       GetArena());
