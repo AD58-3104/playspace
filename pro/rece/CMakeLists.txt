@@ -1,0 +1,8 @@
+project(prototry)
+cmake_minimum_required(VERSION 3.10)
+add_compile_options("-Wall")
+find_package(Protobuf REQUIRED)
+#target_include_directories(rece PUBLIC /usr/local/include/google/protobuf)
+include_directories(../proto /usr/local/include)
+add_executable(recebin getproto.cpp)
+target_link_libraries(recebin protobufff protobuf::libprotobuf)
