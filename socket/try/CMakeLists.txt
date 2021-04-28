@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.10)
+project(socket)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+
+find_package(Boost REQUIRED COMPONENTS thread system date_time )
+include_directories(${Boost_INCLUDE_DIRS}/boost)
+#message(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIR})
+message(${Boost_LIBRARY_DIRS})
+add_executable(client interclient.cpp)
+add_executable(server interserver.cpp)
+target_link_libraries(client ${Boost_LIBRARIES} -lrt)
+target_link_libraries(server ${Boost_LIBRARIES} -lrt)
