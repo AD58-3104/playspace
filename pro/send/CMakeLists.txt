@@ -1,6 +1,7 @@
 project(prototry)
 cmake_minimum_required(VERSION 3.10)
 add_compile_options("-Wall")
+add_compile_options("-pthread")
 find_package(Protobuf REQUIRED)
 #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../proto build)
 #target_include_directories(PUBLIC /usr/local/include/google/protobuf)
