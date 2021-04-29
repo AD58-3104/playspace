@@ -42,6 +42,7 @@ main(int argc, const char **argv)
     constexpr int size = 640 * 480;
     std::string image(size, '0');
     std::string send_data;
+    send_data.resize(800*480);
     picture.set_image(image);
     picture.set_simtime(765765);
     picture.set_width(640);
@@ -53,9 +54,8 @@ main(int argc, const char **argv)
 
 
 
-    qu aa;
+    //qu aa;
     std::cout << "end";
-    return 0;
     {
         while (1)
         {
@@ -74,7 +74,7 @@ main(int argc, const char **argv)
         }
         boost::interprocess::message_queue msgq(boost::interprocess::open_only, "WEBOTS_PICTURE_COMMUNICATION");
 
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 100000; ++i)
         {
             msgq.send(&send_data[0], send_data.size(), 0);
             std::this_thread::sleep_for(1000ms);

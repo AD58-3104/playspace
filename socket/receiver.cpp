@@ -16,7 +16,7 @@ int main(int argc, const char **argv)
     unsigned int priority = 0;
     received_data.resize(max_len_message);
     boost::interprocess::message_queue::remove("WEBOTS_PICTURE_COMMUNICATION");
-    boost::interprocess::message_queue msgq(boost::interprocess::create_only, "WEBOTS_PICTURE_COMMUNICATION", 5, max_len_message);
+    boost::interprocess::message_queue msgq(boost::interprocess::open_or_create, "WEBOTS_PICTURE_COMMUNICATION", 5, max_len_message);
     while (1)
     {
         msgq.receive(&received_data[0], received_data.size(), recv_size, priority);
@@ -25,7 +25,7 @@ int main(int argc, const char **argv)
         //cout << recv_pic.DebugString() << endl;
         int x = recv_pic.height();
         cout << x << endl;
-        std::this_thread::sleep_for(1000ms);
+        //std::this_thread::sleep_for(10ms);
         //cout << recv_pic.width() << recv_pic.height() << recv_pic.simtime();
     }
 
