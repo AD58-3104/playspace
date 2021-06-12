@@ -66,7 +66,7 @@ public:
 
 
 	// 情報共有される構造体
-	struct comm_info_T
+	struct comm_info_T	//TODO: これはprivateにするべきでは
 	{
 		unsigned char id;                                   // our_color << 7 | ID : 1-6
 		unsigned char cf_own;                               // 0-100 : 自己位置の確信度     (0-100)
@@ -135,7 +135,7 @@ public:
 	 * @param[in] our_color 味方の色
 	 * @return 0:正常
 	 */
-	int ChangeColor(int our_color);
+	int ChangeColor(int our_color);//上記の4つは使われる状況を考えるとスレッドセーフに近い
 
 	/*
 	 * @brief 情報共有のデータを送信
@@ -201,6 +201,13 @@ private:
 	 */
 	std::size_t  SendCommonInfoThread();
 
+	/*
+	 * @brief 他のInfoshareオブジェクトのデータを呼び出したオブジェクトにコピーする。スレッドセーフにするためこちらを用いる
+	 * @param[in] original コピー元となるデータ
+	 * @return エラー 成功:0 失敗:1
+	 */
+	int CopyInfoFromAnother(const InfoShare& original);
+
 	bool terminated;
 	bool exist_send_data;
 	boost::thread th;                   // スレッド
@@ -227,53 +234,66 @@ private:
 	static bool GetCommInfoObject(const unsigned char *data, Pos2D *pos, bool *is_our_side, bool *is_opposite_side);
 };
 
-class InfoShareBroker //ここに受信スレッド持たせる。ID判別して特定のオブジェクトに渡す。
+class InfoShareBroker
 {
 public:
-	InfoShareBroker() : mSelfID(-1)
+	InfoShareBroker() : mSelfID(-1),receive_and_distributer(-1,-1,-1,"0,0,0,0")
 	{
 	}
 	void setup(int id, int ourcolor, const std::string &ipaddress, float (*timefunc)())
 	{
 		mInfoShares.resize(InfoShare::NUM_PLAYERS);
-		for(int i=0; i<InfoShare::NUM_PLAYERS; i++) {
-			mInfoShares[i] = new CitBrains::InfoShare(i+1, id, ourcolor, ipaddress+".255");
+		for (int i = 0; i < InfoShare::NUM_PLAYERS; i++)
+		{
+			mInfoShares[i] = new CitBrains::InfoShare(i + 1, id, ourcolor, ipaddress + ".255");
 			mInfoShares[i]->setTimeFunc(timefunc);
 		}
 		mSelfID = id;
 		mTerminated = false;
 #ifdef VREP_SIMULATOR
-		mInfoShares[mSelfID-1]->OpenPort(InfoShare::THREADTYPE_SEND);
+		mInfoShares[mSelfID - 1]->OpenPort(InfoShare::THREADTYPE_SEND);
 		mThread = boost::thread(boost::bind(&InfoShareBroker::thread_run, this));
 #endif
+#ifdef WEBOTS_VHSC
+		receive_and_distributer.SetID(id, ourcolor);
+		receive_and_distributer.OpenPort(InfoShare::THREADTYPE_RECV);
+		mThread = boost::thread(boost::bind(&InfoShareBroker::receiveAndDistributeThread, this));
+#endif //WEBOTS_VHSC
 	}
 	~InfoShareBroker()
 	{
 		terminate();
 	}
-	InfoShare *getInfo(int id) //排他制御してないけど平気かな ここはコピーしたやつを返すべき
+	InfoShare *getInfo(int id) //TODO:?ここcondition variableとか使った方が良いのかな
 	{
-		return mInfoShares[id-1];
+		boost::mutex::scoped_lock(mInfoShares_mutex);
+		return mInfoShares[id - 1];
 	}
-	void terminate() {
+	void terminate()
+	{
 		mTerminated = true;
-#ifdef VREP_SIMULATOR
+#ifdef WEBOTS_VHSC
 		mThread.join();
-		mInfoShares[mSelfID-1]->ClosePort();
+		mInfoShares[mSelfID - 1]->ClosePort();
+		receive_and_distributer.ClosePort();
 #endif
-		for(int i=0; i<mInfoShares.size(); i++) {
+		for (int i = 0; i < mInfoShares.size(); i++)
+		{
 			delete mInfoShares[i];
 		}
 	}
+
 private:
 	void thread_run();
+	void receiveAndDistributeThread();
 	int mSelfID;
-#ifdef VREP_SIMULATOR
+//WEBOTS_VHSC
 	boost::thread mThread;
-#endif
+	CitBrains::InfoShare receive_and_distributer;
+	boost::mutex mInfoShares_mutex;
+//WEBTOS_VHSC
 	bool mTerminated;
-	std::vector<CitBrains::InfoShare*> mInfoShares;
+	std::vector<CitBrains::InfoShare *> mInfoShares;
 };
 
 };
-

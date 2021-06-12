@@ -7,6 +7,9 @@ ELSE(WIN32)
 ENDIF(WIN32)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
+# SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfatal-errors")
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+add_definitions(-DWEBOTS_VHSC)
 
 FIND_PACKAGE(Boost COMPONENTS system thread date_time)
 
@@ -32,9 +35,9 @@ add_library(InfoShareLib
 	${InfoShare_SRCS}
 )
 
-IF(0) #InfoShareTest
+IF(1) #InfoShareTest
 add_executable(InfoShareTest
-	InfoShareTest.cpp
+	test.cpp
 )
 
 IF(UNIX)
@@ -48,4 +51,4 @@ target_link_libraries(InfoShareTest
 	HCLib
 )
 ENDIF(UNIX)
-ENDIF(0) #InfoShareTest
+ENDIF(1) #InfoShareTest

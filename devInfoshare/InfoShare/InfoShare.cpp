@@ -28,7 +28,7 @@ InfoShare::InfoShare(int id = 1, int self_id = 1, int our_color = COLOR_MAGENTA,
 	SetID(id, our_color);
 	SetIPAddress(iipaddress);
 	recvTime = getTime();
-#if !defined VREP_SIMULATOR
+#if !defined VREP_SIMULATOR && !defined WEBOTS_VHSC
 	if(id == self_id)
 		OpenPort(THREADTYPE_SEND);
 	else
@@ -41,7 +41,7 @@ InfoShare::InfoShare(int id = 1, int self_id = 1, int our_color = COLOR_MAGENTA,
  */
 InfoShare::~InfoShare()
 {
-#if !defined VREP_SIMULATOR
+#if !defined VREP_SIMULATOR && !defined WEBOTS_VHSC
 	ClosePort();
 #endif
 }
@@ -81,50 +81,59 @@ int InfoShare::OpenPort(int recv_or_send)
 	try {
 		if (socket.is_open()) ClosePort();
 #ifdef WEBOTS_VHSC
-		std::cout << "--------------------------OpenPort in WEBOTS_VHSC-----------------------------------------------" << std::endl;
-		auto getSimulatorPort = []() -> int32_t //これ恐らくもういらないはず。
-		{
-			int32_t color = 0;
-			int32_t ID = static_cast<int32_t>(getenv("ROBOCUP_ROBOT_ID")[0] - '0');
-			if (std::string("blue") == std::string(getenv("ROBOCUP_TEAM_COLOR")))
-			{
-				color = 20;
-			}
-			return 10000 + color + ID;
-		};
+		//webotsの場合sender１つとreceiver1つオブジェクトのみ以下の処理を行う。
+		std::cout << "--------------------------OpenPort in WEBOTS_VHSC----------------------------------" << std::endl;
 		auto getPlayerAddr = []() -> std::string
 		{		
 			int32_t ID = static_cast<int32_t>(getenv("ROBOCUP_ROBOT_ID")[0] - '0');
 			std::string addr;
-			if(ID == 1){
+			if(ID == 1)
+			{
 				addr = std::string(getenv("ROBOCUP_TEAM_PLAYER1_IP"));
 			}
-			else if(ID == 2){
+			else if(ID == 2)
+			{
 				addr = std::string(getenv("ROBOCUP_TEAM_PLAYER2_IP"));
 			}
-			else if(ID == 3){
+			else if(ID == 3)
+			{
 				addr = std::string(getenv("ROBOCUP_TEAM_PLAYER3_IP"));
 			}
-			else{
+			else
+			{
 				addr = std::string(getenv("ROBOCUP_TEAM_PLAYER4_IP"));
 			}
 			addr.erase(addr.find_first_of(":"));
 			std::cout << "player address is " << addr << std::endl;
 			return addr;
 		};
-		static const int32_t ROBOCUP_SIMULATOR_BROADCAST_PORT = 3737; //送るのも受け取るのも3737でOKっぽい
-		auto getSimulatorAddr = []()->std::string{				//どこから送られたかによってどのロボットからなのかを判断しているのでそこをどうにかする必要あり
+		auto getSimulatorAddr = []() -> std::string { //どこから送られたかによってどのロボットからなのかを判断しているのでそこをどうにかする必要あり
 			std::string addr(getenv("ROBOCUP_SIMULATOR_ADDR"));
-        	addr.erase(addr.find_first_of(":"));
-			std::cout << "simulator address is " << addr << std::endl;
+			addr.erase(addr.find_first_of(":"));
+			std::cout << "simulator address is ::" << addr << std::endl;
 			return addr;
 		};
-		static const std::string ROBOCUP_SIMULATOR_ADDR(getSimulatorAddr());
-		static const std::string RECEIVE_ADDR(getPlayerAddr());
-		// recv_endpoint = udp::endpoint(boost::asio::ip::address::from_string(RECEIVE_ADDR), ROBOCUP_SIMULATOR_BROADCAST_PORT);
-		send_endpoint = udp::endpoint(boost::asio::ip::address::from_string(ROBOCUP_SIMULATOR_ADDR), ROBOCUP_SIMULATOR_BROADCAST_PORT);
-		socket.open(udp::v4());
-		// socket.bind(recv_endpoint);
+
+
+		static const int32_t ROBOCUP_SIMULATOR_BROADCAST_PORT = 3737;
+		if (recv_or_send == THREADTYPE_RECV)
+		{
+			static const std::string RECEIVE_ADDR(getPlayerAddr());
+			recv_endpoint = udp::endpoint(boost::asio::ip::address::from_string(RECEIVE_ADDR), ROBOCUP_SIMULATOR_BROADCAST_PORT); //TODO :アドレスをしっかりする
+			socket.open(udp::v4());
+			socket.bind(recv_endpoint);
+
+		}
+		else if (recv_or_send == THREADTYPE_SEND)
+		{
+			static const std::string ROBOCUP_SIMULATOR_ADDR(getSimulatorAddr());
+			send_endpoint = udp::endpoint(boost::asio::ip::address::from_string(ROBOCUP_SIMULATOR_ADDR), ROBOCUP_SIMULATOR_BROADCAST_PORT);
+			socket.open(udp::v4());
+		}
+		else
+		{
+			return -1; /* invalid thread type */
+		}
 #else
 		recv_endpoint = udp::endpoint(boost::asio::ip::address::from_string("0.0.0.0"), comm_info_port);
 		send_endpoint = udp::endpoint(boost::asio::ip::address::from_string(broadcastip), comm_info_port);
@@ -132,7 +141,7 @@ int InfoShare::OpenPort(int recv_or_send)
 		socket.bind(recv_endpoint);
 		socket.set_option(boost::asio::socket_base::broadcast(true));
 #endif
-#if !defined VREP_SIMULATOR
+#if !defined VREP_SIMULATOR && !defined WEBOTS_VHSC
 		if(recv_or_send == THREADTYPE_RECV)
 			th = boost::thread(boost::bind(&InfoShare::RecvThreadRun, this));
 		else if(recv_or_send == THREADTYPE_SEND)
@@ -145,7 +154,7 @@ int InfoShare::OpenPort(int recv_or_send)
 		return -1;
 	}
 	return 0;
-} //receiver のスレッドをゼロにして一つで受け取って他のオブジェクトに渡す
+}
 
 /*
  * @brief 通信ポートのクローズ
@@ -398,10 +407,10 @@ int InfoShare::SendCommonInfo(Pos2DCf ball_gl_cf, Pos2DCf self_pos_cf, std::vect
 
 
 /*
- * @brief 情報共有のデータを受信
+ * @brief 情報共有のデータを受信 TODO:brokerのreceiverでのみ呼び出し可能にする。あっちに実装書くとかする。
  * @return 受信した文字数, -1:エラー
  */
-int InfoShare::RecvCommonInfo(InfoShare &out_info) //この辺使ってバイト列から構築できるメソッドがあると便利(コンストラクタでもどっちでも)
+int InfoShare::RecvCommonInfo(InfoShare &out_info)
 {
 	int i;
 	bool is_our_side, is_opposite_side;
@@ -422,19 +431,19 @@ int InfoShare::RecvCommonInfo(InfoShare &out_info) //この辺使ってバイト
 	if ((buf[0] & (1 << 7)) != (our_color_flag << 7)) return 0;                 // 色が異なる場合は-1を戻す
 
 	{
-		char *p = (char *)&comm_info;
-		for(i = 0; (i < len)&&(i < sizeof(comm_info_T)); i++)
-		{
-			*p ++ = buf[i];
+		// boost::mutex::scoped_lock lock(mut);      排他制御 out_infoに*thisが入る場合はロックする必要がありそう。そもそもそれをやめる
+		{	//これそもそもout_infoで他のオブジェクトに書き込んだ時は、それからの情報の読み出し等に排他制御かからない重大な欠点があるのではないか
+			char *p = (char *)&comm_info;
+			for (i = 0; (i < len) && (i < sizeof(comm_info_T)); i++)
+			{
+				*p++ = buf[i];
+			}
 		}
-	}
 
-	int no = 0;
-	unsigned char *b;
-	Pos2D pos;
-	{
-		boost::mutex::scoped_lock lock(mut);                                    // 排他制御
-#ifdef VREP_SIMULATOR
+		int no = 0;
+		unsigned char *b;
+		Pos2D pos;
+#if defined(VREP_SIMULATOR) || defined(WEBOTS_VHSC)
 		out_info.id = (comm_info.id & 0x7f);
 #else
 		assert(id == (comm_info.id & 0x7f));                                    // ポートとIDに不整合があるかのチェック
@@ -559,9 +568,73 @@ bool InfoShare::GetCommInfoObject(const unsigned char *data, Pos2D *pos, bool *i
 	return res;
 }
 
-void InfoShare::copyInfoTo(InfoShare &dest) //コピー中はロックする
+int InfoShare::CopyInfoFromAnother(const InfoShare &original)
 {
-	boost::mutex::scoped_lock(mut);
+    int i;
+    bool is_our_side, is_opposite_side;
+
+    size_t len = 0;
+
+    {
+        boost::mutex::scoped_lock(mut);
+        int no = 0;
+        const unsigned char *b;
+        Pos2D pos;
+#ifdef  WEBOTS_VHSC
+        this->id = (original.comm_info.id & 0x7f);
+#else
+        assert(id == (original.comm_info.id & 0x7f)); // ポートとIDに不整合があるかのチェック
+#endif
+        no++;
+        this->cf_own = original.comm_info.cf_own;   // 自己位置の確信度を代入 (0~100)
+        this->cf_ball = original.comm_info.cf_ball; // ボールの確信度を代入 (0~100)
+        b = original.comm_info.object[0];              // 受信したデータを4バイト分bに代入
+        this->is_detect_ball = GetCommInfoObject(b, &(this->ball_gl), &is_our_side, &is_opposite_side);
+        // フィールド座標でのボール位置
+        this->our_robot_gl.clear();
+        this->enemy_robot_gl.clear();
+        this->black_pole_gl.clear();
+        this->target_pos_vec.clear();
+
+        for (i = 1; i < MAX_COMM_INFO_OBJ; i++) // 残り６個分の座標値を取得
+        {
+            b = original.comm_info.object[i];
+
+            // フィールド座標での位置を取得
+            if (b[0] & COMM_EXIST)
+            {
+                GetCommInfoObject(b, &pos, &is_our_side, &is_opposite_side); // もし発見していたら
+                if (is_our_side)                                             // 自チームのロボットの場合
+                {
+                    this->our_robot_gl.push_back(pos);
+                }
+                else if (is_opposite_side) // enemy robot is currently disabled and replaced with target pos
+                {
+                    //this->enemy_robot_gl.push_back(pos);
+                    this->target_pos_vec.push_back(pos);
+                }
+                else
+                {
+                    this->black_pole_gl.push_back(pos); // それ以外は黒ポール
+                }
+            }
+        }
+
+        this->status = original.comm_info.status;               // ステータスの代入
+        this->strategy_no = original.comm_info.fps;             // 戦略番号の代入(現在不使用)
+        this->voltage = original.comm_info.voltage << 8;        // 電圧の代入
+        this->temperature = original.comm_info.temperature;     // サーボの温度の代入
+        this->highest_servo = original.comm_info.highest_servo; // 最も温度の高いサーボの番号
+        this->command = (const char *)original.comm_info.command;
+    }
+    this->recvTime = getTime(); // 現在の時刻を取得
+
+    return 0;
+}
+
+void InfoShare::copyInfoTo(InfoShare &dest)	//上の関数で置き替えたい
+{
+	 //この関数もスレッドセーフであるべきと考えられる。->これスレッドセーフにするのはダルイので使わない。
 	dest.ball_gl        = ball_gl;
 	dest.our_robot_gl   = our_robot_gl;
 	dest.enemy_robot_gl = enemy_robot_gl;
@@ -599,4 +672,20 @@ void InfoShareBroker::thread_run()
 	}
 }
 
+void InfoShareBroker::receiveAndDistributeThread()
+{ //TODO:あとでthread_runをこれに変更したい
+	InfoShare buffInfo;
+	while (!mTerminated)
+	{
+		boost::mutex::scoped_lock(mInfoShares_mutex);
+		if (!receive_and_distributer.RecvCommonInfo(buffInfo))
+		{
+			if ((1 <= buffInfo.id) && (buffInfo.id <= InfoShare::NUM_PLAYERS) && (buffInfo.id != mSelfID))
+			{
+				mInfoShares[buffInfo.id-1]->CopyInfoFromAnother(buffInfo);
+			}
+			//ここ1msくらいスリーブ入れた方が良い？それとも条件変数を使ってどうにかするべきなのかな？
+		}
+	}
+}
 };
