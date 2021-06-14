@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.20)
+project(kadai-ninshiki)
+set(CMAKE_CXX_FLAGS "-O2 -Wall")  
+set(CMAKE_CXX_STANDARD 17)
+# include_directories(/usr/include/c++/9)
+# link_directories(/usr/lib/gcc/x86_64-linux-gnu/9)
+add_executable(file file_input.cpp)
+target_link_libraries(file -lstdc++fs)
