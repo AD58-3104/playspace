@@ -71,16 +71,23 @@ file_input::data_t file_input::getfiledatas()
     return this->data;
 }
 
-float file_input::dpMatching(int tmpfolder,int tmpfile_num, int folder){
+float file_input::dpMatching(int tmpfolder,int tmpfile_num, int target_folder){
     float min_distance = 1e9;
     auto template_data = data[tmpfolder][tmpfile_num];
-    for(const auto & target:data[folder]){
+    for(const auto & target:data[target_folder]){
+        int max_i = template_data.size();
+        int max_j = target.size();
         std::vector<std::vector<float>> result(template_data.size(),std::vector<float>(target.size(),1e8));
-        result[0][0] = template_data[0][0];
+        result[0][0] = local_distance(template_data[0],target[0]);
         
-        for(int i = 0;i < ;++i){
-            for(int j = 0;j < dimension;++j){
-                
+        for(int tmp_i = 0;i < max_i;++tmp_i){
+            for(int target_j = 0;j < max_j;++target_j){
+                if(tmp_i == 0 && target_j == 0)continue;
+                float min_num = 1e10;
+                if(tmp_i - 1 >= 0)min_num = std::min(min_num,local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i-1][target_j]);
+                if(target_j - 1 >= 0)min_num = std::min(min_num,2 * local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i-1][target_j-1]);
+                if((tmp_i - 1 >= 0) && (target_j - 1 >= 0))min_num = std::min(min_num,local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i][target_j-1]),;
+                result[tmp_i][target_j] = min_num;
             }
         }
     }
