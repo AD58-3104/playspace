@@ -20,7 +20,7 @@ public:
     static const int dimension = 15;
     data_t getfiledatas();
     float local_distance(const std::vector<float> & frame_i,const std::vector<float> & frame_j);
-    float dpMatching(int tmpfolder,int tmpfile_num, int folder);
+    bool dpMatching(int tmpfolder,int tmpfile_num, int folder);
 
 };
 
@@ -71,28 +71,36 @@ file_input::data_t file_input::getfiledatas()
     return this->data;
 }
 
-float file_input::dpMatching(int tmpfolder,int tmpfile_num, int target_folder){
+bool file_input::dpMatching(int tmpfolder,int tmpfile_num, int target_folder){
     float min_distance = 1e9;
     auto template_data = data[tmpfolder][tmpfile_num];
+    int voice_num =0;
+    int shortest =0;
     for(const auto & target:data[target_folder]){
         int max_i = template_data.size();
         int max_j = target.size();
         std::vector<std::vector<float>> result(template_data.size(),std::vector<float>(target.size(),1e8));
         result[0][0] = local_distance(template_data[0],target[0]);
         
-        for(int tmp_i = 0;i < max_i;++tmp_i){
-            for(int target_j = 0;j < max_j;++target_j){
+        for(int tmp_i = 0;tmp_i < max_i;++tmp_i){
+            for(int target_j = 0;target_j < max_j;++target_j){
                 if(tmp_i == 0 && target_j == 0)continue;
                 float min_num = 1e10;
                 if(tmp_i - 1 >= 0)min_num = std::min(min_num,local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i-1][target_j]);
-                if(target_j - 1 >= 0)min_num = std::min(min_num,2 * local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i-1][target_j-1]);
-                if((tmp_i - 1 >= 0) && (target_j - 1 >= 0))min_num = std::min(min_num,local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i][target_j-1]),;
+                if(target_j - 1 >= 0)min_num = std::min(min_num,2 * local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i][target_j-1]);
+                if((tmp_i - 1 >= 0) && (target_j - 1 >= 0))min_num = std::min(min_num,local_distance(template_data[tmp_i],target[target_j]) + result[tmp_i-1][target_j-1]);
                 result[tmp_i][target_j] = min_num;
             }
         }
+        if(min_distance > result[max_i-1][max_j-1] / (max_i + max_j)){
+            min_distance = result[max_i-1][max_j-1] / (max_i + max_j);
+            shortest = voice_num;
+        }
+        voice_num++;
     }
-    return min_distance;
+    return (shortest == tmpfile_num);
 }
+
 
 float file_input::local_distance(const std::vector<float> & frame_i,const std::vector<float> & frame_j){
     float result_distance = 0;
@@ -105,6 +113,11 @@ float file_input::local_distance(const std::vector<float> & frame_i,const std::v
 int main(int argc, char const *argv[])
 {
     file_input files;
-    file_input::data_t datas = files.getfiledatas();
+    files.getfiledatas();
+    int n = 0;
+    for(int i = 0;i < 100;++i){
+        n += files.dpMatching(2,i,1);
+    }
+    std::cout << n / 99.f;
     return 0;
 }
