@@ -9,18 +9,21 @@ using namespace std;
 
 class file_input
 {
+    //This class is written by 19C1012 Inoue Satoshi.
 public:
-    file_input();
-    std::ifstream ifs;
-    std::vector<std::string> cities = {"city011", "city012", "city021", "city022"};
-    const std::string root = "/home/satoshi/playspace/kadai/ninshiki/city_mcepdata/";
-    std::vector<std::vector<std::string>> filenames;
     using data_t = std::vector<std::vector<std::vector<std::vector<float>>>>;
-    data_t data; //[フォルダ][ファイルが何番目か][行][列]
-    static const int dimension = 15;
-    data_t getfiledatas();
-    float local_distance(const std::vector<float> &frame_i, const std::vector<float> &frame_j);
+    file_input();
+    const std::string root = "/home/satoshi/playspace/kadai/ninshiki/city_mcepdata/";
+    std::vector<std::string> cities = {"city011", "city012", "city021", "city022"};
+    std::vector<std::vector<std::string>> filenames;
     int dpMatching(int tmpfolder, int tmpfile_num, int folder);
+    data_t getfiledatas();
+
+private:
+    float local_distance(const std::vector<float> &frame_i, const std::vector<float> &frame_j);
+    static const int dimension = 15;
+    std::ifstream ifs;
+    data_t data; //[フォルダ][ファイルが何番目か][行][列]
 };
 
 file_input::file_input()
@@ -95,7 +98,7 @@ int file_input::dpMatching(int tmpfolder, int tmpfile_num, int target_folder)
                 if (target_j - 1 >= 0)
                     min_num = std::min(min_num, local_distance(template_data[tmp_i], target[target_j]) + result[tmp_i][target_j - 1]);
                 if ((tmp_i - 1 >= 0) && (target_j - 1 >= 0))
-                    min_num = std::min(min_num, 2 * local_distance(template_data[tmp_i], target[target_j]) + result[tmp_i - 1][target_j - 1]);
+                    min_num = std::min(min_num, 10 * local_distance(template_data[tmp_i], target[target_j]) + result[tmp_i - 1][target_j - 1]);
                 result[tmp_i][target_j] = min_num;
             }
         }
@@ -106,7 +109,7 @@ int file_input::dpMatching(int tmpfolder, int tmpfile_num, int target_folder)
         }
         voice_num++;
     }
-    if(shortest == tmpfile_num)
+    if (shortest == tmpfile_num)
         return 1;
     else
         return 0;
@@ -137,10 +140,10 @@ int main(int argc, char const *argv[])
             }
             for (int k = 0; k < 100; ++k)
             {
-                n += files.dpMatching(i,k,j);
+                n += files.dpMatching(i, k, j);
             }
             std::cout << "template::" << files.cities[i] << " compared::" << files.cities[j] << std::endl;
-            std::cout << "result:: " << n << "%"<< std::endl;
+            std::cout << "result:: " << n << "%" << std::endl;
         }
     }
 
