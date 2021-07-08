@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package tutorial;
+
+message Person {
+  optional bytes id  = 1;
+  optional bytes cf_own = 2;
+  optional bytes cf_ball = 3;
+  optional bytes Status = 4;
+  optional bytes fps = 5;
+  optional bytes voltage = 6;
+  optional bytes temperature = 7;
+  optional bytes highest_servo = 8;
+  optional string command = 9;
+  optional string current_behavior_name = 10;
+  optional sint32 x = 11;
+}
+
