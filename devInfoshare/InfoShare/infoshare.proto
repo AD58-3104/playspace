@@ -1,9 +1,10 @@
 syntax = "proto2";
 
-package tutorial;
+package MessageProto;
 option optimize_for = CODE_SIZE;
 
-message Person {
+
+message SharingData {
   optional bytes id  = 1 ;
   optional bytes cf_own = 2;
   optional bytes cf_ball = 3;
