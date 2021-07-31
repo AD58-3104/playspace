@@ -1,21 +1,27 @@
 syntax = "proto2";
 
-package MessageProto;
-option optimize_for = CODE_SIZE;
+package CitbrainsMessage;
+option optimize_for = CODE_SIZE; //これどうなんだっけわすれた
+
+message Object {
+  optional bytes robot_side = 1;
+  optional sint32 pos_x = 2;
+  optional sint32 pos_y = 3;
+  optional sint32 pos_th = 4;
+}
 
 
 message SharingData {
   optional bytes id  = 1 ;
   optional bytes cf_own = 2;
   optional bytes cf_ball = 3;
-  optional bytes Status = 4;
+  optional bytes status = 4;
   optional bytes fps = 5;
   optional bytes voltage = 6;
   optional bytes temperature = 7;
   optional bytes highest_servo = 8;
   optional string command = 9;
   optional string current_behavior_name = 10;
-  optional sint32 x = 11;
-  optional string pack = 13;
+  repeated Object objects = 11;
 }
 
