@@ -8,6 +8,7 @@ message Object {
   optional sint32 pos_x = 2;
   optional sint32 pos_y = 3;
   optional sint32 pos_th = 4;
+  // optional bytes flags = 5; フラグ類を詰め込むやつが欲しい。
 }
 
 
