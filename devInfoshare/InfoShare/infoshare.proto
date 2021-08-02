@@ -23,6 +23,6 @@ message SharingData {
   optional bytes highest_servo = 8;
   optional string command = 9;
   optional string current_behavior_name = 10;
-  repeated Object objects = 11;
+  repeated Object objects = 11; //ここは種類によって分けた方が良さそう。
 }
 

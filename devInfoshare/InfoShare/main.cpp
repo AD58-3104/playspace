@@ -2,11 +2,23 @@
 #include <string>
 #include "infoshare.pb.h"
 using namespace std;
+
+struct St{
+    #ifdef  __cpp_inline_variables
+    inline static constexpr int I = 0b1111'1111;
+    #else 
+    static const int I = 0b1111'1001;
+    #endif
+};
+
+
 int main(int argc, char const *argv[])
 {
     CitbrainsMessage::SharingData proto;
     string pack;
     int i = 12;
+    uint8_t c = St::I;
+    cout << static_cast<int>(c) <<  endl;
     // pack = string{i} + string{12} + string{23} + string{43}+ string{98}+ string{93}+ string{73}+ string{74};
     // proto.set_pack(pack);
     // proto.set_x(1024);
