@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(try)
+project(Infoshare)
 find_package(Protobuf REQUIRED)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS infoshare.proto)
 #protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS DESCRIPTORS PROTO_DESCS pro.proto)
