@@ -18,7 +18,7 @@ message SharingData {
   optional bytes cf_ball = 3;
   optional bytes status = 4;
   optional bytes fps = 5;
-  optional bytes voltage = 6;
+  optional sint32 voltage = 6;     //今は使ってない。
   optional bytes temperature = 7;
   optional bytes highest_servo = 8;
   optional string command = 9;

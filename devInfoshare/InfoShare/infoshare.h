@@ -4,8 +4,10 @@
 #include <atomic>
 #include <iostream>
 #include <string>
+#include <mutex>
 #include <functional>
-#include <boost/asio.hpp>
+#include <chrono>
+#include <cstdint>
 #include "hpl_types.h"
 
 namespace Citbrains
@@ -14,7 +16,7 @@ namespace Citbrains
     {
         struct OtherRobotInfomation
         {
-            enum class MutexNumber{
+            enum class MutexTag:int32_t{
                 COMMAND = 0,
                 CURRENT_BEHAVIOR_NAME = 1,
                 OUR_ROBOT_GL = 2,
@@ -22,21 +24,21 @@ namespace Citbrains
                 BLACK_POLE_GL = 4,
                 TARGET_POS_VEC = 5,
                 LENGTH  //最大数を知りたい時に使うので何か追加する時はこれの前に追加する。
-            }
+            };
             //scoped_lockして
-            std::vercor<std::mutex> mutexes_;
+            std::vector<std::mutex> dataMutexes_;
             OtherRobotInfomation(){
-                for(size_t i = 0;i < static_cast<size_t>(MutexNumber::LENGTH);i++){
-                    mutexes_.emplace_back(std::mutex());
+                for(int32_t i = 0;i < static_cast<int32_t>(MutexTag::LENGTH);++i){
+                    dataMutexes_.emplace_back(std::mutex());
                 }
             }
             private:
             std::atomic_uint32_t id_;
             std::atomic_uint32_t cf_own_;
             std::atomic_uint32_t cf_ball_;                  //fastにした方が良いのかもしれない
-            std::atomic_uint32_t status_;
+            std::atomic_uint32_t status_;           //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべき。
             std::atomic_uint32_t fps_;
-            std::atomic_uint32_t voltage_;
+            std::atomic_uint32_t voltage_;  //使ってない。
             std::atomic_uint32_t temperature_;
             std::atomic_uint32_t highest_servo_;
             std::atomic_bool is_detect_ball_;
@@ -81,25 +83,29 @@ namespace Citbrains
             #else
             //jetsonで無理だったら実装する.書くと長すぎて見にくいので.
             #endif
-            InfoShare(const int32_t self_id,const int32_t our_color,const std::string ip_address,float (*timeFunc)() );
+            InfoShare(const int32_t self_id,const int32_t our_color,const int32_t number_of_our_robots,const std::string ip_address,float (*timeFunc)() );
             ~InfoShare();
             //---------------------------------------------------------------------
             //atomicなloadをしたのを返す一連のgetter。
-            [[nodiscard]] int32_t get_cf_own(const int& id) const noexcept; 
-            [[nodiscard]] std::string get_command(const int& id) const ; //残念ながらunique_lockは例外を投げるらしい
+            //自分のidを指定された場合0に相当するものを返す。
+            [[nodiscard]] int32_t get_cf_own(const int32_t& id) const noexcept; 
+            [[nodiscard]] std::string get_command(const int32_t& id) const ; //残念ながらscoped_lockは例外を投げるらしい
             //---------------------------------------------------------------------
             void terminate(void);
-            bool sendInfomationToOtherRobots();
-            void changeColor(const int32_t id, const int32_t color);
+            // bool sendInfomationToOtherRobots();
+            void changeColor(const int32_t color);
             void setTimeFunc(float (*func)());
             float getTime(void);
+            //TODO:名前変える
+            int32_t sendCommonInfo/*setSharingDatasAndSendInfomationToOtherRobotsにしたい*/(); //パラメータパックで受け取っても良いが、使われる場所がhplの一か所のみなので寧ろそうしない方が良さそう。
 
         private:
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
-            MessageProto::SharingData sharing_data_;
+            CitbrainsMessage::SharingData sharing_data_;
             std::thread receive_thread_;
             std::thread send_thread_;
             const int32_t self_id_;
+            const int32_t number_of_our_robots_;
             bool terminated_ = false;
             void receiveSharedInfomation();
             void receivingThreadLoop();
