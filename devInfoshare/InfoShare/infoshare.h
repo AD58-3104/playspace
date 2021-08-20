@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 #include "hpl_types.h"
+#include "infoshare.pb.h"
 
 namespace Citbrains
 {
@@ -106,7 +107,8 @@ namespace Citbrains
             std::thread send_thread_;
             const int32_t self_id_;
             const int32_t number_of_our_robots_;
-            bool terminated_ = false;
+            int32_t our_color_;
+            bool terminated_;
             void receiveSharedInfomation();
             void receivingThreadLoop();
             void sendingThreadLoop();
