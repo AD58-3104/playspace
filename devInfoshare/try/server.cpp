@@ -7,25 +7,26 @@ using asio::ip::udp;
 
 class Server {
     asio::io_service& io_service_;
-    tcp::acceptor acceptor_;
-    tcp::socket socket_;
+    // udp::acceptor acceptor_;
+    udp::socket socket_;
     asio::streambuf receive_buff_;
+    udp::endpoint remote_endpoint_;
 
 public:
     Server(asio::io_service& io_service)
         : io_service_(io_service),
-          socket_(io_service,udp::endpoint(asio::ip::address::from_string("127.0.0.1"), 31400)) {}
-
-
-private:
+        socket_(io_service,udp::endpoint(udp::v4(), 31400))
+        {
+            start_receive();
+        }
 
     // メッセージ受信
     void start_receive()
     {
-        boost::asio::async_read(
-            socket_,
+        socket_.async_receive_from(
             receive_buff_,
-            asio::transfer_all(),
+            remote_endpoint_,
+            asio::transfer_at_least(1),
             boost::bind(&Server::on_receive, this,
                         asio::placeholders::error, asio::placeholders::bytes_transferred));
     }
@@ -52,7 +53,7 @@ int main()
     asio::io_service io_service;
     Server server(io_service);
 
-    server.start();
+
 
     io_service.run();
 }
