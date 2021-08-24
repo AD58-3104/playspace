@@ -45,8 +45,7 @@ public:
     void send()
     {
         send_data_ = "ping";
-        asio::async_write(
-                socket_,
+        socket_.async_send(
                 asio::buffer(send_data_),
                 boost::bind(&Client::on_send, this,
                             asio::placeholders::error,

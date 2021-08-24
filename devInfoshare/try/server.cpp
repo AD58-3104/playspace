@@ -1,6 +1,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/array.hpp>
 
 namespace asio = boost::asio;
 using asio::ip::udp;
@@ -9,7 +10,7 @@ class Server {
     asio::io_service& io_service_;
     // udp::acceptor acceptor_;
     udp::socket socket_;
-    asio::streambuf receive_buff_;
+    boost::array<char,1024> receive_buff_;
     udp::endpoint remote_endpoint_;
 
 public:
@@ -24,9 +25,8 @@ public:
     void start_receive()
     {
         socket_.async_receive_from(
-            receive_buff_,
+            boost::asio::buffer(receive_buff_),
             remote_endpoint_,
-            asio::transfer_at_least(1),
             boost::bind(&Server::on_receive, this,
                         asio::placeholders::error, asio::placeholders::bytes_transferred));
     }
@@ -40,10 +40,12 @@ public:
             std::cout << "receive failed: " << error.message() << std::endl;
         }
         else {
-            const char* data = asio::buffer_cast<const char*>(receive_buff_.data());
+            // const char* data = asio::buffer_cast<const char*>(receive_buff_.data());
+            const char* data = receive_buff_.data();
             std::cout << data << std::endl;
 
-            receive_buff_.consume(receive_buff_.size());
+            // receive_buff_.consume(receive_buff_.size());
+            start_receive();
         }
     }
 };
