@@ -11,11 +11,12 @@ class Client
     asio::io_service &io_service_;
     udp::socket socket_;
     std::string send_data_; // 送信データ
+    int cnt;
 
 public:
     Client(asio::io_service &io_service)
         : io_service_(io_service),
-          socket_(io_service)
+          socket_(io_service),cnt(0)
     {
         if(socket_.is_open()){
             socket_.close();
@@ -51,6 +52,10 @@ public:
     void send()
     {
         send_data_ = "ping";
+        if(cnt == 10){
+            send_data_.erase(send_data_.begin(),send_data_.end());
+            send_data_ = "end";
+        }
         // boost::asio::ip::address adress;
         boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string("127.0.0.1"), 31400);
         socket_.async_send_to(
@@ -76,6 +81,7 @@ public:
             std::cout << "send correct!" << std::endl;
         }
         std::this_thread::sleep_for(1000ms);
+        cnt++;
         send();
     }
 };
