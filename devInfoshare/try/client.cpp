@@ -1,6 +1,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/thread.hpp>
 #include <chrono>
 #include <thread>
 namespace asio = boost::asio;
@@ -52,16 +53,19 @@ public:
     void send()
     {
         send_data_ = "ping";
-        if(cnt == 10){
-            send_data_.erase(send_data_.begin(),send_data_.end());
+        if(cnt > 4){
+            send_data_.clear();
+            send_data_.shrink_to_fit();
+            std::cerr << send_data_.capacity() << std::endl;
             send_data_ = "end";
+            std::cerr << send_data_.capacity() << std::endl;
         }
         // boost::asio::ip::address adress;
         boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string("127.0.0.1"), 31400);
         socket_.async_send_to(
             asio::buffer(send_data_),
             destination,
-            boost::bind(&Client::on_send,  
+            boost::bind(&Client::sendHandler,  
                         this,
                         asio::placeholders::error,
                         asio::placeholders::bytes_transferred));
@@ -70,7 +74,7 @@ public:
     // 送信完了
     // error : エラー情報
     // bytes_transferred : 送信したバイト数
-    void on_send(const boost::system::error_code &error, size_t bytes_transferred)
+    void sendHandler(const boost::system::error_code &error, size_t bytes_transferred)
     {
         if (error)
         {
@@ -92,6 +96,5 @@ int main()
     Client client(io_service);
 
     client.send();
-
     io_service.run();
 }

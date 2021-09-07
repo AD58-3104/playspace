@@ -85,6 +85,7 @@ namespace Citbrains
             //jetsonで無理だったら実装する.書くと長すぎて見にくいので.
             #endif
             InfoShare(const int32_t self_id,const int32_t our_color,const int32_t number_of_our_robots,const std::string ip_address,float (*timeFunc)() );
+            //コピー禁止しとく。ムーブ専用にする。
             ~InfoShare();
             //---------------------------------------------------------------------
             //atomicなloadをしたのを返す一連のgetter。
@@ -112,6 +113,12 @@ namespace Citbrains
             void receiveSharedInfomation();
             void receivingThreadLoop();
             void sendingThreadLoop();
+
+
+            //server-----------------------------------------------
+            //多分2つ共クラスを持つ方が良い。
+            //client----------------------------------------------- 
+
         };
 
     }

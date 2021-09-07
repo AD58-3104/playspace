@@ -12,32 +12,36 @@ class Server
     asio::io_service &io_service_;
     udp::socket socket_;
     udp::endpoint remote_endpoint_;
-    bool terminate = false;
+    bool terminated_ = false;
     // boost::array<char, 512> receive_buff_;
     boost::asio::streambuf receive_buff_;
 
-public:
-    Server(asio::io_service &io_service)
+public:                     
+    Server(asio::io_service &io_service) //コンストラクタでRobotstatusの参照を渡しておく
         : io_service_(io_service),
           socket_(io_service, udp::endpoint(udp::v4(), 31400))
     {
-        start_receive();
+        startReceive();
     }
 
     // メッセージ受信
-    void start_receive()
+    void startReceive()
     {
         socket_.async_receive_from(
             receive_buff_.prepare(512),
             remote_endpoint_,
-            boost::bind(&Server::on_receive, this,
-                        asio::placeholders::error, asio::placeholders::bytes_transferred));
+            // boost::bind(&Server::receiveHandler, this,
+            //             asio::placeholders::error, asio::placeholders::bytes_transferred)
+            [&](const boost::system::error_code &error, size_t bytes_transferred){
+                receiveHandler(error,bytes_transferred);
+            }
+            );
     }
 
     // 受信完了
     // error : エラー情報
     // bytes_transferred : 受信したバイト数
-    void on_receive(const boost::system::error_code &error, size_t bytes_transferred)
+    void receiveHandler(const boost::system::error_code &error, size_t bytes_transferred)
     {
         if (error && error != boost::asio::error::eof)
         {
@@ -52,12 +56,12 @@ public:
             receive_buff_.consume(receive_buff_.size() + 1);
             if (data.compare("end") == 0)
             {
-                terminate = true;
+                terminated_ = true;
             }
             // receive_buff_.consume(receive_buff_.size());
-            if (!terminate)
+            if (!terminated_)
             {
-                start_receive();
+                startReceive();
             }
         }
     }
