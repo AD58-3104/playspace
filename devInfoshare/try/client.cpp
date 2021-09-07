@@ -17,9 +17,10 @@ class Client
 public:
     Client(asio::io_service &io_service)
         : io_service_(io_service),
-          socket_(io_service),cnt(0)
+          socket_(io_service), cnt(0)
     {
-        if(socket_.is_open()){
+        if (socket_.is_open())
+        {
             socket_.close();
         }
         socket_.open(udp::v4());
@@ -53,7 +54,8 @@ public:
     void send()
     {
         send_data_ = "ping";
-        if(cnt > 4){
+        if (cnt > 4)
+        {
             send_data_.clear();
             send_data_.shrink_to_fit();
             std::cerr << send_data_.capacity() << std::endl;
@@ -65,7 +67,7 @@ public:
         socket_.async_send_to(
             asio::buffer(send_data_),
             destination,
-            boost::bind(&Client::sendHandler,  
+            boost::bind(&Client::sendHandler,
                         this,
                         asio::placeholders::error,
                         asio::placeholders::bytes_transferred));
@@ -84,10 +86,12 @@ public:
         {
             std::cout << "send correct!" << std::endl;
         }
-        std::this_thread::sleep_for(1000ms);
+        std::this_thread::sleep_for(500ms);
         cnt++;
-        send();
+
+        // send();
     }
+    void terminate();
 };
 
 int main()
@@ -97,4 +101,8 @@ int main()
 
     client.send();
     io_service.run();
+    for (int i = 0; i < 10; ++i)
+        client.send();
+    io_service.run();
+    std::cout << "\n\nend !!!!!!!!!!!!!!!!!!!!!!!!!!!";
 }

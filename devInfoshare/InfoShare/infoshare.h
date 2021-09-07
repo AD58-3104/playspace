@@ -61,6 +61,7 @@ namespace Citbrains
         public:
             //inline変数を使っているのでc++17以上でしかコンパイル出来ない。
             #ifdef  __cpp_inline_variables
+            static_assert(false,"this environment has inline variables");
             inline static constexpr int32_t NUM_PLAYERS = 6;
             inline static constexpr int32_t COMM_INFO_PORT0 = 7110; //!< CommInfoで使用するPORTのはじめのポート
                                                                     //1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
@@ -83,6 +84,7 @@ namespace Citbrains
             inline static constexpr int32_t NO_CYAN = 1;       //!< シアンの番号
             #else
             //jetsonで無理だったら実装する.書くと長すぎて見にくいので.
+            static_assert(false,"this environment has not inline variables");
             #endif
             InfoShare(const int32_t self_id,const int32_t our_color,const int32_t number_of_our_robots,const std::string ip_address,float (*timeFunc)() );
             //コピー禁止しとく。ムーブ専用にする。

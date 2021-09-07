@@ -53,6 +53,7 @@ namespace Citbrains
 
         void InfoShare::terminate()
         {
+            //clientとserverのio_serviceをstopする為のterminateを呼ぶ。
             terminated_ = true;
         }
     }

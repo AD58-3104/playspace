@@ -7,7 +7,7 @@
 namespace asio = boost::asio;
 using asio::ip::udp;
 
-class Server
+class InfoShareServer
 {
     asio::io_service &io_service_;
     udp::socket socket_;
@@ -17,10 +17,11 @@ class Server
     boost::asio::streambuf receive_buff_;
 
 public:                     
-    Server(asio::io_service &io_service) //コンストラクタでRobotstatusの参照を渡しておく
+    InfoShareServer(asio::io_service &io_service) //コンストラクタでRobotstatusの参照を渡しておく
         : io_service_(io_service),
           socket_(io_service, udp::endpoint(udp::v4(), 31400))
     {
+        boost::asio::execu
         startReceive();
     }
 
@@ -30,7 +31,7 @@ public:
         socket_.async_receive_from(
             receive_buff_.prepare(512),
             remote_endpoint_,
-            // boost::bind(&Server::receiveHandler, this,
+            // boost::bind(&InfoShareServer::receiveHandler, this,
             //             asio::placeholders::error, asio::placeholders::bytes_transferred)
             [&](const boost::system::error_code &error, size_t bytes_transferred){
                 receiveHandler(error,bytes_transferred);
@@ -65,12 +66,13 @@ public:
             }
         }
     }
+    void terminate();
 };
 
 int main()
 {
     asio::io_service io_service;
-    Server server(io_service);
+    InfoShareServer server(io_service);
 
     std::thread t([&io_service]
                   { io_service.run(); });
