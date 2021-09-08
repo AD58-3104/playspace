@@ -3,9 +3,11 @@
 #include <boost/bind.hpp>
 #include <boost/array.hpp>
 #include <thread>
+#include <chrono>
 #include <string>
 namespace asio = boost::asio;
 using asio::ip::udp;
+using namespace std::literals::chrono_literals;
 
 class InfoShareServer
 {
@@ -15,13 +17,14 @@ class InfoShareServer
     bool terminated_ = false;
     // boost::array<char, 512> receive_buff_;
     boost::asio::streambuf receive_buff_;
+    static const int32_t buffer_size_ = 1024;
+    int32_t port_;
 
 public:                     
-    InfoShareServer(asio::io_service &io_service) //コンストラクタでRobotstatusの参照を渡しておく
+    InfoShareServer(asio::io_service &io_service,int32_t port) //コンストラクタでRobotstatusの参照を渡しておく
         : io_service_(io_service),
-          socket_(io_service, udp::endpoint(udp::v4(), 31400))
+          socket_(io_service, udp::endpoint(udp::v4(), port)),port_(port)
     {
-        boost::asio::execu
         startReceive();
     }
 
@@ -29,11 +32,11 @@ public:
     void startReceive()
     {
         socket_.async_receive_from(
-            receive_buff_.prepare(512),
+            receive_buff_.prepare(buffer_size_),
             remote_endpoint_,
             // boost::bind(&InfoShareServer::receiveHandler, this,
             //             asio::placeholders::error, asio::placeholders::bytes_transferred)
-            [&](const boost::system::error_code &error, size_t bytes_transferred){
+            [this](const boost::system::error_code &error, size_t bytes_transferred){
                 receiveHandler(error,bytes_transferred);
             }
             );
@@ -66,16 +69,19 @@ public:
             }
         }
     }
-    void terminate();
+    void terminate(){
+        io_service_.stop();
+    };
 };
 
 int main()
 {
     asio::io_service io_service;
-    InfoShareServer server(io_service);
+    InfoShareServer server(io_service,7110);
 
     std::thread t([&io_service]
                   { io_service.run(); });
+    std::this_thread::sleep_for(1000ms);
     t.join();
     // io_service.run();
 }

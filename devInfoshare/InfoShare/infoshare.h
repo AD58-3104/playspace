@@ -18,16 +18,13 @@ namespace Citbrains
         struct OtherRobotInfomation
         {
             enum class MutexTag:int32_t{
-                COMMAND = 0,
-                CURRENT_BEHAVIOR_NAME = 1,
-                OUR_ROBOT_GL = 2,
-                ENEMY_ROBOT_GL = 3,
-                BLACK_POLE_GL = 4,
-                TARGET_POS_VEC = 5,
+                OUR_ROBOT_GL,
+                ENEMY_ROBOT_GL,
+                BLACK_POLE_GL,
+                TARGET_POS_VEC,
                 LENGTH  //最大数を知りたい時に使うので何か追加する時はこれの前に追加する。
             };
             //scoped_lockして
-            std::vector<std::mutex> dataMutexes_;
             OtherRobotInfomation(){
                 for(int32_t i = 0;i < static_cast<int32_t>(MutexTag::LENGTH);++i){
                     dataMutexes_.emplace_back(std::mutex());
@@ -45,15 +42,16 @@ namespace Citbrains
             std::atomic_bool is_detect_ball_;
             std::atomic_uint32_t strategy_no_;
             std::atomic<float> recv_time_;
-
-            std::string command_;
-            std::string current_behavior_name_;
+            std::atomic_uint32_t command_;              //文字列は長いので数字で管理する
+            std::atomic_uint32_t current_behavior_name_;//上に同じく
 
             std::vector<Pos2D> our_robot_gl_;  //扱いが良く分からんやつら
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
             std::vector<Pos2D> target_pos_vec_;
 
+
+            std::vector<std::mutex> dataMutexes_;
         };
 
         class InfoShare
@@ -89,12 +87,14 @@ namespace Citbrains
             InfoShare(const int32_t self_id,const int32_t our_color,const int32_t number_of_our_robots,const std::string ip_address,float (*timeFunc)() );
             //コピー禁止しとく。ムーブ専用にする。
             ~InfoShare();
+
             //---------------------------------------------------------------------
             //atomicなloadをしたのを返す一連のgetter。
             //自分のidを指定された場合0に相当するものを返す。
             [[nodiscard]] int32_t get_cf_own(const int32_t& id) const noexcept; 
             [[nodiscard]] std::string get_command(const int32_t& id) const ; //残念ながらscoped_lockは例外を投げるらしい
             //---------------------------------------------------------------------
+            
             void terminate(void);
             // bool sendInfomationToOtherRobots();
             void changeColor(const int32_t color);
@@ -113,9 +113,6 @@ namespace Citbrains
             int32_t our_color_;
             bool terminated_;
             void receiveSharedInfomation();
-            void receivingThreadLoop();
-            void sendingThreadLoop();
-
 
             //server-----------------------------------------------
             //多分2つ共クラスを持つ方が良い。
