@@ -11,7 +11,7 @@ using namespace std::literals::chrono_literals;
 
 class InfoShareServer
 {
-    asio::io_service &io_service_;
+    asio::io_service io_service_;
     udp::socket socket_;
     udp::endpoint remote_endpoint_;
     bool terminated_ = false;
@@ -19,15 +19,19 @@ class InfoShareServer
     boost::asio::streambuf receive_buff_;
     static const int32_t buffer_size_ = 1024;
     int32_t port_;
+    std::thread server_thread_;
 
 public:                     
     InfoShareServer(asio::io_service &io_service,int32_t port) //コンストラクタでRobotstatusの参照を渡しておく
-        : io_service_(io_service),
-          socket_(io_service, udp::endpoint(udp::v4(), port)),port_(port)
+        : io_service_(),
+          socket_(io_service_, udp::endpoint(udp::v4(), port)),port_(port),server_thread_([this](){startReceive();})
     {
-        startReceive();
+        std::this_thread::sleep_for(100ms);
+        io_service_.run();
     }
-
+    ~InfoShareServer(){
+        terminate();
+    }
     // メッセージ受信
     void startReceive()
     {
@@ -57,7 +61,7 @@ public:
             const std::string data(boost::asio::buffer_cast<const char*>(receive_buff_.data()),bytes_transferred);
             // const std::string data(boost::asio::buffer_cast<const char*>(receive_buff_.data()),bytes_transferred);
             std::cout << data  << "::length " << bytes_transferred << std::endl;
-            receive_buff_.consume(receive_buff_.size() + 1);
+            receive_buff_.consume(receive_buff_.size());
             if (data.compare("end") == 0)
             {
                 terminated_ = true;
@@ -71,6 +75,7 @@ public:
     }
     void terminate(){
         io_service_.stop();
+        server_thread_.join();
     };
 };
 
@@ -78,10 +83,7 @@ int main()
 {
     asio::io_service io_service;
     InfoShareServer server(io_service,7110);
-
-    std::thread t([&io_service]
-                  { io_service.run(); });
-    std::this_thread::sleep_for(1000ms);
-    t.join();
+    std::this_thread::sleep_for(10s);
+    server.terminate();
     // io_service.run();
 }

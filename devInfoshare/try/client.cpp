@@ -2,8 +2,9 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-#include <chrono>
 #include <thread>
+#include <memory>
+#include <chrono>
 namespace asio = boost::asio;
 using asio::ip::udp;
 using namespace std::literals::chrono_literals;
@@ -20,12 +21,12 @@ using namespace std::literals::chrono_literals;
 
 class Client
 {
-    asio::io_service &io_service_;
+    asio::io_service io_service_;
     udp::socket socket_;
-    std::string send_data_; // 送信データ
     int cnt;
     int32_t port_;
     std::string ip_address_;
+    std::unique_ptr<std::thread> client_thread_;
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> w_guard_;
 #else
@@ -33,8 +34,8 @@ class Client
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
 
 public:
-    Client(asio::io_service &io_service, int32_t port, std::string address)
-        : io_service_(io_service), socket_(io_service), cnt(0), port_(port), ip_address_(address)
+    Client(int32_t port, std::string address)
+        : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address)
     {
         try
         {
@@ -48,35 +49,38 @@ public:
             e.what();
         }
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
-        w_guard_ = boost::asio::make_work_guard(io_service);
+        w_guard_ = boost::asio::make_work_guard(io_service_);
 #else
-        w_guard_ = std::make_shared<boost::asio::io_service::work>(io_service);
+        w_guard_ = std::make_shared<boost::asio::io_service::work>(io_service_);
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
+        client_thread_ = std::make_unique<std::thread>([&](){
+            io_service_.run();
+        });
+    }
+    ~Client(){
+        terminate();
     }
 
 
-
-
-    void f(){
-        send_data_ = "ping";
-        if (cnt > 4)
-        {
-            send_data_.clear();
-            send_data_.shrink_to_fit();
-            send_data_ = "end";
-        }
-        cnt++;
-    };
+    // void f(){
+    //     send_data_ = "ping";
+    //     if (cnt > 4)
+    //     {
+    //         send_data_.clear();
+    //         send_data_.shrink_to_fit();
+    //         send_data_ = "end";
+    //     }
+    //     cnt++;
+    // };
 
     // メッセージ送信
-    void send()
+    void send(std::string&& bytestring)
     {
-
-        f();
+        std::string send_data = std::move(bytestring);
         // boost::asio::ip::address adress;
         boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
         socket_.async_send_to(
-            asio::buffer(send_data_),
+            asio::buffer(send_data),
             destination,
             [this](const boost::system::error_code &error, size_t bytes_transferred)
             { sendHandler(error, bytes_transferred); });
@@ -95,29 +99,23 @@ public:
         {
             std::cout << "send correct!" << std::endl;
         }
-        // std::this_thread::sleep_for(500ms);
     }
     void terminate()
     {
-        w_guard_.reset();
+        w_guard_.reset();//ここでwork_guardかworkを破棄してrun()のブロッキングを終わらせる
+        client_thread_->join();
     };
 };
 
 int main()
 {
-    asio::io_service io_service;
-    Client client(io_service, 7110, "127.0.0.1");
 
-    client.send();
-    std::thread t([&]
-                  {
-                      for (int i = 0; i < 10; ++i)
-                          client.send();
-                      std::cout << "this thread is end";
-                      client.terminate();
-                  });
+    Client client(7110, "127.0.0.1");
+
+    
+    for(int i = 0;i < 5;++i)
+        client.send(std::string("fuck"));
+    client.send(std::string("end"));
     std::cout << "running\n";
-    io_service.run();
-    t.join();
     std::cout << "\n\nend !!!!!!!!!!!!!!!!!!!!!!!!!!!";
 }
