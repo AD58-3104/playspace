@@ -10,11 +10,28 @@
 #include <cstdint>
 #include "hpl_types.h"
 #include "infoshare.pb.h"
+#include "header.hpp"
 
 namespace Citbrains
 {
     namespace infosharemodule
     {
+        /*
+        commandstring 
+        behavierstringをここにハードコーディングする
+        
+        
+
+
+
+
+        */
+
+
+
+
+
+
         struct OtherRobotInfomation
         {
             enum class MutexTag:int32_t{
@@ -30,7 +47,6 @@ namespace Citbrains
                     dataMutexes_.emplace_back(std::mutex());
                 }
             }
-            private:
             std::atomic_uint32_t id_;
             std::atomic_uint32_t cf_own_;
             std::atomic_uint32_t cf_ball_;                  //fastにした方が良いのかもしれない
@@ -42,7 +58,7 @@ namespace Citbrains
             std::atomic_bool is_detect_ball_;
             std::atomic_uint32_t strategy_no_;
             std::atomic<float> recv_time_;
-            std::atomic_uint32_t command_;              //文字列は長いので数字で管理する
+            std::atomic_uint32_t command_;              //文字列は長いので数字で管理する    returnで返すdataはどっかで文字列に変換して返すべき
             std::atomic_uint32_t current_behavior_name_;//上に同じく
 
             std::vector<Pos2D> our_robot_gl_;  //扱いが良く分からんやつら
@@ -112,7 +128,10 @@ namespace Citbrains
             const int32_t number_of_our_robots_;
             int32_t our_color_;
             bool terminated_;
-            void receiveSharedInfomation();
+            auto handler = [this](std::string){
+
+            };
+            // void receiveSharedInfomation(); serverクラスに仕事無くされた
 
             //server-----------------------------------------------
             //多分2つ共クラスを持つ方が良い。
@@ -122,3 +141,25 @@ namespace Citbrains
 
     }
 }
+
+
+
+
+
+/*
+ * memo
+ * hplから使っている必要なインターフェース
+ * setup().多分IDと色とアドレスを設定する
+ * terminate()普通にterminate
+ * elapsed()recvTimeを返す これreceiveのハンドラに参照渡さないとまずいな
+ * get_ourcolor
+ * changecolor()
+ * sendCommonInfo
+ * 
+ * -----一連のgetter
+ * get_command()コマンドの文字列返す
+ * target_pos_vec(Pos2Dのやつ)のgetter.
+ * 
+ * 
+ * 
+ * /

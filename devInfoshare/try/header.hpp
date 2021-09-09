@@ -8,15 +8,13 @@
 using boost::asio::ip::udp;
 using namespace std::literals::chrono_literals;
 
-#if (((BOOST_VERSION / 1000) + ((BOOST_VERSION) % 1000)) > 165)
+#if (((BOOST_VERSION / 100000) + ((BOOST_VERSION)/ 100 % 1000)) > 165)
 //Boost1.65より新しい時(io_serviceがdeprecatedな為分けている)
 /**/ #define BOOST_VERSION_IS_HIGHER_THAN_1_65
 #else
 // Boost1.65以下の時
 /**/ #define BOOST_VERSION_IS_1_65_OR_LOWER
 #endif //(((BOOST_VERSION / 1000) + ((BOOST_VERSION) % 1000)) >= 165)
-
-#undef 
 
 class Client
 {
@@ -34,7 +32,7 @@ class Client
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
 
 public:
-    Client(std::string address,int32_t port)
+    Client(std::string address, int32_t port)
         : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
           w_guard_(boost::asio::make_work_guard(io_service_))
@@ -62,17 +60,6 @@ public:
     {
         terminate();
     }
-
-    // void f(){
-    //     send_data_ = "ping";
-    //     if (cnt > 4)
-    //     {
-    //         send_data_.clear();
-    //         send_data_.shrink_to_fit();
-    //         send_data_ = "end";
-    //     }
-    //     cnt++;
-    // };
 
     // メッセージ送信
     void send(std::string &&bytestring)
@@ -120,6 +107,7 @@ class InfoShareServer
     boost::asio::streambuf receive_buff_;
     static const int32_t buffer_size_ = 1024;
     int32_t port_;
+    std::function<void(std::string&& s)> bytestringHandler_;
     std::unique_ptr<std::thread> server_thread_;
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> w_guard_;
@@ -128,9 +116,9 @@ class InfoShareServer
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
 
 public:
-    InfoShareServer(int32_t port) //コンストラクタでRobotstatusの参照を渡しておく
+    InfoShareServer(int32_t port,std::function<void(std::string&&)> func) //コンストラクタでRobotstatusの参照を渡しておく
         : io_service_(),
-          socket_(io_service_, udp::endpoint(udp::v4(), port)), terminated_(false), port_(port),
+          socket_(io_service_, udp::endpoint(udp::v4(), port)), terminated_(false), port_(port),bytestringHandler_(func),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
           w_guard_(boost::asio::make_work_guard(io_service_))
 #else
@@ -170,16 +158,11 @@ public:
         }
         else
         {
-            // const char* data = asio::buffer_cast<const char*>(receive_buff_.data());
-            const std::string data(boost::asio::buffer_cast<const char *>(receive_buff_.data()), bytes_transferred);
-            // const std::string data(boost::asio::buffer_cast<const char*>(receive_buff_.data()),bytes_transferred);
-            std::cout << data << "::length " << bytes_transferred << std::endl;
+            std::string data(boost::asio::buffer_cast<const char *>(receive_buff_.data()), bytes_transferred);
+            std::cout << "length::" << bytes_transferred << " " << std::endl;
+            bytestringHandler_(std::move(data));
+            std::cout << data;
             receive_buff_.consume(receive_buff_.size());
-            // if (data.compare("end") == 0)
-            // {
-            //     terminated_ = true;
-            // }
-            // // receive_buff_.consume(receive_buff_.size());
             if (!terminated_)
             {
                 startReceive();
