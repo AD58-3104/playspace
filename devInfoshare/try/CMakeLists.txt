@@ -4,8 +4,8 @@ find_package(Boost REQUIRED system thread )
 SET(Boost_USE_STATIC_LIBS OFF)
 SET(Boost_USE_MULTITHREAD ON)
 
-add_executable(server server.cpp )
-add_executable(client client.cpp )
+add_executable(server servermain.cpp header.hpp)
+add_executable(client clientmain.cpp header.hpp)
 
 target_compile_features(server  PUBLIC cxx_std_17)
 target_compile_options(server  PUBLIC -O2 -Wall -pedantic-errors) 

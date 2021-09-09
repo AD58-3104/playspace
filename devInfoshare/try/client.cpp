@@ -5,8 +5,7 @@
 #include <thread>
 #include <memory>
 #include <chrono>
-namespace asio = boost::asio;
-using asio::ip::udp;
+using boost::asio::ip::udp;
 using namespace std::literals::chrono_literals;
 
 #if (((BOOST_VERSION / 1000) + ((BOOST_VERSION) % 1000)) > 165)
@@ -21,7 +20,7 @@ using namespace std::literals::chrono_literals;
 
 class Client
 {
-    asio::io_service io_service_;
+    boost::asio::io_service io_service_;
     udp::socket socket_;
     int cnt;
     int32_t port_;
@@ -80,7 +79,7 @@ public:
         // boost::asio::ip::address adress;
         boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
         socket_.async_send_to(
-            asio::buffer(send_data),
+            boost::asio::buffer(send_data),
             destination,
             [this](const boost::system::error_code &error, size_t bytes_transferred)
             { sendHandler(error, bytes_transferred); });

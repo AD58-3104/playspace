@@ -5,34 +5,33 @@
 #include <thread>
 #include <chrono>
 #include <string>
-namespace asio = boost::asio;
-using asio::ip::udp;
-using namespace std::literals::chrono_literals;
 
+using boost::asio::ip::udp;
+using namespace std::literals::chrono_literals;
 class InfoShareServer
 {
-    asio::io_service io_service_;
+
+    boost::asio::io_service io_service_;
     udp::socket socket_;
     udp::endpoint remote_endpoint_;
-    bool terminated_ = false;
-    // boost::array<char, 512> receive_buff_;
+    bool terminated_;
     boost::asio::streambuf receive_buff_;
     static const int32_t buffer_size_ = 1024;
     int32_t port_;
     std::thread server_thread_;
 
 public:                     
-    InfoShareServer(asio::io_service &io_service,int32_t port) //コンストラクタでRobotstatusの参照を渡しておく
+    InfoShareServer(boost::asio::io_service &io_service,int32_t port) //コンストラクタでRobotstatusの参照を渡しておく
         : io_service_(),
-          socket_(io_service_, udp::endpoint(udp::v4(), port)),port_(port),server_thread_([this](){startReceive();})
+          socket_(io_service_, udp::endpoint(udp::v4(), port)),terminated_(false),port_(port),server_thread_([this](){io_service_.run();})
     {
         std::this_thread::sleep_for(100ms);
-        io_service_.run();
+        startReceive();
     }
     ~InfoShareServer(){
         terminate();
     }
-    // メッセージ受信
+    // 受信開始
     void startReceive()
     {
         socket_.async_receive_from(
@@ -46,9 +45,7 @@ public:
             );
     }
 
-    // 受信完了
-    // error : エラー情報
-    // bytes_transferred : 受信したバイト数
+    // 受信のハンドラ
     void receiveHandler(const boost::system::error_code &error, size_t bytes_transferred)
     {
         if (error && error != boost::asio::error::eof)
@@ -81,9 +78,9 @@ public:
 
 int main()
 {
-    asio::io_service io_service;
+   boost::asio::io_service io_service;
     InfoShareServer server(io_service,7110);
-    std::this_thread::sleep_for(10s);
+    std::this_thread::sleep_for(4s);
     server.terminate();
     // io_service.run();
 }
