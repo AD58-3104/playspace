@@ -12,8 +12,11 @@ namespace Citbrains
         {
             for (int32_t i = 0; i < number_of_our_robots_; ++i)
             {
-                robot_data_list_.push_back(std::make_unique<Citbrains::infosharemodule::OtherRobotInfomation>());
+                robot_data_list_.push_back(std::make_unique<Citbrains::infosharemodule::OtherRobotInfomation>(i,timeFunc));
             }
+            receivedDataHandler_ = [&](std::string && data){ //全てキャプチャするのは嫌だが取り敢えずこうしておく。参照の寿命とラムダの寿命は同じ。
+                //パースして中に入れる。大分面倒なので後で.....。
+            };
         }
         InfoShare::~InfoShare()
         {

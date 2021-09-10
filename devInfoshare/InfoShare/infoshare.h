@@ -8,9 +8,9 @@
 #include <functional>
 #include <chrono>
 #include <cstdint>
+#include <deque>
 #include "hpl_types.h"
 #include "infoshare.pb.h"
-#include "header.hpp"
 
 namespace Citbrains
 {
@@ -21,9 +21,6 @@ namespace Citbrains
         behavierstringをここにハードコーディングする
         
         
-
-
-
 
         */
 
@@ -39,35 +36,38 @@ namespace Citbrains
                 ENEMY_ROBOT_GL,
                 BLACK_POLE_GL,
                 TARGET_POS_VEC,
+                RECV_TIME,
                 LENGTH  //最大数を知りたい時に使うので何か追加する時はこれの前に追加する。
             };
             //scoped_lockして
-            OtherRobotInfomation(){
+            OtherRobotInfomation(int32_t id,float (*timeFunc)()):id_(id),timeFunc_(timeFunc){
                 for(int32_t i = 0;i < static_cast<int32_t>(MutexTag::LENGTH);++i){
-                    dataMutexes_.emplace_back(std::mutex());
+                    dataMutexes_.emplace_back();
                 }
             }
-            std::atomic_uint32_t id_;
-            std::atomic_uint32_t cf_own_;
-            std::atomic_uint32_t cf_ball_;                  //fastにした方が良いのかもしれない
-            std::atomic_uint32_t status_;           //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべき。
-            std::atomic_uint32_t fps_;
-            std::atomic_uint32_t voltage_;  //使ってない。
-            std::atomic_uint32_t temperature_;
-            std::atomic_uint32_t highest_servo_;
-            std::atomic_bool is_detect_ball_;
-            std::atomic_uint32_t strategy_no_;
-            std::atomic<float> recv_time_;
-            std::atomic_uint32_t command_;              //文字列は長いので数字で管理する    returnで返すdataはどっかで文字列に変換して返すべき
-            std::atomic_uint32_t current_behavior_name_;//上に同じく
+            const int32_t id_;      //idは0スタートで管理する
+            float (*timeFunc_)();
 
+            std::atomic_uint32_t cf_own_ = 0;
+            std::atomic_uint32_t cf_ball_ = 0;                  //fastにした方が良いのかもしれない
+            std::atomic_uint32_t status_ = 0;           //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべき。
+            std::atomic_uint32_t fps_ = 0;
+            std::atomic_uint32_t voltage_ = 0;  //使ってない。
+            std::atomic_uint32_t temperature_ =0;
+            std::atomic_uint32_t highest_servo_ = 0;
+            std::atomic_bool is_detect_ball_ = false;
+            std::atomic_uint32_t strategy_no_ = 0;
+            std::atomic_uint32_t command_ = 0;              //文字列は長いので数字で管理する    returnで返すdataはどっかで文字列に変換して返すべき
+            std::atomic_uint32_t current_behavior_name_ = 0;//上に同じく
+
+            float recv_time_ = 0.0;      //c++20からですが......
             std::vector<Pos2D> our_robot_gl_;  //扱いが良く分からんやつら
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
             std::vector<Pos2D> target_pos_vec_;
 
 
-            std::vector<std::mutex> dataMutexes_;
+            std::deque<std::mutex> dataMutexes_; //vectorだとmutexのコピーコンストラクタを呼んでしまうのでdeque
         };
 
         class InfoShare
@@ -75,8 +75,8 @@ namespace Citbrains
         public:
             //inline変数を使っているのでc++17以上でしかコンパイル出来ない。
             #ifdef  __cpp_inline_variables
-            static_assert(false,"this environment has inline variables");
-            inline static constexpr int32_t NUM_PLAYERS = 6;
+            // static_assert(false,"this environment has inline variables");確認用
+            inline static constexpr int32_t NUM_PLAYERS = 4;
             inline static constexpr int32_t COMM_INFO_PORT0 = 7110; //!< CommInfoで使用するPORTのはじめのポート
                                                                     //1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
 
@@ -101,7 +101,8 @@ namespace Citbrains
             static_assert(false,"this environment has not inline variables");
             #endif
             InfoShare(const int32_t self_id,const int32_t our_color,const int32_t number_of_our_robots,const std::string ip_address,float (*timeFunc)() );
-            //コピー禁止しとく。ムーブ専用にする。
+            InfoShare( const InfoShare & ) = delete ;
+            InfoShare & operator = ( const InfoShare & ) = delete ;
             ~InfoShare();
 
             //---------------------------------------------------------------------
@@ -120,17 +121,13 @@ namespace Citbrains
             int32_t sendCommonInfo/*setSharingDatasAndSendInfomationToOtherRobotsにしたい*/(); //パラメータパックで受け取っても良いが、使われる場所がhplの一か所のみなので寧ろそうしない方が良さそう。
 
         private:
+            const int32_t self_id_;
+            bool terminated_;
+            int32_t our_color_;
+            const int32_t number_of_our_robots_;
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
             CitbrainsMessage::SharingData sharing_data_;
-            std::thread receive_thread_;
-            std::thread send_thread_;
-            const int32_t self_id_;
-            const int32_t number_of_our_robots_;
-            int32_t our_color_;
-            bool terminated_;
-            auto handler = [this](std::string){
-
-            };
+            std::function<void(std::string &&)> receivedDataHandler_ ;
             // void receiveSharedInfomation(); serverクラスに仕事無くされた
 
             //server-----------------------------------------------
@@ -162,4 +159,4 @@ namespace Citbrains
  * 
  * 
  * 
- * /
+ */
