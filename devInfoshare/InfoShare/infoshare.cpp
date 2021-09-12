@@ -60,6 +60,11 @@ namespace Citbrains
         void InfoShare::setTimeFunc(float (*func)())
         {
             timeFunc_ = func;
+            //TODO implement 全部にセットする
+            for(auto&& itr : robot_data_list_){
+                std::lock_guard lock(itr->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::RECV_TIME)]);
+                itr->timeFunc_ = func;
+            }
         }
         //既にtimefuncを設定済みの場合は渡さなければ変更されない。
         void InfoShare::setup(const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_adress = "127.0.0.1", float (*timefunc)() = nullptr)
@@ -83,7 +88,15 @@ namespace Citbrains
                 //ここで必ずsetRecv_timeを呼びます。
             };
         }
-        float InfoShare::getTime()
+        int32_t InfoShare::getOurcolor()  const noexcept
+        {
+            return our_color_;
+        }
+        int32_t InfoShare::getID()  const noexcept
+        {
+            return self_id_;
+        }
+        float InfoShare::getTime() const
         {
             if (timeFunc_ != nullptr)
             {
@@ -92,10 +105,6 @@ namespace Citbrains
             return (float)time(0);
         }
 
-        int32_t InfoShare::getOurcolor()
-        {
-            return our_color_;
-        }
         [[nodiscard]] int32_t InfoShare::getcf_own(const int32_t &id) const noexcept
         {
             if (id == self_id_)

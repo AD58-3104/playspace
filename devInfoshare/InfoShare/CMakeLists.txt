@@ -4,7 +4,7 @@ find_package(Protobuf REQUIRED)
 find_package(Boost REQUIRED thread system date_time)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS infoshare.proto)
 
-set(InfoShareSrc main.cpp infoshare.cpp infoshare.h)
+set(InfoShareSrc main.cpp infoshare.cpp infoshare.h header.hpp)
 add_executable(main ${InfoShareSrc} ${PROTO_SRCS} ${PROTO_HDRS})
 
 target_compile_features(main PUBLIC cxx_std_17)

@@ -11,6 +11,7 @@
 #include <deque>
 #include "hpl_types.h"
 #include "infoshare.pb.h"
+#include "header.hpp"
 
 namespace Citbrains
 {
@@ -68,6 +69,7 @@ namespace Citbrains
                 {
                     dataMutexes_.emplace_back();
                 }
+                setRecv_time();
             }
             void setTimeFunc(float (*timeFunc)())
             {
@@ -141,9 +143,9 @@ namespace Citbrains
             void changeColor(const int32_t color);
             void setTimeFunc(float (*func)());
             void setup(const int32_t self_id, const int32_t our_color, const std::string ip_adress, float (*func)());
-            float getTime(); //getelapsedtimeとかの方が良いかも
-            int32_t getOurcolor();
-            int32_t getID();
+            float getTime() const; //getelapsedtimeとかの方が良いかも
+            int32_t getOurcolor() const noexcept ;
+            int32_t getID() const noexcept ;
             //TODO:名前変える
             int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (); //パラメータパックで受け取っても良いが、使われる場所がhplの一か所のみなので寧ろそうしない方が良さそう。
 
@@ -158,8 +160,9 @@ namespace Citbrains
             CitbrainsMessage::SharingData sharing_data_;
             std::function<void(std::string &&)> receivedDataHandler_;
             //server-----------------------------------------------
-            //多分2つ共クラスを持つ方が良い。
+            std::unique_ptr<Server> server;
             //client-----------------------------------------------
+            std::unique_ptr<Client> client;
         };
 
     }
