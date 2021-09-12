@@ -5,7 +5,7 @@ option optimize_for = CODE_SIZE; //これどうなんだっけわすれた
 
 message Object {
   optional bytes robot_side = 1;    //TODO こんなん使ってたっけ？
-  optional sint32 pos_x = 2;
+  optional sint32 pos_x = 2;  //intにして詰める。100倍して100で割る(暫定)
   optional sint32 pos_y = 3;
   optional sint32 pos_th = 4;
   optional bytes flags = 5; //TODO フラグ類を詰め込むやつにしたい。Pos2Dをもつ4つのうちどれなのか判断

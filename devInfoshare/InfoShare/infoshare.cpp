@@ -100,16 +100,51 @@ namespace Citbrains
                 set_target->current_behavior_name_.store(static_cast<uint32_t>(shared_data.current_behavior_name().at(0)));
                 set_target->is_detect_ball_.store(shared_data.is_detect_ball());
                 //--------object data set--------
-                if(0 < shared_data.our_robot_gl_size()) //持ってる時
+                if (0 < shared_data.our_robot_gl_size()) //持ってる時
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::OUR_ROBOT_GL)]);
-                    set_target->our_robot_gl_.clear();//どうせまた格納されるのでshrink_to_fitしない。
-                    set_target->our_robot_gl_.emplace_back();
+                    set_target->our_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                    for (int32_t  i = 0; i < shared_data.our_robot_gl_size(); i++)
+                    {
+                        auto itr = shared_data.mutable_our_robot_gl(i);
+                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                    }
+                }
+                if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
+                {
+                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::ENEMY_ROBOT_GL)]);
+                    set_target->enemy_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                    for (int32_t  i = 0; i < shared_data.enemy_robot_gl_size(); i++)
+                    {
+                        auto itr = shared_data.mutable_enemy_robot_gl(i);
+                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                    }
+                }
+                if (0 < shared_data.black_pole_gl_size()) //持ってる時
+                {
+                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BLACK_POLE_GL)]);
+                    set_target->black_pole_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                    for (int32_t  i = 0; i < shared_data.black_pole_gl_size(); i++)
+                    {
+                        auto itr = shared_data.mutable_black_pole_gl(i);
+                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                    }
+                }
+                if (0 < shared_data.target_pos_vec_size()) //持ってる時
+                {
+                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::TARGET_POS_VEC)]);
+                    set_target->target_pos_vec_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                    for (int32_t  i = 0; i < shared_data.target_pos_vec_size(); i++)
+                    {
+                        auto itr = shared_data.mutable_target_pos_vec(i);
+                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                    }
                 }
             };
             client = std::make_unique<Client>(ip_adress_, port_); //TODO そういやブロードキャストでは？
             server = std::make_unique<Server>(port_, receivedDataHandler_);
         }
+        
         int32_t InfoShare::getOurcolor() const noexcept
         {
             return our_color_;
