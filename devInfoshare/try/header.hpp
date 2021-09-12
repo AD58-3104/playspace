@@ -131,8 +131,7 @@ using namespace std::literals::chrono_literals;
                   w_guard_(std::make_shared<boost::asio::io_service::work>(io_service_))
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
             {
-                server_thread_ = std::make_unique<std::thread>([&]()
-                                                               { io_service_.run(); });
+                server_thread_ = std::make_unique<std::thread>([&](){ io_service_.run(); });
                 startReceive();
             }
             ~Server()

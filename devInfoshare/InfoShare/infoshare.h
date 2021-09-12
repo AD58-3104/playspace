@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <cassert>
 #include "hpl_types.h"
 #include "infoshare.pb.h"
 #include "header.hpp"
@@ -50,7 +51,7 @@ namespace Citbrains
 #else
         //jetsonで無理だったら実装する.書くと長すぎて見にくいので.
         static_assert(false, "this environment doesn't have inline variables");
-#endif 
+#endif
         struct OtherRobotInfomation
         {
             enum class MutexTag : int32_t
@@ -65,6 +66,7 @@ namespace Citbrains
             //scoped_lockして
             OtherRobotInfomation(int32_t id, float (*timeFunc)()) : id_(id), timeFunc_(timeFunc)
             {
+                assert((0 <= id) && (id <= 3));//内部で扱うidは0 indexed
                 for (int32_t i = 0; i < static_cast<int32_t>(MutexTag::LENGTH); ++i)
                 {
                     dataMutexes_.emplace_back();
@@ -81,7 +83,7 @@ namespace Citbrains
                 std::lock_guard lock(dataMutexes_[static_cast<int32_t>(MutexTag::RECV_TIME)]);
                 if (timeFunc_ != nullptr)
                 {
-                    recv_time_ =  timeFunc_();
+                    recv_time_ = timeFunc_();
                 }
                 recv_time_ = (float)time(0);
             }
@@ -132,7 +134,7 @@ namespace Citbrains
             [[nodiscard]] int32_t getcommand(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getcurrent_behavior_name(const int32_t &id) const noexcept;
             //----mutex付きのやつ
-            [[nodiscard]] float getrecv_time(const int32_t &id) const;     //残念ながらscoped_lockは例外を投げるらしい
+            [[nodiscard]] float getrecv_time(const int32_t &id) const; //残念ながらscoped_lockは例外を投げるらしい
             [[nodiscard]] std::vector<Pos2D> getour_robot_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> getenemy_robot_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> getblack_pole_gl(const int32_t &id) const;
@@ -142,10 +144,10 @@ namespace Citbrains
             void terminate();
             void changeColor(const int32_t color);
             void setTimeFunc(float (*func)());
-            void setup(const int32_t self_id, const int32_t our_color, const std::string ip_adress, float (*func)());
+            void setup(const int32_t self_id, const int32_t our_color, const std::string ip_adress, const int32_t port, float (*func)());
             float getTime() const; //getelapsedtimeとかの方が良いかも
-            int32_t getOurcolor() const noexcept ;
-            int32_t getID() const noexcept ;
+            int32_t getOurcolor() const noexcept;
+            int32_t getID() const noexcept;
             //TODO:名前変える
             int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (); //パラメータパックで受け取っても良いが、使われる場所がhplの一か所のみなので寧ろそうしない方が良さそう。
 
@@ -153,6 +155,7 @@ namespace Citbrains
             int32_t self_id_;
             int32_t our_color_;
             std::string ip_adress_;
+            int32_t port_;
             float (*timeFunc_)();
             bool terminated_;
 
