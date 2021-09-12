@@ -101,7 +101,7 @@ namespace Citbrains
             std::atomic_uint32_t command_ = 0;               //文字列は長いので数字で管理する    returnで返すdataはどっかで文字列に変換して返すべき
             std::atomic_uint32_t current_behavior_name_ = 0; //上に同じく
             //-------------non atomic datas---------------
-            float recv_time_ = 0.0;           //c++20からですが......
+            float recv_time_ = 0.0;           //これ整数でよくね？？
             std::vector<Pos2D> our_robot_gl_; //扱いが良く分からんやつら
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
@@ -118,9 +118,23 @@ namespace Citbrains
 
             //-----------------------other robot data getter----------------------
             //自分のidを指定された場合0に相当するものを返す。
-            [[nodiscard]] int32_t getCf_own(const int32_t &id) const noexcept;
-            [[nodiscard]] std::string getCommand(const int32_t &id) const; //残念ながらscoped_lockは例外を投げるらしい
-            [[nodiscard]] float getRecv_time(const int32_t &id) const;     //残念ながらscoped_lockは例外を投げるらしい
+            [[nodiscard]] int32_t getcf_own(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getcf_ball(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getstatus(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getfps(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getvoltage(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t gettemperature(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t gethighest_servo(const int32_t &id) const noexcept;
+            [[nodiscard]] bool getis_detect_ball(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getstrategy_no(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getcommand(const int32_t &id) const noexcept;
+            [[nodiscard]] int32_t getcurrent_behavior_name(const int32_t &id) const noexcept;
+            //----mutex付きのやつ
+            [[nodiscard]] float getrecv_time(const int32_t &id) const;     //残念ながらscoped_lockは例外を投げるらしい
+            [[nodiscard]] std::vector<Pos2D> getour_robot_gl(const int32_t &id) const;
+            [[nodiscard]] std::vector<Pos2D> getenemy_robot_gl(const int32_t &id) const;
+            [[nodiscard]] std::vector<Pos2D> getblack_pole_gl(const int32_t &id) const;
+            [[nodiscard]] std::vector<Pos2D> gettarget_pos_vec(const int32_t &id) const;
             //--------------------------------------------------------------------
 
             void terminate();
