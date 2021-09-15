@@ -68,7 +68,7 @@ namespace Citbrains
             }
         }
         //既にtimefuncを設定済みの場合は渡さなければ変更されない。
-        void InfoShare::setup(const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_adress = "127.0.0.1", int32_t port = 7110, float (*timefunc)() = nullptr)
+        void InfoShare::setup(const bool allow_broadcast_sending,const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_adress = "127.0.0.1", int32_t port = 7110, float (*timefunc)() = nullptr)
         {
             assert(self_id >= 1); //self id must be 1 or more
             self_id_ = self_id;
@@ -141,7 +141,7 @@ namespace Citbrains
                     }
                 }
             };
-            client = std::make_unique<Client>(ip_adress_, port_); //TODO そういやブロードキャストでは？
+            client = std::make_unique<Client>(ip_adress_, port_,allow_broadcast_sending); //TODO そういやブロードキャストでは？
             server = std::make_unique<Server>(port_, receivedDataHandler_);
         }
         

@@ -28,7 +28,6 @@ using namespace std::literals::chrono_literals;
             int32_t port_;
             std::string ip_address_;
             std::unique_ptr<std::thread> client_thread_;
-
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
             boost::asio::executor_work_guard<boost::asio::io_context::executor_type> w_guard_;
 #else
@@ -43,7 +42,7 @@ using namespace std::literals::chrono_literals;
              * @param (address) 送り先のIPアドレス
              * @param (port) 送り先のポート番号
              */
-            Client(std::string address, int32_t port)
+            Client(std::string address, int32_t port, bool is_broadcast)
                 : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
                   w_guard_(boost::asio::make_work_guard(io_service_))
@@ -53,6 +52,9 @@ using namespace std::literals::chrono_literals;
             {
                 try
                 {
+                    if (is_broadcast){
+                        socket_.set_option(boost::asio::socket_base::broadcast(true));
+                    }
                     if (socket_.is_open())
                     {
                         socket_.close();
@@ -107,7 +109,7 @@ using namespace std::literals::chrono_literals;
                     w_guard_.reset(); //ここでwork_guardかworkを破棄してrun()のブロッキングを終わらせる
                     client_thread_->join();
                 }
-            };
+            }
         };
 
         class Server
