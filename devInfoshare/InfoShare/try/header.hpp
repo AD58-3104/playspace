@@ -39,8 +39,9 @@ using namespace std::literals::chrono_literals;
              * @fn
              * コンストラクタ
              * @brief コンストラクタ
-             * @param (address) 送り先のIPアドレス
+             * @param (address) 送り先のIPアドレス.
              * @param (port) 送り先のポート番号
+             * @detail 引数はマルチキャストの場合マルチキャスト用のを入れる.
              */
             Client(std::string address, int32_t port, bool is_broadcast)
                 : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address),
@@ -54,6 +55,9 @@ using namespace std::literals::chrono_literals;
                 {
                     if (is_broadcast){
                         socket_.set_option(boost::asio::socket_base::broadcast(true));
+                    }
+                    else{
+
                     }
                     if (socket_.is_open())
                     {
@@ -80,7 +84,7 @@ using namespace std::literals::chrono_literals;
             void send(std::string &&bytestring)
             {
                 std::string send_data = std::move(bytestring);
-                // boost::asio::ip::address adress;
+                // boost::asio::ip::address address;
                 boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
                 socket_.async_send_to(
                     boost::asio::buffer(send_data),

@@ -144,7 +144,7 @@ namespace Citbrains
             void terminate();
             void changeColor(const int32_t color);
             void setTimeFunc(float (*func)());
-            void setup(const bool allow_broadcast_sending,const int32_t self_id, const int32_t our_color, const std::string ip_adress, const int32_t port, float (*func)());
+            void setup(const bool allow_broadcast_sending,const int32_t self_id, const int32_t our_color, const std::string ip_address, const int32_t port, float (*func)());
             float getTime() const; //getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
@@ -154,7 +154,7 @@ namespace Citbrains
         private:
             int32_t self_id_;
             int32_t our_color_;
-            std::string ip_adress_;
+            std::string ip_address_;
             int32_t port_;
             float (*timeFunc_)();
             bool terminated_;

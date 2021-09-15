@@ -10,7 +10,7 @@ namespace Citbrains
         //デフォルトの時間関数を使いたい場合は引数無し
         //必ずsetupを呼ぶ。
         InfoShare::InfoShare()
-            : self_id_(1), our_color_(COLOR_MAGENTA), ip_adress_("127.0.0.1"), port_(7110), timeFunc_(nullptr), terminated_(false)
+            : self_id_(1), our_color_(COLOR_MAGENTA), ip_address_("127.0.0.1"), port_(7110), timeFunc_(nullptr), terminated_(false)
         {
         }
         InfoShare::~InfoShare()
@@ -68,11 +68,11 @@ namespace Citbrains
             }
         }
         //既にtimefuncを設定済みの場合は渡さなければ変更されない。
-        void InfoShare::setup(const bool allow_broadcast_sending,const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_adress = "127.0.0.1", int32_t port = 7110, float (*timefunc)() = nullptr)
+        void InfoShare::setup(const bool allow_broadcast_sending,const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_address = "127.0.0.1", int32_t port = 7110, float (*timefunc)() = nullptr)
         {
             assert(self_id >= 1); //self id must be 1 or more
             self_id_ = self_id;
-            ip_adress_ = ip_adress;
+            ip_address_ = ip_address;
             our_color_ = our_color;
             if (timefunc != nullptr)
             {
@@ -141,7 +141,7 @@ namespace Citbrains
                     }
                 }
             };
-            client = std::make_unique<Client>(ip_adress_, port_,allow_broadcast_sending); //TODO そういやブロードキャストでは？
+            client = std::make_unique<Client>(ip_address_, port_,allow_broadcast_sending); //TODO そういやブロードキャストでは？
             server = std::make_unique<Server>(port_, receivedDataHandler_);
         }
         
