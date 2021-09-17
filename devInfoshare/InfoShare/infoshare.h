@@ -120,7 +120,7 @@ namespace Citbrains
             InfoShare &operator=(const InfoShare &) = delete;
             ~InfoShare();
 
-            //-----------------------other robot data getter----------------------
+            //-----------------------other robot data getter--------------------------
             //自分のidを指定された場合0に相当するものを返す。
             [[nodiscard]] int32_t getcf_own(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getcf_ball(const int32_t &id) const noexcept;
@@ -129,7 +129,7 @@ namespace Citbrains
             [[nodiscard]] int32_t getvoltage(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t gettemperature(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t gethighest_servo(const int32_t &id) const noexcept;
-            [[nodiscard]] bool getis_detect_ball(const int32_t &id) const noexcept;
+            [[nodiscard]] bool    getis_detect_ball(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getstrategy_no(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getcommand(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getcurrent_behavior_name(const int32_t &id) const noexcept;
@@ -139,7 +139,7 @@ namespace Citbrains
             [[nodiscard]] std::vector<Pos2D> getenemy_robot_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> getblack_pole_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> gettarget_pos_vec(const int32_t &id) const;
-            //--------------------------------------------------------------------
+            //-------------------------------------------------------------------------
 
             void terminate();
             void changeColor(const int32_t color);

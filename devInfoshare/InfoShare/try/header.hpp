@@ -27,6 +27,7 @@ using namespace std::literals::chrono_literals;
             int cnt;
             int32_t port_;
             std::string ip_address_;
+            bool allow_broadcast_;
             std::unique_ptr<std::thread> client_thread_;
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
             boost::asio::executor_work_guard<boost::asio::io_context::executor_type> w_guard_;
@@ -44,7 +45,7 @@ using namespace std::literals::chrono_literals;
              * @detail 引数はマルチキャストの場合マルチキャスト用のを入れる.
              */
             Client(std::string address, int32_t port, bool is_broadcast)
-                : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address),
+                : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address), allow_broadcast_(false),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
                   w_guard_(boost::asio::make_work_guard(io_service_))
 #else
@@ -53,17 +54,22 @@ using namespace std::literals::chrono_literals;
             {
                 try
                 {
-                    if (is_broadcast){
+                    // socket_.set_option(boost::asio::ip::udp::socket::reuse_address(false)); TODO わからん
+                    if (is_broadcast)
+                    {
                         socket_.set_option(boost::asio::socket_base::broadcast(true));
                     }
-                    else{
-
+                    else
+                    {
                     }
                     if (socket_.is_open())
                     {
                         socket_.close();
                     }
                     socket_.open(udp::v4());
+                    boost::asio::socket_base::broadcast broadcast_option;
+                    socket_.get_option(broadcast_option);
+                    allow_broadcast_ = broadcast_option.value();
                 }
                 catch (boost::system::system_error &e)
                 {
@@ -84,13 +90,24 @@ using namespace std::literals::chrono_literals;
             void send(std::string &&bytestring)
             {
                 std::string send_data = std::move(bytestring);
-                // boost::asio::ip::address address;
-                boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
-                socket_.async_send_to(
-                    boost::asio::buffer(send_data),
-                    destination,
-                    [this](const boost::system::error_code &error, size_t bytes_transferred)
-                    { sendHandler(error, bytes_transferred); });
+                if (allow_broadcast_)
+                {
+                    boost::asio::ip::udp::endpoint destination(boost::asio::ip::address_v4::broadcast(), port_);
+                    socket_.async_send_to(
+                        boost::asio::buffer(send_data),
+                        destination,
+                        [this](const boost::system::error_code &error, size_t bytes_transferred)
+                        { sendHandler(error, bytes_transferred); });
+                }
+                else
+                {
+                    boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
+                    socket_.async_send_to(
+                        boost::asio::buffer(send_data),
+                        destination,
+                        [this](const boost::system::error_code &error, size_t bytes_transferred)
+                        { sendHandler(error, bytes_transferred); });
+                }
             }
 
             // 送信のハンドラ
@@ -112,6 +129,8 @@ using namespace std::literals::chrono_literals;
                 {
                     w_guard_.reset(); //ここでwork_guardかworkを破棄してrun()のブロッキングを終わらせる
                     client_thread_->join();
+                    // socket_.cancel();
+                    socket_.close();
                 }
             }
         };
@@ -211,7 +230,8 @@ using namespace std::literals::chrono_literals;
                     already_called = true;
                     terminated_ = true;
                     w_guard_.reset();
-                    socket_.cancel();
+                    // socket_.cancel();
+                    socket_.close();
                     io_service_.stop();
                     server_thread_->join();
                     std::cout << "server is terminated!!" << std::endl;
