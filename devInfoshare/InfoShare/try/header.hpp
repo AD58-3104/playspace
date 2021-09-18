@@ -54,7 +54,7 @@ using namespace std::literals::chrono_literals;
             {
                 try
                 {
-                    // socket_.set_option(boost::asio::ip::udp::socket::reuse_address(false)); TODO わからん
+                     socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true)); //TODO わからん
                     if (is_broadcast)
                     {
                         socket_.set_option(boost::asio::socket_base::broadcast(true));
@@ -131,6 +131,7 @@ using namespace std::literals::chrono_literals;
                     client_thread_->join();
                     // socket_.cancel();
                     socket_.close();
+		    already_called = true;
                 }
             }
         };
