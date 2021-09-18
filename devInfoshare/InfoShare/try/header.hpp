@@ -54,7 +54,12 @@ using namespace std::literals::chrono_literals;
             {
                 try
                 {
-                     socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true)); //TODO わからん
+                    if (socket_.is_open())
+                    {
+                        socket_.close();
+                    }
+                    socket_.open(udp::v4());
+                    socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true)); //TODO わからん
                     if (is_broadcast)
                     {
                         socket_.set_option(boost::asio::socket_base::broadcast(true));
@@ -62,17 +67,13 @@ using namespace std::literals::chrono_literals;
                     else
                     {
                     }
-                    if (socket_.is_open())
-                    {
-                        socket_.close();
-                    }
-                    socket_.open(udp::v4());
                     boost::asio::socket_base::broadcast broadcast_option;
                     socket_.get_option(broadcast_option);
                     allow_broadcast_ = broadcast_option.value();
                 }
                 catch (boost::system::system_error &e)
                 {
+                    std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
                     e.what();
                 }
 
@@ -131,7 +132,7 @@ using namespace std::literals::chrono_literals;
                     client_thread_->join();
                     // socket_.cancel();
                     socket_.close();
-		    already_called = true;
+                    already_called = true;
                 }
             }
         };
