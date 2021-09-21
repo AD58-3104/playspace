@@ -18,7 +18,7 @@ using namespace std::literals::chrono_literals;
 
 #undef BOOST_VERSION_IS_HIGHER_THAN_1_65
 
-class Client
+class UDPClient
 {
     boost::asio::io_service io_service_;
     udp::socket socket_;
@@ -33,7 +33,7 @@ class Client
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
 
 public:
-    Client(int32_t port, std::string address)
+    UDPClient(int32_t port, std::string address)
         : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address)
     {
         try
@@ -56,7 +56,7 @@ public:
             io_service_.run();
         });
     }
-    ~Client(){
+    ~UDPClient(){
         terminate();
     }
 
@@ -109,7 +109,7 @@ public:
 int main()
 {
 
-    Client client(7110, "127.0.0.1");
+    UDPClient client(7110, "127.0.0.1");
 
     
     for(int i = 0;i < 5;++i)

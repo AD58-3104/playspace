@@ -163,9 +163,9 @@ namespace Citbrains
             CitbrainsMessage::SharingData sharing_data_;
             std::function<void(std::string &&)> receivedDataHandler_;
             //server-----------------------------------------------
-            std::unique_ptr<Server> server;
+            std::unique_ptr<UDPServer> server;
             //client-----------------------------------------------
-            std::unique_ptr<Client> client;
+            std::unique_ptr<UDPClient> client;
         };
 
     }

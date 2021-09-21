@@ -141,7 +141,7 @@ namespace Citbrains
                     }
                 }
             };
-            client = std::make_unique<Client>(ip_address_, port_,allow_broadcast_sending); //TODO そういやブロードキャストでは？
+            client = std::make_unique<UDPClient>(ip_address_, port_,allow_broadcast_sending); //TODO そういやブロードキャストでは？
             server = std::make_unique<Server>(port_, receivedDataHandler_);
         }
         
