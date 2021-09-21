@@ -6,7 +6,7 @@ int main(int argc, char const *argv[])
 {
     boost::asio::io_service io_service;
     std::vector<std::string> stringContainer; 
-    Server server(7110,[&stringContainer](std::string&& s){
+    UDPServer server(7110,[&stringContainer](std::string&& s){
         std::string moved_string(std::move(s));
         std::cout << moved_string;
         stringContainer.push_back(moved_string);

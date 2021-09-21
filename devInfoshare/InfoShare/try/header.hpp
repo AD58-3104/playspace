@@ -20,8 +20,9 @@ using namespace std::literals::chrono_literals;
 {
     namespace infosharemodule
     {
-        struct SocketMode{
-            using clientsendmode_t = int32_t ;
+        struct SocketMode
+        {
+            using clientsendmode_t = int32_t;
             static const clientsendmode_t broadcast_mode = 0;
             static const clientsendmode_t multicast_mode = broadcast_mode + 1;
             static const clientsendmode_t unicast_mode = multicast_mode + 1;
@@ -50,7 +51,7 @@ using namespace std::literals::chrono_literals;
              * @param (port) 送り先のポート番号
              * @detail 引数はマルチキャストの場合マルチキャスト用のを入れる.
              */
-            UDPClient(std::string address, int32_t port,  SocketMode::clientsendmode_t mode)
+            UDPClient(std::string address, int32_t port, SocketMode::clientsendmode_t mode)
                 : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address), allow_broadcast_(false),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
                   w_guard_(boost::asio::make_work_guard(io_service_))
@@ -70,12 +71,14 @@ using namespace std::literals::chrono_literals;
                     {
                         socket_.set_option(boost::asio::socket_base::broadcast(true));
                     }
-                    else if(mode == SocketMode::multicast_mode){
+                    else if (mode == SocketMode::multicast_mode)
+                    {
                         socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
+                        socket_.set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(ip_address_)));
                     }
                     else
                     {
-
+                        //TODO:何か書く必要あるっけここ？
                     }
                     boost::asio::socket_base::broadcast broadcast_option;
                     socket_.get_option(broadcast_option);
@@ -174,7 +177,7 @@ using namespace std::literals::chrono_literals;
             * @param (func) 受け取ったデータ(文字列)を処理する為の関数オブジェクト
             * @detail 第二引数の関数オブジェクトはstd::stringの右辺値参照を取る。呼び出した時点から受信待機を行う。
             */
-            UDPServer(int32_t port, std::function<void(std::string &&)> func)
+            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::clientsendmode_t mode,std::string multicast_address = "127.0.0.1")
                 : io_service_(),
                   socket_(io_service_, udp::endpoint(udp::v4(), port)), terminated_(false), port_(port), receivedHandler_(func),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
@@ -183,6 +186,16 @@ using namespace std::literals::chrono_literals;
                   w_guard_(std::make_shared<boost::asio::io_service::work>(io_service_))
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
             {
+                socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+                if (mode == SocketMode::multicast_mode)
+                {
+                    socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
+                    socket_.set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(multicast_address)));
+                }
+                else
+                {
+                    //TODO:broadcastとunicastは何もない。
+                }
                 server_thread_ = std::make_unique<std::thread>([&]()
                                                                { io_service_.run(); });
                 startReceive();
