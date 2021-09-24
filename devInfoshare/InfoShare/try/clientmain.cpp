@@ -4,7 +4,7 @@ using namespace Citbrains::infosharemodule;
 int main(int argc, char const *argv[])
 {
 
-    UDPClient client("127.0.0.1",7113,true);
+    UDPClient client("127.0.0.1",7110,SocketMode::unicast_mode);
 
     
     for(int i = 0;i < 5;++i)

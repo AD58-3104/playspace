@@ -10,12 +10,13 @@ int main(int argc, char const *argv[])
         std::string moved_string(std::move(s));
         std::cout << moved_string;
         stringContainer.push_back(moved_string);
-    });
+    },
+    SocketMode::unicast_mode);
     std::cout << "server clieted\n";
-    std::this_thread::sleep_for(3s);
+    std::this_thread::sleep_for(10s);
     server.terminate();
     std::cout << "terminated ";
-    std::this_thread::sleep_for(3s);
+    std::this_thread::sleep_for(1s);
     for(const auto& itr:stringContainer)
         std::cout << itr << std::endl;
     return 0;
