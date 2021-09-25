@@ -5,6 +5,7 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <atomic>
 using boost::asio::ip::udp;
 using namespace std::literals::chrono_literals;
 
@@ -18,15 +19,15 @@ using namespace std::literals::chrono_literals;
 
     namespace Citbrains
 {
-    namespace infosharemodule
+    namespace Udpsocket
     {
-        struct SocketMode
+        namespace SocketMode
         {
             using clientsendmode_t = int32_t;
-            static const clientsendmode_t broadcast_mode = 0;
-            static const clientsendmode_t multicast_mode = broadcast_mode + 1;
-            static const clientsendmode_t unicast_mode = multicast_mode + 1;
-        };
+            static inline constexpr clientsendmode_t broadcast_mode = 0;
+            static inline constexpr clientsendmode_t multicast_mode = broadcast_mode + 1;
+            static inline constexpr clientsendmode_t unicast_mode = multicast_mode + 1;
+        }
         class UDPClient
         {
             boost::asio::io_service io_service_;
@@ -36,6 +37,7 @@ using namespace std::literals::chrono_literals;
             std::string ip_address_;
             bool allow_broadcast_;
             std::unique_ptr<std::thread> client_thread_;
+            bool terminated_;
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
             boost::asio::executor_work_guard<boost::asio::io_context::executor_type> w_guard_;
 #else
@@ -52,7 +54,7 @@ using namespace std::literals::chrono_literals;
              * @detail 引数はマルチキャストの場合マルチキャスト用のを入れる.
              */
             UDPClient(std::string address, int32_t port, SocketMode::clientsendmode_t mode)
-                : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address), allow_broadcast_(false),
+                : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address), allow_broadcast_(false), terminated_(false),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
                   w_guard_(boost::asio::make_work_guard(io_service_))
 #else
@@ -87,7 +89,7 @@ using namespace std::literals::chrono_literals;
                 catch (boost::system::system_error &e)
                 {
                     std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
-                    e.what();
+                    std::cerr << e.what() << std::endl;
                 }
 
                 client_thread_ = std::make_unique<std::thread>([&]()
@@ -127,25 +129,28 @@ using namespace std::literals::chrono_literals;
             // 送信のハンドラ
             void sendHandler(const boost::system::error_code &error, size_t bytes_transferred)
             {
+#ifdef DEBUG
                 if (error)
                 {
-                    std::cout << "send failed: " << error.message() << std::endl;
+                    std::cout << "send failed: " << error.message() << std::endl; //TODO::どこかに書き込む
                 }
                 else
                 {
                     std::cout << "send correct!" << std::endl;
                 }
+#endif //DEBUG
             }
+
             void terminate()
             {
-                static bool already_called = false;
-                if (!already_called)
+                // static bool already_called = false;
+                if (!terminated_)
                 {
+                    terminated_ = true;
                     w_guard_.reset(); //ここでwork_guardかworkを破棄してrun()のブロッキングを終わらせる
                     client_thread_->join();
                     // socket_.cancel();
                     socket_.close();
-                    already_called = true;
                 }
             }
         };
@@ -177,7 +182,7 @@ using namespace std::literals::chrono_literals;
             * @param (func) 受け取ったデータ(文字列)を処理する為の関数オブジェクト
             * @detail 第二引数の関数オブジェクトはstd::stringの右辺値参照を取る。呼び出した時点から受信待機を行う。
             */
-            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::clientsendmode_t mode,std::string multicast_address = "127.0.0.1")
+            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::clientsendmode_t mode, std::string multicast_address = "224.0.0.169")
                 : io_service_(),
                   socket_(io_service_, udp::endpoint(udp::v4(), port)), terminated_(false), port_(port), receivedHandler_(func),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
@@ -186,18 +191,26 @@ using namespace std::literals::chrono_literals;
                   w_guard_(std::make_shared<boost::asio::io_service::work>(io_service_))
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
             {
-                socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
-                if (mode == SocketMode::multicast_mode)
+                try
                 {
-                    socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
-                    socket_.set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(multicast_address)));
+                    socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+                    if (mode == SocketMode::multicast_mode)
+                    {
+                        socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
+                        socket_.set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(multicast_address)));
+                    }
+                    else
+                    {
+                        //TODO:broadcastとunicastは何もない。
+                    }
+                    server_thread_ = std::make_unique<std::thread>([&]()
+                                                                   { io_service_.run(); });
                 }
-                else
+                catch (const std::runtime_error &e)
                 {
-                    //TODO:broadcastとunicastは何もない。
+                    std::cout << "exception catched in" << __FILE__ << "::" << __LINE__ << std::endl;
+                    std::cout << e.what() << std::endl;
                 }
-                server_thread_ = std::make_unique<std::thread>([&]()
-                                                               { io_service_.run(); });
                 startReceive();
             }
             ~UDPServer()
@@ -227,14 +240,18 @@ using namespace std::literals::chrono_literals;
             {
                 if (error && error != boost::asio::error::eof)
                 {
+#ifdef DEBUG
                     std::cout << "receive failed: " << error.message() << std::endl;
+#endif
                 }
                 else
                 {
                     std::string data(boost::asio::buffer_cast<const char *>(receive_buff_.data()), bytes_transferred);
+#ifdef DEBUG
                     std::cout << "length::" << bytes_transferred << " " << std::endl;
-                    receivedHandler_(std::move(data));
                     std::cout << data;
+#endif
+                    receivedHandler_(std::move(data));
                     receive_buff_.consume(receive_buff_.size());
                     if (!terminated_)
                     {
@@ -249,17 +266,23 @@ using namespace std::literals::chrono_literals;
              */
             void terminate()
             {
-                static bool already_called = false;
-                if (!already_called)
+                if (!terminated_)
                 {
-                    already_called = true;
-                    terminated_ = true;
-                    w_guard_.reset();
-                    // socket_.cancel();
-                    socket_.close();
-                    io_service_.stop();
-                    server_thread_->join();
-                    std::cout << "server is terminated!!" << std::endl;
+                    try
+                    {
+                        terminated_ = true;
+                        w_guard_.reset();
+                        // socket_.cancel();
+                        socket_.close();
+                        io_service_.stop();
+                        server_thread_->join();
+                        std::cout << "server is terminated!!" << std::endl;
+                    }
+                    catch (const std::runtime_error &e)
+                    {
+                        std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
+                        std::cout << e.what() << std::endl;
+                    }
                 }
             };
         };
