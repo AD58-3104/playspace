@@ -1,0 +1,21 @@
+syntax = "proto2";
+package joystick_controll;
+
+message JoystickType {
+    optional sint32 cancel_motion = 8;
+    optional sint32 motion = 1;
+    optional sint32 walk_step = 2;
+    optional sint32 walk_angle = 3;
+    optional sint32 walk_x_stride = 4;
+    optional sint32 walk_period = 5;
+    optional sint32 walk_y_stride = 6;
+    optional sint32 mode = 7;
+    enum ModeNumber {
+        GC = 0;
+        PK = 1;
+        GK = 2;
+    }
+    enum RobotPort {
+        port = 7999;
+    }
+}
