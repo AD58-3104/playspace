@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+project(armplot)
+find_package(Eigen3 REQUIRED)
+add_executable(arm arm.cpp)
+target_compile_options(arm PUBLIC -Wpedantic)
+target_include_directories(arm  PUBLIC ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(arm m Eigen3::Eigen)

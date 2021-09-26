@@ -6,7 +6,7 @@ using namespace std;
 int main(int argc, const char **argv)
 {
     ofstream ofs("d.dat");
-    for (int i = 0; i < 2 * 314; ++i)
+    for (int i = 0; i < 2 * 314; i+=40)
     {
         ofs << (double)(i / 100.0) << " " << sin((double)i / 100.0) << std::endl;
     }
