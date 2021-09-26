@@ -9,6 +9,8 @@ option(PROTO_DBG "proto debug build" OFF)
 option(INFOSHARE_DEBUG "debugging infoshare" OFF)
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS infoshare.proto)
+add_custom_target(Create_dictionary_datfile ALL COMMAND python3 ../parse_htn_name.py ../)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/behavior_name_dict.dat ${CMAKE_CURRENT_BINARY_DIR}/command_dict.dat DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(InfoShareSrc  infoshare.cpp infoshare.h hajime_command.h try/sUDPSocket.hpp)
 
