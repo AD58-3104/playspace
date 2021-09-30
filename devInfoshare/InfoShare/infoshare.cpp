@@ -57,16 +57,16 @@ namespace Citbrains
         {
             our_color_ = color;
         }
-        void InfoShare::setTimeFunc(float (*func)())
-        {
-            timeFunc_ = func;
-            //TODO implement 全部にセットする
-            for (auto &&itr : robot_data_list_)
-            {
-                std::lock_guard lock(itr->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::RECV_TIME)]);
-                itr->timeFunc_ = func;
-            }
-        }
+        // void InfoShare::setTimeFunc(float (*func)())
+        // {
+        //     timeFunc_ = func;
+        //     //TODO implement 全部にセットする
+        //     for (auto &&itr : robot_data_list_)
+        //     {
+        //         std::lock_guard lock(itr->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::RECV_TIME)]);
+        //         itr->timeFunc_ = func;
+        //     }
+        // }
         //既にtimefuncを設定済みの場合は渡さなければ変更されない。
         void InfoShare::setup(const bool allow_broadcast_sending,const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_address = "127.0.0.1", int32_t port = 7110, float (*timefunc)() = nullptr)
         {
@@ -141,8 +141,8 @@ namespace Citbrains
                     }
                 }
             };
-            client = std::make_unique<UDPClient>(ip_address_, port_,allow_broadcast_sending); //TODO そういやブロードキャストでは？
-            server = std::make_unique<Server>(port_, receivedDataHandler_);
+            client = std::make_unique<UDPClient>(ip_address_, port_,SocketMode::broadcast_mode); //TODO そういやブロードキャストでは？
+            server = std::make_unique<UDPServer>(port_, receivedDataHandler_,SocketMode::broadcast_mode);
         }
         
         int32_t InfoShare::getOurcolor() const noexcept

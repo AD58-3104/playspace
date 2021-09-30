@@ -36,6 +36,7 @@ using namespace std::literals::chrono_literals;
             int32_t port_;
             std::string ip_address_;
             bool allow_broadcast_;
+            bool allow_multicast_;
             std::unique_ptr<std::thread> client_thread_;
             bool terminated_;
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
@@ -77,6 +78,7 @@ using namespace std::literals::chrono_literals;
                     {
                         socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
                         socket_.set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(ip_address_)));
+                        allow_multicast_ = true;
                     }
                     else
                     {

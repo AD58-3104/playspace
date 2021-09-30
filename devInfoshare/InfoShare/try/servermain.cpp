@@ -12,6 +12,7 @@ int main(int argc, char const *argv[])
             std::string moved_string(std::move(s));
             std::cout << moved_string;
             stringContainer.push_back(moved_string);
+            std::cout << "server1::message -->" << moved_string << std::endl;
         },
         SocketMode::multicast_mode);
     UDPServer server2(
@@ -29,7 +30,7 @@ int main(int argc, char const *argv[])
         },
         SocketMode::multicast_mode);
     std::cout << "server created \n";
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(20s);
     server1.terminate();
     server2.terminate();
     server3.terminate();

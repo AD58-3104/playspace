@@ -217,6 +217,6 @@ namespace CitBrains {
 		int radius;
 		float score;
 	};
-}; // end of namespace CitBrains
+} // end of namespace CitBrains
 
 #endif // HPL_TYPES_H_

@@ -26,6 +26,7 @@ namespace Citbrains
         
         */
 //inli{ne変数を使っているのでc++17以上でしかコンパイル出来ない。
+        using namespace Udpsocket; 
 #ifdef __cpp_inline_variables
         // static_assert(false,"this environment has inline variables");確認用
         inline static constexpr int32_t NUM_PLAYERS = 4;
@@ -73,10 +74,10 @@ namespace Citbrains
                 }
                 setRecv_time();
             }
-            void setTimeFunc(float (*timeFunc)())
-            {
-                timeFunc_ = timeFunc;
-            }
+            // void setTimeFunc(float (*timeFunc)())
+            // {
+            //     timeFunc_ = timeFunc;
+            // }
 
             void setRecv_time(void)
             {
@@ -143,7 +144,7 @@ namespace Citbrains
 
             void terminate();
             void changeColor(const int32_t color);
-            void setTimeFunc(float (*func)());
+            // void setTimeFunc(float (*func)());
             void setup(const bool allow_broadcast_sending,const int32_t self_id, const int32_t our_color, const std::string ip_address, const int32_t port, float (*func)());
             float getTime() const; //getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;

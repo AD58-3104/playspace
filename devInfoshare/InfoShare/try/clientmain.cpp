@@ -4,8 +4,7 @@ using namespace Citbrains::Udpsocket;
 int main(int argc, char const *argv[])
 {
 
-    UDPClient client("127.0.0.1",7110,SocketMode::unicast_mode);
-
+    UDPClient client("224.0.0.169",7110,SocketMode::multicast_mode);
     
     for(int i = 0;i < 5;++i)
         client.send(std::string("ieeeeeeeeeeeeei") + std::to_string(i));
