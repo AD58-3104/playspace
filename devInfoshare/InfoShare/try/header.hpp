@@ -23,10 +23,10 @@ using namespace std::literals::chrono_literals;
     {
         namespace SocketMode
         {
-            using clientsendmode_t = int32_t;
-            static inline constexpr clientsendmode_t broadcast_mode = 0;
-            static inline constexpr clientsendmode_t multicast_mode = broadcast_mode + 1;
-            static inline constexpr clientsendmode_t unicast_mode = multicast_mode + 1;
+            using udpsocketmode_t = int32_t;
+            static inline constexpr udpsocketmode_t broadcast_mode = 0;
+            static inline constexpr udpsocketmode_t multicast_mode = broadcast_mode + 1;
+            static inline constexpr udpsocketmode_t unicast_mode = multicast_mode + 1;
         }
         class UDPClient
         {
@@ -54,7 +54,7 @@ using namespace std::literals::chrono_literals;
              * @param (port) 送り先のポート番号
              * @detail 引数はマルチキャストの場合マルチキャスト用のを入れる.
              */
-            UDPClient(std::string address, int32_t port, SocketMode::clientsendmode_t mode)
+            UDPClient(std::string address, int32_t port, SocketMode::udpsocketmode_t mode)
                 : io_service_(), socket_(io_service_), cnt(0), port_(port), ip_address_(address), allow_broadcast_(false), terminated_(false),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
                   w_guard_(boost::asio::make_work_guard(io_service_))
@@ -62,6 +62,7 @@ using namespace std::literals::chrono_literals;
                   w_guard_(std::make_shared<boost::asio::io_service::work>(io_service_))
 #endif //BOOST_VERSION_IS_HIGHER_THAN_1_65
             {
+                assert((SocketMode::broadcast_mode <= mode) && (mode <= SocketMode::unicast_mode));
                 try
                 {
                     if (socket_.is_open())
@@ -148,11 +149,20 @@ using namespace std::literals::chrono_literals;
                 // static bool already_called = false;
                 if (!terminated_)
                 {
-                    terminated_ = true;
-                    w_guard_.reset(); //ここでwork_guardかworkを破棄してrun()のブロッキングを終わらせる
-                    client_thread_->join();
-                    // socket_.cancel();
-                    socket_.close();
+                    try
+                    {
+                        terminated_ = true;
+                        w_guard_.reset(); //ここでwork_guardかworkを破棄してrun()のブロッキングを終わらせる
+                        io_service_.stop();
+                        socket_.close();
+                        client_thread_->join();
+                        std::cout << "client is terminated!!" << std::endl;
+                    }
+                    catch (const std::runtime_error &e)
+                    {
+                        std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
+                        std::cout << e.what() << std::endl;
+                    }
                 }
             }
         };
@@ -184,7 +194,7 @@ using namespace std::literals::chrono_literals;
             * @param (func) 受け取ったデータ(文字列)を処理する為の関数オブジェクト
             * @detail 第二引数の関数オブジェクトはstd::stringの右辺値参照を取る。呼び出した時点から受信待機を行う。
             */
-            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::clientsendmode_t mode, std::string multicast_address = "224.0.0.169")
+            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::udpsocketmode_t mode, std::string multicast_address = "224.0.0.169")
                 : io_service_(),
                   socket_(io_service_, udp::endpoint(udp::v4(), port)), terminated_(false), port_(port), receivedHandler_(func),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65

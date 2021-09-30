@@ -10,7 +10,7 @@ namespace Citbrains
         //デフォルトの時間関数を使いたい場合は引数無し
         //必ずsetupを呼ぶ。
         InfoShare::InfoShare()
-            : self_id_(1), our_color_(COLOR_MAGENTA), ip_address_("127.0.0.1"), port_(7110), timeFunc_(nullptr), terminated_(false)
+            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false)
         {
         }
         InfoShare::~InfoShare()
@@ -52,6 +52,8 @@ namespace Citbrains
         {
             //clientとserverのio_serviceをstopする為のterminateを呼ぶ。
             terminated_ = true;
+            server_->terminate();
+            client_->terminate();
         }
         void InfoShare::changeColor(const int32_t color)
         {
@@ -68,11 +70,16 @@ namespace Citbrains
         //     }
         // }
         //既にtimefuncを設定済みの場合は渡さなければ変更されない。
-        void InfoShare::setup(const bool allow_broadcast_sending,const int32_t self_id = 1, const int32_t our_color = COLOR_MAGENTA, const std::string ip_address = "127.0.0.1", int32_t port = 7110, float (*timefunc)() = nullptr)
+        void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select,const int32_t self_id, const int32_t our_color, const std::string ip_address, int32_t port, float (*timefunc)())
         {
             assert(self_id >= 1); //self id must be 1 or more
+            static bool already_setup = false;
+            if(already_setup){
+                std::cerr << "already setup" << std::endl;
+                return ;
+            }
+            already_setup = true;
             self_id_ = self_id;
-            ip_address_ = ip_address;
             our_color_ = our_color;
             if (timefunc != nullptr)
             {
@@ -141,8 +148,8 @@ namespace Citbrains
                     }
                 }
             };
-            client = std::make_unique<UDPClient>(ip_address_, port_,SocketMode::broadcast_mode); //TODO そういやブロードキャストでは？
-            server = std::make_unique<UDPServer>(port_, receivedDataHandler_,SocketMode::broadcast_mode);
+            client_ = std::make_unique<UDPClient>(ip_address, port,mode_select); //TODO そういやブロードキャストでは？
+            server_ = std::make_unique<UDPServer>(port, receivedDataHandler_,mode_select,ip_address);
         }
         
         int32_t InfoShare::getOurcolor() const noexcept

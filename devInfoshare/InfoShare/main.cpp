@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include "infoshare.h"
 #include "infoshare.pb.h"
 using namespace std;
 
@@ -14,6 +15,10 @@ struct St{
 
 int main(int argc, char const *argv[])
 {
+    Citbrains::infosharemodule::InfoShare info;
+    info.setup(Citbrains::Udpsocket::SocketMode::unicast_mode,1,COLOR_MAGENTA,"127.0.0.1");
+    info.setup(Citbrains::Udpsocket::SocketMode::unicast_mode,1,COLOR_MAGENTA,"127.0.0.1");
+
     CitbrainsMessage::SharingData proto;
     string pack;
     int i = 12;

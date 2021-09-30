@@ -32,7 +32,7 @@ namespace Citbrains
         inline static constexpr int32_t NUM_PLAYERS = 4;
         inline static constexpr int32_t COMM_INFO_PORT0 = 7110; //!< CommInfoで使用するPORTのはじめのポート
                                                                 //1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
-
+        #define UDPSOCKET_MULTICAST_ADDRESS "224.0.0.169" 
         inline static constexpr int32_t MAX_COMM_INFO_OBJ = 7; //!< 共有するオブジェクトの最大値(はじめはボール)
         inline static constexpr int32_t MAX_STRING = 42;       //!< メッセージの最大値
         inline static constexpr int32_t MAX_BEHAVIOR_STRING = 32;
@@ -145,7 +145,7 @@ namespace Citbrains
             void terminate();
             void changeColor(const int32_t color);
             // void setTimeFunc(float (*func)());
-            void setup(const bool allow_broadcast_sending,const int32_t self_id, const int32_t our_color, const std::string ip_address, const int32_t port, float (*func)());
+            void setup(const Udpsocket::SocketMode::udpsocketmode_t select_mode,const int32_t self_id, const int32_t our_color, const std::string ip_address = UDPSOCKET_MULTICAST_ADDRESS, const int32_t port = COMM_INFO_PORT0, float (*func)() = nullptr);
             float getTime() const; //getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
@@ -155,8 +155,6 @@ namespace Citbrains
         private:
             int32_t self_id_;
             int32_t our_color_;
-            std::string ip_address_;
-            int32_t port_;
             float (*timeFunc_)();
             bool terminated_;
 
@@ -164,9 +162,9 @@ namespace Citbrains
             CitbrainsMessage::SharingData sharing_data_;
             std::function<void(std::string &&)> receivedDataHandler_;
             //server-----------------------------------------------
-            std::unique_ptr<UDPServer> server;
+            std::unique_ptr<UDPServer> server_;
             //client-----------------------------------------------
-            std::unique_ptr<UDPClient> client;
+            std::unique_ptr<UDPClient> client_;
         };
 
     }
