@@ -12,10 +12,10 @@ message Pos2D {
 message Pos2DCf {
   // optional bytes robot_side = 1;    //TODO こんなん使ってたっけ？
   required Pos2D position = 1;
-  optional bytes flags = 2; //TODO フラグ類を詰め込むやつにしたい。Pos2Dをもつ4つのうちどれなのか判断
-  required bytes confidence = 3; //0-100で送信している
-  // optional sint32 time = 4; //送る必要なさそう
-  optional bool is_detect = 5;
+  // optional sint32 time = 2; //送る必要なさそう
+  required bytes confidence = 2; //0-100で送信している
+  optional bool is_detect = 3;
+  // optional bytes flags = 5; //TODO フラグ類を詰め込むやつにしたい。
   /*
   フラグの中身
   robot_side 使ってなさそう

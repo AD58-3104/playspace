@@ -11,7 +11,7 @@ option(PROTO_DBG "proto debug build" OFF)
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS infoshare.proto)
 
-set(InfoShareSrc main.cpp infoshare.cpp infoshare.h hajime_command.h try/header.hpp)
+set(InfoShareSrc main.cpp infoshare.cpp infoshare.h hajime_command.h try/sUDPSocket.hpp)
 
 if(NORMAL)
     add_executable(main ${InfoShareSrc} ${PROTO_SRCS} ${PROTO_HDRS})

@@ -16,8 +16,8 @@ project(try)
 SET(Boost_USE_MULTITHREAD ON)
 find_package(Boost REQUIRED system thread )
 
-add_executable(server servermain.cpp header.hpp)
-add_executable(client clientmain.cpp header.hpp)
+add_executable(server servermain.cpp sUDPSocket.hpp)
+add_executable(client clientmain.cpp sUDPSocket.hpp)
 
 target_compile_features(server  PUBLIC cxx_std_17)
 target_include_directories(server  PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
