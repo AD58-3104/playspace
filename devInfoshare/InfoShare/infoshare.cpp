@@ -69,17 +69,19 @@ namespace Citbrains
         //         itr->timeFunc_ = func;
         //     }
         // }
-        //既にtimefuncを設定済みの場合は渡さなければ変更されない。
-        void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select,const int32_t self_id, const int32_t our_color, const std::string ip_address, int32_t port, float (*timefunc)())
+        void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select, const int32_t self_id, const int32_t our_color, const std::string ip_address, int32_t port, float (*timefunc)())
         {
             assert(self_id >= 1); //self id must be 1 or more
             static bool already_setup = false;
-            if(already_setup){
+            if (already_setup)
+            {
                 std::cerr << "already setup" << std::endl;
-                return ;
+                return;
             }
             already_setup = true;
+            assert((0 <= self_id) && (self_id < 4));
             self_id_ = self_id;
+            assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN));
             our_color_ = our_color;
             if (timefunc != nullptr)
             {
@@ -111,47 +113,55 @@ namespace Citbrains
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::OUR_ROBOT_GL)]);
                     set_target->our_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t  i = 0; i < shared_data.our_robot_gl_size(); i++)
+                    for (int32_t i = 0; i < shared_data.our_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_our_robot_gl(i);
-                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
                     }
                 }
                 if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::ENEMY_ROBOT_GL)]);
                     set_target->enemy_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t  i = 0; i < shared_data.enemy_robot_gl_size(); i++)
+                    for (int32_t i = 0; i < shared_data.enemy_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_enemy_robot_gl(i);
-                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
                     }
                 }
                 if (0 < shared_data.black_pole_gl_size()) //持ってる時
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BLACK_POLE_GL)]);
                     set_target->black_pole_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t  i = 0; i < shared_data.black_pole_gl_size(); i++)
+                    for (int32_t i = 0; i < shared_data.black_pole_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_black_pole_gl(i);
-                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
                     }
                 }
                 if (0 < shared_data.target_pos_vec_size()) //持ってる時
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::TARGET_POS_VEC)]);
                     set_target->target_pos_vec_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t  i = 0; i < shared_data.target_pos_vec_size(); i++)
+                    for (int32_t i = 0; i < shared_data.target_pos_vec_size(); i++)
                     {
                         auto itr = shared_data.mutable_target_pos_vec(i);
-                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x()/100.0),static_cast<float> (itr->pos_y()/100.0),static_cast<float>(itr->pos_th()/100.0));
+                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
                     }
                 }
             };
-            client_ = std::make_unique<UDPClient>(ip_address, port,mode_select); //TODO そういやブロードキャストでは？
-            server_ = std::make_unique<UDPServer>(port, receivedDataHandler_,mode_select,ip_address);
+            client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
+            server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, ip_address);
         }
-        
+        int InfoShare::SendCommonInfo(Pos2DCf ball_gl_cf, Pos2DCf self_pos_cf, std::vector<Pos2D> &our_robot_gl, std::vector<Pos2D> &enemy_robot_gl, std::vector<Pos2D> &black_pole_gl, int fps, std::string message, std::string behavior_name, std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+        {
+            CitbrainsMessage::SharingData sharing_data;
+            auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Object &target) -> void {
+
+            }
+        }
+
+        //simple getter-------------------------------------------------------------------
         int32_t InfoShare::getOurcolor() const noexcept
         {
             return our_color_;

@@ -150,7 +150,7 @@ namespace Citbrains
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
             //TODO:名前変える
-            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (); //パラメータパックで受け取っても良いが、使われる場所がhplの一か所のみなので寧ろそうしない方が良さそう。
+            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (); 
 
         private:
             int32_t self_id_;
@@ -159,7 +159,6 @@ namespace Citbrains
             bool terminated_;
 
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
-            CitbrainsMessage::SharingData sharing_data_;
             std::function<void(std::string &&)> receivedDataHandler_;
             //server-----------------------------------------------
             std::unique_ptr<UDPServer> server_;
@@ -172,7 +171,7 @@ namespace Citbrains
 
 /*
  * memo
- * IDは内部での扱いは0スタート、インターフェースでは1スタートとする。
+ * IDは内部での扱いは0スタート、インターフェースでは1スタートとする。 <-これ流石に全部0-indexedに統一しないとまずくない？
  * hplから使っている必要なインターフェース
  * setup().多分IDと色とアドレスを設定する
  * terminate()普通にterminate

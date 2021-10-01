@@ -3,17 +3,29 @@ syntax = "proto2";
 package CitbrainsMessage;
 option optimize_for = CODE_SIZE; //これどうなんだっけわすれた
 
-message Object {
-  optional bytes robot_side = 1;    //TODO こんなん使ってたっけ？
-  optional sint32 pos_x = 2;  //intにして詰める。100倍して100で割る(暫定)
-  optional sint32 pos_y = 3;
-  optional sint32 pos_th = 4;
-  optional bytes flags = 5; //TODO フラグ類を詰め込むやつにしたい。Pos2Dをもつ4つのうちどれなのか判断
+message Pos2D {
+  required sint32 pos_x = 1;  //intにして詰める。100倍して100で割る(暫定)
+  required sint32 pos_y = 2;
+  required sint32 pos_th = 3;
+}
+
+message Pos2DCf {
+  // optional bytes robot_side = 1;    //TODO こんなん使ってたっけ？
+  required Pos2D position = 1;
+  optional bytes flags = 2; //TODO フラグ類を詰め込むやつにしたい。Pos2Dをもつ4つのうちどれなのか判断
+  optional float cf = 3;
+  optional sint32 time = 4;
+  /*
+  フラグの中身
+  robot_side 使ってなさそう
+  if_detect 使ってなさそう
+  多分enum使うと綺麗になるな。実装と分離するとかいうキモい事が無くなると思う。
+  */
 }
 
 
 message SharingData {
-  optional bytes id  = 1 ;
+  optional bytes id  = 1 ;  //TODO:これはboolとどちらが性能が良いか
   optional bytes cf_own = 2;
   optional bytes cf_ball = 3;
   optional bytes status = 4;
