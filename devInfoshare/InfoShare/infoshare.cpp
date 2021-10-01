@@ -116,7 +116,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.our_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_our_robot_gl(i);
-                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
+                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
                     }
                 }
                 if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
@@ -126,7 +126,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.enemy_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_enemy_robot_gl(i);
-                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
+                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
                     }
                 }
                 if (0 < shared_data.black_pole_gl_size()) //持ってる時
@@ -136,7 +136,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.black_pole_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_black_pole_gl(i);
-                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
+                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
                     }
                 }
                 if (0 < shared_data.target_pos_vec_size()) //持ってる時
@@ -146,19 +146,21 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.target_pos_vec_size(); i++)
                     {
                         auto itr = shared_data.mutable_target_pos_vec(i);
-                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_th() / 100.0));
+                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
                     }
                 }
             };
             client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
             server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, ip_address);
         }
-        int InfoShare::SendCommonInfo(Pos2DCf ball_gl_cf, Pos2DCf self_pos_cf, std::vector<Pos2D> &our_robot_gl, std::vector<Pos2D> &enemy_robot_gl, std::vector<Pos2D> &black_pole_gl, int fps, std::string message, std::string behavior_name, std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+        int32_t InfoShare::sendCommonInfo(Pos2DCf ball_gl_cf, Pos2DCf self_pos_cf, std::vector<Pos2D> &our_robot_gl, std::vector<Pos2D> &enemy_robot_gl, std::vector<Pos2D> &black_pole_gl, int fps, std::string message, std::string behavior_name, std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
-            auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Object &target) -> void {
-
-            }
+            auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void {
+                target.mutable_position()->set_pos_x(input.pos.x);
+                target.mutable_position()->set_pos_y(input.pos.y);
+                target.mutable_position()->set_pos_theta(input.pos.th);
+            };
         }
 
         //simple getter-------------------------------------------------------------------
