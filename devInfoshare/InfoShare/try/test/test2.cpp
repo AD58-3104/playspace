@@ -52,7 +52,7 @@ void Socket_test::test_case1()
     const int32_t timeout_msec = message_size / 50 * 1000 /**/;
     for (int i = 0; i < message_size; ++i)
     {
-        vs.push_back(std::string("send times::") + std::to_string(i));
+        vs.push_back(std::string(160,'x') + std::to_string(i));
     }
     auto th = std::thread(
         [&]()

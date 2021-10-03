@@ -175,7 +175,7 @@ using namespace std::literals::chrono_literals;
             udp::endpoint remote_endpoint_;
             bool terminated_;
             boost::asio::streambuf receive_buff_;
-            static const int32_t buffer_size_ = 1024;
+            static const int32_t buffer_size_ = 512;
             int32_t port_;
             std::function<void(std::string &&s)> receivedHandler_;
             std::unique_ptr<std::thread> server_thread_;
@@ -194,7 +194,7 @@ using namespace std::literals::chrono_literals;
             * @param (func) 受け取ったデータ(文字列)を処理する為の関数オブジェクト
             * @detail 第二引数の関数オブジェクトはstd::stringの右辺値参照を取る。呼び出した時点から受信待機を行う。
             */
-            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::udpsocketmode_t mode, std::string multicast_address = "224.0.0.169")
+            UDPServer(int32_t port, std::function<void(std::string &&)> func, SocketMode::udpsocketmode_t mode,int32_t handler_work_pararell_num = 1 ,std::string multicast_address = "224.0.0.169")
                 : io_service_(),
                   socket_(io_service_, udp::endpoint(udp::v4(), port)), terminated_(false), port_(port), receivedHandler_(func),
 #ifdef BOOST_VERSION_IS_HIGHER_THAN_1_65
