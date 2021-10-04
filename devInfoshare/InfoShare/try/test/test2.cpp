@@ -1,8 +1,10 @@
 // #define BOOST_TEST_MODULE TestUdpsocket
 // #define BOOST_TEST_MAIN
+#define BOOST_TEST_MAIN
+#define BOOST_TEST_STATIC_LINK
 
 #include "sUDPSocket.hpp"
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/bind/bind.hpp>
 #include <deque>
 #include <chrono>
@@ -87,7 +89,8 @@ void free_test(){
 
 test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
 {
-    framework::master_test_suite().p_name.value = "TestUdpsocket";
+    boost::unit_test::test_suite* master_test_suite = BOOST_TEST_SUITE( "TestUdpsocket" );
+    // framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     constexpr int32_t case_num = 6;
     constexpr int32_t init_port = 7777;
@@ -120,8 +123,8 @@ test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
     //-----------------------------------------------------------------------------------
     for (const auto &ts : suite_list)
     {
-        framework::master_test_suite().add(ts);
+        master_test_suite->add(ts);
     }
 
-    return 0;
+    return master_test_suite;
 }

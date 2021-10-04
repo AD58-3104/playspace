@@ -1,8 +1,11 @@
 // #define BOOST_TEST_MODULE TestUdpsocket
 // #define BOOST_TEST_MAIN
+// #define BOOST_TEST_MAIN
+// #define BOOST_TEST_STATIC_LINK
+#define BOOST_TEST_DYN_LINK
 
+#include <boost/test/unit_test.hpp>
 #include "sUDPSocket.hpp"
-#include <boost/test/included/unit_test.hpp>
 #include <boost/bind/bind.hpp>
 #include <deque>
 #include <chrono>
@@ -85,7 +88,7 @@ void free_test(){
 }
 
 
-test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
+bool init_unit_test_suite(int /*argc*/, char * /*argv*/[])
 {
     framework::master_test_suite().add(BOOST_TEST_CASE(&free_test));
     framework::master_test_suite().p_name.value = "TestUdpsocket";
@@ -126,5 +129,10 @@ test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
     //     framework::master_test_suite().add(ts);
     // }
 
-    return 0;
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+  return boost::unit_test::unit_test_main( &init_unit_test_suite, argc, argv );
 }
