@@ -133,7 +133,7 @@ using namespace std::literals::chrono_literals;
             // 送信のハンドラ
             void sendHandler(const boost::system::error_code &error, size_t bytes_transferred)
             {
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                 if (error)
                 {
                     std::cout << "send failed: " << error.message() << std::endl; //TODO::どこかに書き込む
@@ -145,7 +145,7 @@ using namespace std::literals::chrono_literals;
                 static int32_t send_cnt = 0;
                 send_cnt++;
                 std::cout << "send message " << send_cnt << "times" << std::endl;
-#endif //DEBUG
+#endif //DEBUG_SUDPSOCKET
             }
 
             void terminate()
@@ -179,7 +179,7 @@ using namespace std::literals::chrono_literals;
             udp::endpoint remote_endpoint_;
             bool terminated_;
             // boost::asio::streambuf receive_buff_;
-            inline static constexpr int32_t buffer_size_ = 512;
+            inline static constexpr int32_t buffer_size_ = 256;
             boost::array<char, buffer_size_> receive_buff_;
             int32_t port_;
             std::function<void(std::string &&s)> receivedHandler_;
@@ -222,19 +222,20 @@ using namespace std::literals::chrono_literals;
                     }
                     server_thread_ = std::make_unique<std::thread>([&]()
                                                                    {
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                                                                        try
-#endif // DEBUG
+#endif // DEBUG_SUDPSOCKET
                                                                        {
                                                                            io_service_.run();
                                                                        }
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                                                                        catch (const std::runtime_error &e)
                                                                        {
                                                                         std::cout << "exception catched in sUDPSocket server thread" << std::endl;
                                                                            std::cout << e.what() << std::endl;
                                                                        }
-#endif // DEBUG
+                                                                       std::cout << "server io_service is finished!!!" << std::endl;
+#endif // DEBUG_SUDPSOCKET
                                                                    });
                 }
                 catch (const std::runtime_error &e)
@@ -253,9 +254,9 @@ using namespace std::literals::chrono_literals;
             // 受信開始。コンストラクタで呼ばれる。
             void startReceive()
             {
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                 try
-#endif // DEBUG
+#endif // DEBUG_SUDPSOCKET
                 {
                     if (!terminated_)
                         socket_.async_receive_from(
@@ -269,13 +270,13 @@ using namespace std::literals::chrono_literals;
                                 receiveHandler(error, bytes_transferred);
                             });
                 }
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                 catch (const std::runtime_error &e)
                 {
                     std::cout << "exception catched in reiceve" << std::endl;
                     std::cout << e.what() << std::endl;
                 }
-#endif // DEBUG
+#endif // DEBUG_SUDPSOCKET
             }
 
             // 受信のハンドラ。データを受け取った時に呼ばれる。
@@ -283,7 +284,7 @@ using namespace std::literals::chrono_literals;
             {
                 if (error && error != boost::asio::error::eof)
                 {
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                     std::cout << "receive failed: " << error.message() << std::endl;
 #endif
                 }
@@ -291,7 +292,7 @@ using namespace std::literals::chrono_literals;
                 {
                     std::string data(receive_buff_.data(), bytes_transferred);
                     // std::string data(boost::asio::buffer_cast<const char *>(receive_buff_.data()), bytes_transferred);
-#ifdef DEBUG
+#ifdef DEBUG_SUDPSOCKET
                     std::cout << "length::" << bytes_transferred << " row data is ==" << data << std::endl;
 #endif
                     receivedHandler_(std::move(data));
