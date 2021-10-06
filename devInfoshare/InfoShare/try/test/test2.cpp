@@ -100,7 +100,7 @@ bool init_unit_test_suite(/*int argc, char * argv[]*/)
 {
     framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    constexpr int32_t case_num = 20;
+    constexpr int32_t case_num = 50;
     constexpr int32_t init_port = 7777;
     constexpr int32_t message_size = 50;
     std::cout << "in init_unit_test_suite initializing...." << std::endl;
@@ -127,7 +127,7 @@ bool init_unit_test_suite(/*int argc, char * argv[]*/)
     for (int i = 0; i < case_num; ++i)
     {
         // for (int j = 0; j < case_num; ++j)
-        suite_list[i]->add(BOOST_TEST_CASE_NAME(boost::bind(&Socket_test::test_case1, test_list[i]), test_case_name_list[i].c_str()),0,4);
+        suite_list[i]->add(BOOST_TEST_CASE_NAME(boost::bind(&Socket_test::test_case1, test_list[i]), test_case_name_list[i].c_str()),0,2);
     }
     //-----------------------------------------------------------------------------------
     for (const auto &ts : suite_list)
