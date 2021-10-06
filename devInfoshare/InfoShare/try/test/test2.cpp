@@ -1,10 +1,11 @@
 // #define BOOST_TEST_MODULE TestUdpsocket
 // #define BOOST_TEST_MAIN
-#define BOOST_TEST_MAIN
-#define BOOST_TEST_STATIC_LINK
+// #define BOOST_TEST_MAIN
+// #define BOOST_TEST_STATIC_LINK
+#define BOOST_TEST_DYN_LINK
 
-#include "sUDPSocket.hpp"
 #include <boost/test/unit_test.hpp>
+#include "sUDPSocket.hpp"
 #include <boost/bind/bind.hpp>
 #include <deque>
 #include <chrono>
@@ -54,7 +55,7 @@ void Socket_test::test_case1()
     const int32_t timeout_msec = message_size / 50 * 1000 /**/;
     for (int i = 0; i < message_size; ++i)
     {
-        vs.push_back(std::string(160,'x') + std::to_string(i));
+        vs.push_back(std::string("send times::") + std::to_string(i));
     }
     auto th = std::thread(
         [&]()
@@ -82,15 +83,12 @@ void Socket_test::test_case1()
     std::cout << "---------------timeout sec is " << (float)(MESSAGE_SIZE / 50) << "------------------" << std::endl;
 }
 
-void free_test(){
-    BOOST_TEST(true);
-}
 
 
-test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
+
+bool init_unit_test_suite(/*int argc, char * argv[]*/)
 {
-    boost::unit_test::test_suite* master_test_suite = BOOST_TEST_SUITE( "TestUdpsocket" );
-    // framework::master_test_suite().p_name.value = "TestUdpsocket";
+    framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     constexpr int32_t case_num = 6;
     constexpr int32_t init_port = 7777;
@@ -106,7 +104,6 @@ test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
     std::vector<test_suite *> suite_list;
     for (const auto &itr : suite_names)
         suite_list.push_back(BOOST_TEST_SUITE(itr.c_str()));
-    //-----------------------------------------------------------------------------------
     //------------------------------add case---------------------------------------------
     std::vector<boost::shared_ptr<Socket_test>> test_list;
     for (int i = 0; i < case_num; ++i)
@@ -114,17 +111,25 @@ test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/[])
         test_list.push_back(boost::make_shared<Socket_test>(message_size + 50 * i, init_port + i));
         char str[256];
         sprintf(str, "test-case-messagesize%d", message_size + 50 * i);
-        // framework::master_test_suite().add(BOOST_TEST_CASE_NAME(boost::bind(&Socket_test::test_case1, test_list[i]),str));
-        suite_list[i]->add(BOOST_TEST_CASE_NAME(boost::bind(&Socket_test::test_case1, test_list[i]),str));
-        // suite_list[i]->add(BOOST_TEST_CASE(boost::bind(&Socket_test::test_case1, test_list[i])));
     }
-    // test_suite *ts1 = BOOST_TEST_SUITE("test_suite1");
-    // ts1->add(BOOST_TEST_CASE(boost::bind(&test_case1, 100), ));
+    for (int i = 0; i < case_num; ++i)
+    {
+        suite_list[i]->add(BOOST_TEST_CASE(boost::bind(&Socket_test::test_case1, test_list[i])));
+    }
     //-----------------------------------------------------------------------------------
     for (const auto &ts : suite_list)
     {
-        master_test_suite->add(ts);
+        framework::master_test_suite().add(ts);
     }
 
-    return master_test_suite;
+    return true;
+}
+bool init_unit_test(){
+    init_unit_test_suite();
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+  return boost::unit_test::unit_test_main( &init_unit_test, argc, argv );
 }
