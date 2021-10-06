@@ -179,7 +179,7 @@ using namespace std::literals::chrono_literals;
             udp::endpoint remote_endpoint_;
             bool terminated_;
             // boost::asio::streambuf receive_buff_;
-            inline static constexpr int32_t buffer_size_ = 256;
+            inline static constexpr int32_t buffer_size_ = 512;
             boost::array<char, buffer_size_> receive_buff_;
             int32_t port_;
             std::function<void(std::string &&s)> receivedHandler_;

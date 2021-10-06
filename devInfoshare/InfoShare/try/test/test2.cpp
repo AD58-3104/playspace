@@ -16,7 +16,6 @@ using namespace std::literals::string_literals;
 using namespace Citbrains::Udpsocket;
 using namespace boost::unit_test;
 
-#define TEST_MESSAGE_SIZE 250
 
 struct Socket_test
 {
@@ -29,8 +28,9 @@ struct Socket_test
     //--------------------------------
     UDPClient client;
     UDPServer server;
-    std::atomic_int32_t cnt;
+    std::atomic_int32_t cnt = 0;
     std::set<std::string> dq;
+    int32_t Port;
 
     Socket_test(int32_t size, int32_t port) : SendMessage_num(size), finish(false), client(std::string("127.0.0.1"),
                                                                                            port, SocketMode::unicast_mode),
@@ -51,10 +51,15 @@ struct Socket_test
                                                       return;
                                                   },
                                                   SocketMode::unicast_mode),
-                                              cnt(0)
+                                              cnt(0), Port(port)
     {
     }
     ~Socket_test()
+    {
+        client.terminate();
+        server.terminate();
+    }
+    void teardown()
     {
         client.terminate();
         server.terminate();
@@ -70,7 +75,7 @@ void Socket_test::test_case1()
     using namespace std::literals::string_literals;
     for (int i = 0; i < message_size; ++i)
     {
-        vs.insert(std::to_string(i) + std::string('#', message_length));
+        vs.insert(std::to_string(i) + std::string('a', message_length));
     }
     auto th = std::thread(
         [&]()
@@ -79,9 +84,12 @@ void Socket_test::test_case1()
             {
                 client.send(std::move(s));
             }
-            std::this_thread::sleep_for(2000ms);    //timeout
+            std::this_thread::sleep_for(2000ms); //timeout
             for (int i = 0; i < 100; i++)
+            {
+                std::this_thread::sleep_for(10ms);
                 client.send(std::string("end"));
+            }
         });
     th.detach();
 
@@ -90,24 +98,25 @@ void Socket_test::test_case1()
         cv.wait(lock, [&]
                 { return finish; });
     }
-    if (!finish)
+    if (cnt < message_size)
     {
         char str[256];
-        sprintf(str, "test failed with timeout:: message_size is %d over %d msec", message_size, timeout_msec);
+        sprintf(str, "test failed with timeout:: message_size is %d over 2 sec", message_size);
         BOOST_FAIL(str);
     }
 
     BOOST_REQUIRE_EQUAL_COLLECTIONS(vs.begin(), vs.end(), dq.begin(), dq.end());
-    std::cout << "--------number of sended message is " << cnt << "  -----------\n";
+    std::cout << "--------port " << Port << " number of sended message is " << cnt << "  -----------\n";
+    teardown();
 }
 
 bool init_unit_test_suite(/*int argc, char * argv[]*/)
 {
     framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    constexpr int32_t case_num = 20;
+    constexpr int32_t case_num = 40;
     constexpr int32_t init_port = 7777;
-    constexpr int32_t message_size = 1000;
+    constexpr int32_t message_size = 500;
     std::cout << "in init_unit_test_suite initializing...." << std::endl;
     //-------------------------register suites--------------------------------------------
     std::list<std::string> suite_names;
