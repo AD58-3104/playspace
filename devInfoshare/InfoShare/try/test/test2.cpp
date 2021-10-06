@@ -12,6 +12,7 @@
 #include <memory>
 #include <thread>
 using namespace std::literals::chrono_literals;
+using namespace std::literals::string_literals;
 using namespace Citbrains::Udpsocket;
 using namespace boost::unit_test;
 
@@ -29,7 +30,7 @@ struct Socket_test
     UDPClient client;
     UDPServer server;
     std::atomic_int32_t cnt;
-    std::deque<std::string> dq;
+    std::set<std::string> dq;
 
     Socket_test(int32_t size, int32_t port) : SendMessage_num(size), finish(false), client(std::string("127.0.0.1"),
                                                                                            port, SocketMode::unicast_mode),
@@ -38,10 +39,11 @@ struct Socket_test
                                                   [&](std::string &&s) -> void
                                                   {
                                                       // std::cout << s << std::endl;
-                                                      dq.emplace_back(std::move(s));
+                                                      dq.insert(s);
                                                       cnt++;
-                                                      if (cnt >= SendMessage_num)
+                                                      if ((cnt >= SendMessage_num) || (s == "end"s))
                                                       {
+                                                          dq.erase("end");
                                                           std::lock_guard lk(notify_mut);
                                                           finish = true;
                                                           cv.notify_all();
@@ -62,22 +64,24 @@ struct Socket_test
 
 void Socket_test::test_case1()
 {
-    std::vector<std::string> vs;
+    std::set<std::string> vs;
     const int32_t message_size = SendMessage_num;
     const int32_t timeout_msec = message_size / 50 * 1000;
     using namespace std::literals::string_literals;
     for (int i = 0; i < message_size; ++i)
     {
-        vs.push_back(std::to_string(i) + std::string('#', message_length));
+        vs.insert(std::to_string(i) + std::string('#', message_length));
     }
     auto th = std::thread(
         [&]()
         {
-            for (int i = 0; i < 2; ++i)
-                for (auto s : vs)
-                {
-                    client.send(std::move(s));
-                }
+            for (auto s : vs)
+            {
+                client.send(std::move(s));
+            }
+            std::this_thread::sleep_for(2000ms);    //timeout
+            for (int i = 0; i < 100; i++)
+                client.send(std::string("end"));
         });
     th.detach();
 
@@ -101,9 +105,9 @@ bool init_unit_test_suite(/*int argc, char * argv[]*/)
 {
     framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    constexpr int32_t case_num = 50;
+    constexpr int32_t case_num = 20;
     constexpr int32_t init_port = 7777;
-    constexpr int32_t message_size = 50;
+    constexpr int32_t message_size = 1000;
     std::cout << "in init_unit_test_suite initializing...." << std::endl;
     //-------------------------register suites--------------------------------------------
     std::list<std::string> suite_names;

@@ -3,8 +3,11 @@
 #include <deque>
 #include <chrono>
 #include <memory>
+#include <set>
 #include <thread>
 using namespace std::literals::chrono_literals;
+using namespace std::literals::string_literals;
+
 using namespace Citbrains::Udpsocket;
 
 #define TEST_MESSAGE_SIZE 250
@@ -21,7 +24,7 @@ struct Socket_test
     UDPClient client;
     UDPServer server;
     std::atomic_int32_t cnt;
-    std::deque<std::string> dq;
+    std::set<std::string> dq;
 
     Socket_test(int32_t size, int32_t port) : SendMessage_num(size), finish(false), client(std::string("127.0.0.1"),
                                                                                            port, SocketMode::unicast_mode),
@@ -29,11 +32,12 @@ struct Socket_test
                                                   port,
                                                   [&](std::string &&s) -> void
                                                   {
-                                                       std::cout << s << std::endl;
-                                                      dq.emplace_back(std::move(s));
+                                                    //   std::cout << s << std::endl;
+                                                      dq.insert(s);
                                                       cnt++;
-                                                      if (cnt >= SendMessage_num)
+                                                      if ((cnt >= SendMessage_num) || (s == "end"s))
                                                       {
+                                                          dq.erase("end");
                                                           std::lock_guard lk(notify_mut);
                                                           finish = true;
                                                           cv.notify_all();
@@ -54,27 +58,29 @@ struct Socket_test
 
 void Socket_test::test_case1()
 {
-    std::vector<std::string> vs;
+    std::set<std::string> vs;
     const int32_t message_size = SendMessage_num;
     const int32_t timeout_msec = message_size / 50 * 1000;
-    using namespace std::literals::string_literals;
     for (int i = 0; i < message_size; ++i)
     {
         // vs.push_back(std::to_string(i) + std::string('#', message_size));
-        vs.push_back(std::to_string(i));
+        vs.insert(std::to_string(i));
     }
     auto th = std::thread(
         [&]()
         {
-            std::chrono::system_clock::time_point start, end; // 型は auto で可
-            start = std::chrono::system_clock::now();         // 計測開始時間
+            // std::chrono::system_clock::time_point start, end; // 型は auto で可
+            // start = std::chrono::system_clock::now();         // 計測開始時間
             for (auto s : vs)
             {
                 client.send(std::move(s));
             }
-            end = std::chrono::system_clock::now();                                                      // 計測終了時間
-            double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
-            std::cout << "send time elapsed is " << elapsed << "ms " << std::endl;
+            // end = std::chrono::system_clock::now();                                                      // 計測終了時間
+            // double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
+            // std::cout << "send time elapsed is " << elapsed << "ms " << std::endl;
+            std::this_thread::sleep_for(2000ms);
+            for (int i = 0; i < 10; i++)
+                client.send(std::string("end"));
         });
     th.detach();
     std::chrono::system_clock::time_point start, end; // 型は auto で可
@@ -94,6 +100,9 @@ void Socket_test::test_case1()
     }
 
     // BOOST_REQUIRE_EQUAL_COLLECTIONS(vs.begin(), vs.end(), dq.begin(), dq.end());
+    for(const auto& s:dq){
+        std::cout << s << std::endl;
+    }
     std::cout << "--------number of sended message is " << cnt << "  -----------\n";
     std::cout << "---------------timeout sec is " << (float)(SendMessage_num / 50) << "------------------" << std::endl;
     std::cout << "actualtime is :: " << elapsed << " || The 1 packet time is :: " << elapsed / message_size << "ms ||"
@@ -105,6 +114,6 @@ int main(int argc, char *argv[])
     int message_num = 400;
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(nullptr);
-    Socket_test test(400, 7777);
+    Socket_test test(3000, 7777);
     test.test_case1();
 }
