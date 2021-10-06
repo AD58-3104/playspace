@@ -73,10 +73,11 @@ void Socket_test::test_case1()
     auto th = std::thread(
         [&]()
         {
-            for (auto s : vs)
-            {
-                client.send(std::move(s));
-            }
+            for (int i = 0; i < 2; ++i)
+                for (auto s : vs)
+                {
+                    client.send(std::move(s));
+                }
         });
     th.detach();
 
@@ -127,7 +128,7 @@ bool init_unit_test_suite(/*int argc, char * argv[]*/)
     for (int i = 0; i < case_num; ++i)
     {
         // for (int j = 0; j < case_num; ++j)
-        suite_list[i]->add(BOOST_TEST_CASE_NAME(boost::bind(&Socket_test::test_case1, test_list[i]), test_case_name_list[i].c_str()),0,2);
+        suite_list[i]->add(BOOST_TEST_CASE_NAME(boost::bind(&Socket_test::test_case1, test_list[i]), test_case_name_list[i].c_str()), 0, 2);
     }
     //-----------------------------------------------------------------------------------
     for (const auto &ts : suite_list)
