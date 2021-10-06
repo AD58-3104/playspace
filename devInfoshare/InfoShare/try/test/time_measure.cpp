@@ -1,26 +1,18 @@
-// #define BOOST_TEST_MODULE TestUdpsocket
-// #define BOOST_TEST_MAIN
-// #define BOOST_TEST_MAIN
-// #define BOOST_TEST_STATIC_LINK
-#define BOOST_TEST_DYN_LINK
 
-#include <boost/test/unit_test.hpp>
 #include "sUDPSocket.hpp"
-#include <boost/bind/bind.hpp>
 #include <deque>
 #include <chrono>
 #include <memory>
 #include <thread>
 using namespace std::literals::chrono_literals;
 using namespace Citbrains::Udpsocket;
-using namespace boost::unit_test;
 
 #define TEST_MESSAGE_SIZE 250
 
 struct Socket_test
 {
     const int32_t SendMessage_num;
-    static const int32_t message_length = 256;
+    static const int32_t message_length = 512;
     //------------notify--------------
     std::mutex notify_mut;
     bool finish;
@@ -37,7 +29,7 @@ struct Socket_test
                                                   port,
                                                   [&](std::string &&s) -> void
                                                   {
-                                                      // std::cout << s << std::endl;
+                                                       std::cout << s << std::endl;
                                                       dq.emplace_back(std::move(s));
                                                       cnt++;
                                                       if (cnt >= SendMessage_num)
@@ -68,81 +60,51 @@ void Socket_test::test_case1()
     using namespace std::literals::string_literals;
     for (int i = 0; i < message_size; ++i)
     {
-        vs.push_back(std::to_string(i) + std::string('#', message_length));
+        // vs.push_back(std::to_string(i) + std::string('#', message_size));
+        vs.push_back(std::to_string(i));
     }
     auto th = std::thread(
         [&]()
         {
+            std::chrono::system_clock::time_point start, end; // 型は auto で可
+            start = std::chrono::system_clock::now();         // 計測開始時間
             for (auto s : vs)
             {
                 client.send(std::move(s));
             }
+            end = std::chrono::system_clock::now();                                                      // 計測終了時間
+            double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
+            std::cout << "send time elapsed is " << elapsed << "ms " << std::endl;
         });
     th.detach();
+    std::chrono::system_clock::time_point start, end; // 型は auto で可
+    start = std::chrono::system_clock::now();         // 計測開始時間
 
     {
         std::unique_lock<std::mutex> lock(notify_mut);
         cv.wait(lock, [&]
                 { return finish; });
     }
+    end = std::chrono::system_clock::now();                                                      // 計測終了時間
+    double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(); //処理に要した時間をミリ秒に変換
     if (!finish)
     {
         char str[256];
         sprintf(str, "test failed with timeout:: message_size is %d over %d msec", message_size, timeout_msec);
-        BOOST_FAIL(str);
     }
 
-
-    BOOST_REQUIRE_EQUAL_COLLECTIONS(vs.begin(), vs.end(), dq.begin(), dq.end());
+    // BOOST_REQUIRE_EQUAL_COLLECTIONS(vs.begin(), vs.end(), dq.begin(), dq.end());
     std::cout << "--------number of sended message is " << cnt << "  -----------\n";
     std::cout << "---------------timeout sec is " << (float)(SendMessage_num / 50) << "------------------" << std::endl;
-}
-
-bool init_unit_test_suite(/*int argc, char * argv[]*/)
-{
-    framework::master_test_suite().p_name.value = "TestUdpsocket";
-    //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    constexpr int32_t case_num = 6;
-    constexpr int32_t init_port = 7777;
-    constexpr int32_t message_size = 50;
-    std::cout << "in init_unit_test_suite initializing...." << std::endl;
-    //-------------------------register suites--------------------------------------------
-    std::list<std::string> suite_names;
-    for (int i = 1; i < case_num + 1; ++i)
-    {
-        using namespace std::literals::string_literals;
-        suite_names.push_back("test_suite"s + std::to_string(i));
-    }
-    std::vector<test_suite *> suite_list;
-    for (const auto &itr : suite_names)
-        suite_list.push_back(BOOST_TEST_SUITE(itr.c_str()));
-    //------------------------------add case---------------------------------------------
-    std::vector<boost::shared_ptr<Socket_test>> test_list;
-    for (int i = 0; i < case_num; ++i)
-    {
-        test_list.push_back(boost::make_shared<Socket_test>(message_size + 50 * i, init_port + i));
-        char str[256];
-        sprintf(str, "test-case-messagesize%d", message_size + 50 * i);
-    }
-    for (int i = 0; i < case_num; ++i)
-    {
-        suite_list[i]->add(BOOST_TEST_CASE(boost::bind(&Socket_test::test_case1, test_list[i])));
-    }
-    //-----------------------------------------------------------------------------------
-    for (const auto &ts : suite_list)
-    {
-        framework::master_test_suite().add(ts);
-    }
-
-    return true;
-}
-bool init_unit_test()
-{
-    init_unit_test_suite();
-    return true;
+    std::cout << "actualtime is :: " << elapsed << " || The 1 packet time is :: " << elapsed / message_size << "ms ||"
+              << " through put is" << (message_size * message_length) / (elapsed) << "Kbyte/s" << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-    return boost::unit_test::unit_test_main(&init_unit_test, argc, argv);
+    int message_num = 400;
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    Socket_test test(400, 7777);
+    test.test_case1();
 }
