@@ -16,7 +16,6 @@ using namespace std::literals::string_literals;
 using namespace Citbrains::Udpsocket;
 using namespace boost::unit_test;
 
-
 struct Socket_test
 {
     const int32_t SendMessage_num;
@@ -44,6 +43,8 @@ struct Socket_test
                                                       if ((cnt >= SendMessage_num) || (s == "end"s))
                                                       {
                                                           dq.erase("end");
+                                                          if (s == "end"s)
+                                                              cnt--;
                                                           std::lock_guard lk(notify_mut);
                                                           finish = true;
                                                           cv.notify_all();
@@ -80,19 +81,23 @@ void Socket_test::test_case1()
     auto th = std::thread(
         [&]()
         {
-            for (auto s : vs)
+            for (int i = 0; i < 2; ++i)
             {
-                client.send(std::move(s));
+                for (auto s : vs)
+                {
+                    std::this_thread::sleep_for(100ns);
+                    client.send(std::move(std::string(s)));
+                }
             }
             std::this_thread::sleep_for(2000ms); //timeout
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 50; i++)
             {
                 std::this_thread::sleep_for(10ms);
                 client.send(std::string("end"));
             }
         });
     th.detach();
-
+    std::cout << "------------start send------------" << std::endl;
     {
         std::unique_lock<std::mutex> lock(notify_mut);
         cv.wait(lock, [&]
@@ -101,26 +106,29 @@ void Socket_test::test_case1()
     if (cnt < message_size)
     {
         char str[256];
+        std::cout << "--------loss is " << cnt - SendMessage_num << "  -----------\n";
         sprintf(str, "test failed with timeout:: message_size is %d over 2 sec", message_size);
         BOOST_FAIL(str);
     }
 
     BOOST_REQUIRE_EQUAL_COLLECTIONS(vs.begin(), vs.end(), dq.begin(), dq.end());
     std::cout << "--------port " << Port << " number of sended message is " << cnt << "  -----------\n";
-    teardown();
+    std::cout << "--------loss is " << cnt - SendMessage_num << "  -----------\n";
+
+    // teardown();
 }
 
 bool init_unit_test_suite(/*int argc, char * argv[]*/)
 {
     framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    constexpr int32_t case_num = 40;
+    constexpr int32_t case_num =20;
     constexpr int32_t init_port = 7777;
-    constexpr int32_t message_size = 500;
+    constexpr int32_t message_size = 1000;
     std::cout << "in init_unit_test_suite initializing...." << std::endl;
     //-------------------------register suites--------------------------------------------
     std::list<std::string> suite_names;
-    for (int i = 1; i < case_num + 1; ++i)
+    for (int i = 0; i < case_num; ++i)
     {
         using namespace std::literals::string_literals;
         suite_names.push_back("test_suite"s + std::to_string(i));
@@ -135,7 +143,7 @@ bool init_unit_test_suite(/*int argc, char * argv[]*/)
     {
         test_list.push_back(boost::make_shared<Socket_test>(message_size + 50 * i, init_port + i));
         char str[256];
-        sprintf(str, "test-case-messagesize%d", message_size + 50 * i);
+        sprintf(str, "test-case-messagesize%d", message_size + 20 * i);
         test_case_name_list.emplace_back(str);
     }
     for (int i = 0; i < case_num; ++i)

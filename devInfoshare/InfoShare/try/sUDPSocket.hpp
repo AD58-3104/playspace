@@ -178,9 +178,9 @@ using namespace std::literals::chrono_literals;
             udp::socket socket_;
             udp::endpoint remote_endpoint_;
             bool terminated_;
-            // boost::asio::streambuf receive_buff_;
-            inline static constexpr int32_t buffer_size_ = 512;
-            boost::array<char, buffer_size_> receive_buff_;
+            boost::asio::streambuf receive_buff_;
+            inline static constexpr int32_t buffer_size_ = 1024;
+            // boost::array<char, buffer_size_> receive_buff_;
             int32_t port_;
             std::function<void(std::string &&s)> receivedHandler_;
             std::unique_ptr<std::thread> server_thread_;
@@ -260,8 +260,8 @@ using namespace std::literals::chrono_literals;
                 {
                     if (!terminated_)
                         socket_.async_receive_from(
-                            // receive_buff_.prepare(buffer_size_),
-                            boost::asio::buffer(receive_buff_),
+                            receive_buff_.prepare(buffer_size_),
+                            // boost::asio::buffer(receive_buff_),
                             remote_endpoint_,
                             // boost::bind(&UDPServer::receiveHandler, this,
                             //             asio::placeholders::error, asio::placeholders::bytes_transferred)
@@ -290,13 +290,13 @@ using namespace std::literals::chrono_literals;
                 }
                 else
                 {
-                    std::string data(receive_buff_.data(), bytes_transferred);
-                    // std::string data(boost::asio::buffer_cast<const char *>(receive_buff_.data()), bytes_transferred);
+                    // std::string data(receive_buff_.data(), bytes_transferred);
+                    std::string data(boost::asio::buffer_cast<const char *>(receive_buff_.data()), bytes_transferred);
 #ifdef DEBUG_SUDPSOCKET
                     std::cout << "length::" << bytes_transferred << " row data is ==" << data << std::endl;
 #endif
                     receivedHandler_(std::move(data));
-                    // receive_buff_.consume(receive_buff_.size());
+                    receive_buff_.consume(receive_buff_.size());
                     if (!terminated_)
                     {
                         startReceive();
