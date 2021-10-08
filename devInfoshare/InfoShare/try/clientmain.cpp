@@ -1,10 +1,10 @@
-#include "sUDPSocket.hpp"
-using namespace Citbrains::Udpsocket;
+#include "sAsyncSocket.hpp"
+using namespace Citbrains::Asyncsocket;
 
 int main(int argc, char const *argv[])
 {
 
-    UDPClient client("224.0.0.169",7110,SocketMode::multicast_mode);
+    TCPClient client("127.0.0.1",7110,SocketMode::unicast_mode);
     
     for(int i = 0;i < 5;++i)
         client.send(std::string("ieeeeeeeeeeeeei") + std::to_string(i));

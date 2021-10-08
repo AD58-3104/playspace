@@ -220,7 +220,7 @@ using namespace std::literals::chrono_literals;
                 assert((SocketMode::broadcast_mode <= mode) && (mode <= SocketMode::unicast_mode));
                 try
                 {
-                    socket_.set_option(boost::asio::ip::tcp::socket::reuse_address(true));
+                    // socket_.set_option(boost::asio::ip::tcp::socket::reuse_address(true));
                     if (mode == SocketMode::multicast_mode)
                     {
                         socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
