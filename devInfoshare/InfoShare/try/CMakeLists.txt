@@ -10,16 +10,16 @@ if(WIN32)
     endif()
 endif()
 
-project(try)
+project(try CXX)
 
-option(TEST_BUILD "build for testcase" OFF)
+option(TEST_BUILD "build for unit test" OFF)
 
 # set(Boost_USE_STATIC_RUNTIME ON)
 SET(Boost_USE_MULTITHREAD ON)
 find_package(Boost 1.77.0 REQUIRED system thread unit_test_framework)
 
 if(TEST_BUILD)
-enable_testing()
+    enable_testing()
     set(TEST_SRC test/test2.cpp )
     # set(Boost_USE_STATIC_LIBS ON)
     message("-------------------------------Test build--------------------------")
@@ -29,7 +29,12 @@ enable_testing()
     target_include_directories(time_mes   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_include_directories(time_mes  PRIVATE ${Boost_INCLUDE_DIRS})
     target_link_libraries(time_mes  ${Boost_LIBRARIES})
-
+    
+    add_executable(tcp_sock sAsyncSocket.hpp cm.cpp)
+    target_compile_features(tcp_sock  PUBLIC cxx_std_17)
+    target_compile_options(tcp_sock PUBLIC -std=c++17)
+    target_include_directories(tcp_sock  PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(tcp_sock  ${Boost_LIBRARIES})
 
     add_executable(test_exe ${TEST_SRC} sUDPSocket.hpp)
     target_compile_features(test_exe  PUBLIC cxx_std_17)

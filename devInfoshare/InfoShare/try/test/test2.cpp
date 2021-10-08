@@ -96,8 +96,7 @@ void Socket_test::test_case1()
                 client.send(std::string("end"));
             }
         });
-    th.detach();
-    std::cout << "------------start send------------" << std::endl;
+    th.join();
     {
         std::unique_lock<std::mutex> lock(notify_mut);
         cv.wait(lock, [&]
@@ -122,7 +121,7 @@ bool init_unit_test_suite(/*int argc, char * argv[]*/)
 {
     framework::master_test_suite().p_name.value = "TestUdpsocket";
     //^^^^^^^^^^^^^^^^^^^^^   setting  test condition ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    constexpr int32_t case_num =20;
+    constexpr int32_t case_num = 20;
     constexpr int32_t init_port = 7777;
     constexpr int32_t message_size = 1000;
     std::cout << "in init_unit_test_suite initializing...." << std::endl;
