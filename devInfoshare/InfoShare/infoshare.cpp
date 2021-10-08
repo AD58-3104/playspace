@@ -4,58 +4,76 @@
 #include <ctime>
 #include <type_traits>
 #include <google/protobuf/util/time_util.h>
+#include <fstream>
 using namespace std::literals::chrono_literals;
 
-/**
- * @brief protobufオブジェクトのデバッグ関数.INFOSHARE_DEBUGがONの時のみ有効.debugの時に適当に書き換えていいです.
- * @param[in] data protobufのオブジェクト
- */
-static void debugPrint(const CitbrainsMessage::SharingData &data)
+namespace debug
 {
-    static int32_t received_num = 1;
-    received_num++;
-    std::cerr << "number of received " << received_num << std::endl;
-    std::cout << data.DebugString() << std::endl;
-    if(data.has_timestamp()){
-        using namespace google::protobuf::util;
-        std::cout << "reached " <<TimeUtil::DurationToNanoseconds(TimeUtil::GetCurrentTime() - data.timestamp()) << "nano seconds" << std::endl;
-    }
-    try
+    static std::vector<std::pair<int32_t,int64_t>> time_log;
+    /**
+     * @brief protobufオブジェクトのデバッグ関数.INFOSHARE_DEBUGがONの時のみ有効.debugの時に適当に書き換えていいです.
+     * @param[in] data protobufのオブジェクト
+     */
+    static void debugPrint(const CitbrainsMessage::SharingData &data)
     {
-        // std::cerr << "debug print " << std::endl;
-        // std::string s = data.cf_ball();
-        // if (data.has_cf_ball())
-        //     std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
-        // int i = data.cf_ball().at(0);
-        // std::cout << "int " << i << std::endl;
-        // if (data.has_is_detect_ball())
-        //     std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
-        // if (data.has_cf_ball())
-        //     std::cout << 1 << (static_cast<int32_t>(data.cf_ball().at(0))) << std::endl;
-        // if (data.has_cf_own())
-        //     std::cout << 2 << (static_cast<int32_t>(data.cf_own().at(0))) << std::endl;
-        // if (data.has_status())
-        //     std::cout << 3 << (static_cast<int32_t>(data.status().at(0))) << std::endl;
-        // if (data.has_fps())
-        //     std::cout << 4 << (static_cast<int32_t>(data.fps().at(0))) << std::endl;
-        // if (data.has_voltage())
-        //     std::cout << 5 << (static_cast<int32_t>(data.voltage().at(0))) << std::endl;
-        // if (data.has_temperature())
-        //     std::cout << 6 << (static_cast<int32_t>(data.temperature().at(0))) << std::endl;
-        // if (data.has_highest_servo())
-        //     std::cout << 7 << (static_cast<int32_t>(data.highest_servo().at(0))) << std::endl;
-        // if (data.has_command())
-        //     std::cout << 8 << (static_cast<int32_t>(data.command().at(0))) << std::endl;
-        // if (data.has_current_behavior_name())
-        //     std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
+        static int32_t received_num = 1;
+        received_num++;
+        // std::cerr << "number of received " << received_num << std::endl;
+        // std::cout << data.DebugString() << "\n"; //正確に時間計測するならこの二行の出力は無くすべき.
+        if (data.has_timestamp())
+        {
+            using namespace google::protobuf::util;
+            time_log.push_back(std::make_pair(received_num,TimeUtil::DurationToNanoseconds(TimeUtil::NanosecondsToTimestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) - data.timestamp())));
+        }
+        try
+        {
+            // std::cerr << "debug print " << std::endl;
+            // std::string s = data.cf_ball();
+            // if (data.has_cf_ball())
+            //     std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
+            // int i = data.cf_ball().at(0);
+            // std::cout << "int " << i << std::endl;
+            // if (data.has_is_detect_ball())
+            //     std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
+            // if (data.has_cf_ball())
+            //     std::cout << 1 << (static_cast<int32_t>(data.cf_ball().at(0))) << std::endl;
+            // if (data.has_cf_own())
+            //     std::cout << 2 << (static_cast<int32_t>(data.cf_own().at(0))) << std::endl;
+            // if (data.has_status())
+            //     std::cout << 3 << (static_cast<int32_t>(data.status().at(0))) << std::endl;
+            // if (data.has_fps())
+            //     std::cout << 4 << (static_cast<int32_t>(data.fps().at(0))) << std::endl;
+            // if (data.has_voltage())
+            //     std::cout << 5 << (static_cast<int32_t>(data.voltage().at(0))) << std::endl;
+            // if (data.has_temperature())
+            //     std::cout << 6 << (static_cast<int32_t>(data.temperature().at(0))) << std::endl;
+            // if (data.has_highest_servo())
+            //     std::cout << 7 << (static_cast<int32_t>(data.highest_servo().at(0))) << std::endl;
+            // if (data.has_command())
+            //     std::cout << 8 << (static_cast<int32_t>(data.command().at(0))) << std::endl;
+            // if (data.has_current_behavior_name())
+            //     std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
+            std::cout << e.what() << std::endl;
+        }
     }
-    catch (const std::exception &e)
+    /**
+     * @brief protobufオブジェクトのデバッグを終了する時に呼ぶ関数.主にファイルに書き込む.
+     */
+    void finishDebug()
     {
-        std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
-        std::cout << e.what() << std::endl;
+        std::ofstream ofs;
+        ofs.open("receive_time_log.txt");
+        for(const auto& [receive_num,time_nanos]:time_log){
+            ofs << "number " << receive_num << " reached " << time_nanos << "nano seconds" << std::endl;
+        }
+        ofs.close();
     }
-}
 
+}
 namespace Citbrains
 {
     namespace infosharemodule
@@ -76,6 +94,9 @@ namespace Citbrains
         InfoShare::~InfoShare()
         {
             terminate();
+#ifdef INFOSHARE_DEBUG
+            debug::finishDebug();
+#endif // INFOSHARE_DEBUG
         }
 
         /**
@@ -288,7 +309,7 @@ namespace Citbrains
                     return; //自分の情報は無視
                 }
 #ifdef INFOSHARE_DEBUG
-                debugPrint(shared_data);
+                debug::debugPrint(shared_data);
 #endif // INFOSHARE_DEBUG
                 auto &set_target = robot_data_list_[static_cast<int32_t>(shared_data.id().at(0)) - 1];
                 //------------data set-----------------------------------------------------------------
