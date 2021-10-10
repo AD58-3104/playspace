@@ -151,7 +151,7 @@ namespace Citbrains
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
             //TODO:名前変える
-            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (Pos2DCf ball_gl_cf, Pos2DCf self_pos_cf, std::vector<Pos2D> &our_robot_gl, std::vector<Pos2D> &enemy_robot_gl, std::vector<Pos2D> &black_pole_gl, int fps, std::string message, std::string behavior_name, std::vector<Pos2D> &target_pos_vec, RobotStatus state); 
+            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (const Pos2DCf& ball_gl_cf,const Pos2DCf& self_pos_cf,const std::vector<Pos2D> &our_robot_gl,const std::vector<Pos2D> &enemy_robot_gl,const std::vector<Pos2D> &black_pole_gl,const int fps,const std::string& message,const  std::string& behavior_name,const std::vector<Pos2D> &target_pos_vec, RobotStatus state); 
 
         private:
             int32_t self_id_;

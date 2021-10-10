@@ -151,19 +151,31 @@ namespace Citbrains
                 }
             };
             client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
-            server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, ip_address);
+            server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select,1, ip_address);
         }
-        int32_t InfoShare::sendCommonInfo(Pos2DCf ball_gl_cf, Pos2DCf self_pos_cf, std::vector<Pos2D> &our_robot_gl, std::vector<Pos2D> &enemy_robot_gl, std::vector<Pos2D> &black_pole_gl, int fps, std::string message, std::string behavior_name, std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+        int32_t InfoShare::sendCommonInfo(const Pos2DCf& ball_gl_cf,const Pos2DCf& self_pos_cf,const std::vector<Pos2D>& our_robot_gl,const std::vector<Pos2D>& enemy_robot_gl,const std::vector<Pos2D>& black_pole_gl,const int fps,const  std::string& message,const std::string& behavior_name,const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
+            auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void {
+
+                target.set_pos_x(input.x);
+                target.set_pos_y(input.y);
+                target.set_pos_theta(input.th);
+            };
+
             auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void {
+                char c = std::clamp(static_cast<int32_t>(input.cf),0,100);
+                target.set_confidence(std::string{c}.c_str());
+                target.set_is_detect(input.is_detect);
                 target.mutable_position()->set_pos_x(input.pos.x);
                 target.mutable_position()->set_pos_y(input.pos.y);
                 target.mutable_position()->set_pos_theta(input.pos.th);
             };
+            
+
         }
 
-        //simple getter-------------------------------------------------------------------
+//-----------simple getter--------------------------------------------------------------------
         int32_t InfoShare::getOurcolor() const noexcept
         {
             return our_color_;
