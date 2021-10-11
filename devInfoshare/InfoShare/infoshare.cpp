@@ -18,36 +18,6 @@ namespace Citbrains
             terminate();
         }
 
-        // void InfoShare::receiveSharedInfomation()
-        // {
-        //     boost::asio::io_service io_service; //毎回構築していいのかしら。https://docs.microsoft.com/ja-jp/dotnet/framework/network-programming/asynchronous-server-socket-example を見ると流石に毎回構築してないので一度だけ作る。
-        //     boost::asio::ip::udp::socket socket(io_service, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), COMM_INFO_PORT0 + self_id_));
-        //     std::array<std::byte, 1024> receive_buffer;
-        //     while (!terminated_)
-        //     {
-        //         try
-        //         {
-        //             while (!terminated_)
-        //             {
-        //                 if (!socket.available())
-        //                 {
-        //                     std::this_thread::sleep_for(50ms);
-        //                     continue;
-        //                 }
-        //                 boost::system::error_code error;
-        //                 boost::asio::ip::udp::endpoint remote_endpoint;
-        //                 size_t receive_length = socket.receive_from(boost::asio::buffer(receive_buffer), remote_endpoint, 0, error);
-        //                 if (error)
-        //                     continue;
-        //                 //いらないっぽいif(){} //TODO:ここでハッシュのチェックでもする？？ダメだったら落とすみたいな
-        //             }
-        //         }
-        //         catch (const std::exception &e)
-        //         {
-        //             std::cerr << e.what() << std::endl;
-        //         }
-        //     }
-        // }
         void InfoShare::terminate()
         {
             //clientとserverのio_serviceをstopする為のterminateを呼ぶ。
@@ -79,103 +49,165 @@ namespace Citbrains
                 return;
             }
             already_setup = true;
-            assert((0 <= self_id) && (self_id < 4));
-            self_id_ = self_id;
-            assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN));
-            our_color_ = our_color;
-            if (timefunc != nullptr)
+#ifdef INFOSHARE_DEBUG
+            std::cout << "debug in" << std::endl;
+            try
             {
-                timeFunc_ = timefunc;
+#endif //INFOSHARE_DEBUG
+                assert((0 <= self_id) && (self_id < 4));
+                self_id_ = self_id;
+                assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN)); //color must be magenta or cyan
+                our_color_ = our_color;
+                if (timefunc != nullptr)
+                {
+                    timeFunc_ = timefunc;
+                }
+                for (int32_t i = 0; i < NUM_PLAYERS; ++i)
+                {
+                    robot_data_list_.push_back(std::make_unique<Citbrains::infosharemodule::OtherRobotInfomation>(i, timeFunc_));
+                }
+                receivedDataHandler_ = [&](std::string &&data) { //全てキャプチャするのは嫌だが取り敢えずこうしておく。参照の寿命とラムダの寿命は同じ。
+                                                                 //メンバにする方が良いかな。多分そっちの方が良いな
+#ifdef INFOSHARE_DEBUG
+                    std::cout << "receive data" << std::endl;
+                    try
+                    {
+#endif //INFOSHARE_DEBUG
+                        std::string s(std::move(data));
+                        CitbrainsMessage::SharingData shared_data;
+                        shared_data.ParseFromString(s);
+                        auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0))]; //atだからout of rangeで落ちる。
+                        //------------data set----------------------------------------------------------------------
+                        set_target->setRecv_time();
+                        if (shared_data.has_cf_ball())
+                            set_target->cf_ball_.store(static_cast<uint32_t>(shared_data.cf_ball().at(0)));
+                        if (shared_data.has_status())
+                            set_target->status_.store(static_cast<uint32_t>(shared_data.status().at(0)));
+                        if (shared_data.has_fps())
+                            set_target->fps_.store(static_cast<uint32_t>(shared_data.fps().at(0)));
+                        if (shared_data.has_voltage())
+                            set_target->voltage_.store(static_cast<uint32_t>(shared_data.voltage().at(0)));
+                        if (shared_data.has_temperature())
+                            set_target->temperature_.store(static_cast<uint32_t>(shared_data.temperature().at(0)));
+                        if (shared_data.has_highest_servo())
+                            set_target->highest_servo_.store(static_cast<uint32_t>(shared_data.highest_servo().at(0)));
+                        if (shared_data.has_command())
+                            set_target->command_.store(static_cast<uint32_t>(shared_data.command().at(0)));
+                        if (shared_data.has_current_behavior_name())
+                            set_target->current_behavior_name_.store(static_cast<uint32_t>(shared_data.current_behavior_name().at(0)));
+                        if (shared_data.has_is_detect_ball())
+                            set_target->is_detect_ball_.store(shared_data.is_detect_ball());
+                        //--------object data set-------------------------------------------------------------------
+                        if (0 < shared_data.our_robot_gl_size()) //持ってる時
+                        {
+                            std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::OUR_ROBOT_GL)]);
+                            set_target->our_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                            for (int32_t i = 0; i < shared_data.our_robot_gl_size(); i++)
+                            {
+                                auto itr = shared_data.mutable_our_robot_gl(i);
+                                set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                            }
+                        }
+                        if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
+                        {
+                            std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::ENEMY_ROBOT_GL)]);
+                            set_target->enemy_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                            for (int32_t i = 0; i < shared_data.enemy_robot_gl_size(); i++)
+                            {
+                                auto itr = shared_data.mutable_enemy_robot_gl(i);
+                                set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                            }
+                        }
+                        if (0 < shared_data.black_pole_gl_size()) //持ってる時
+                        {
+                            std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BLACK_POLE_GL)]);
+                            set_target->black_pole_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                            for (int32_t i = 0; i < shared_data.black_pole_gl_size(); i++)
+                            {
+                                auto itr = shared_data.mutable_black_pole_gl(i);
+                                set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                            }
+                        }
+                        if (0 < shared_data.target_pos_vec_size()) //持ってる時
+                        {
+                            std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::TARGET_POS_VEC)]);
+                            set_target->target_pos_vec_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
+                            for (int32_t i = 0; i < shared_data.target_pos_vec_size(); i++)
+                            {
+                                auto itr = shared_data.mutable_target_pos_vec(i);
+                                set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                            }
+                        }
+#ifdef INFOSHARE_DEBUG
+                    }
+                    catch (boost::system::system_error &e)
+                    {
+                        std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
+                        std::cerr << e.what() << std::endl;
+                    }
+                    std::cout << "receive end" << std::endl;
+#endif //INFOSHARE_DEBUG
+                };
+                client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
+                server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, 1, ip_address);
+#ifdef INFOSHARE_DEBUG
             }
-            for (int32_t i = 0; i < NUM_PLAYERS; ++i)
+            catch (boost::system::system_error &e)
             {
-                robot_data_list_.push_back(std::make_unique<Citbrains::infosharemodule::OtherRobotInfomation>(i, timeFunc_));
+                std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
+                std::cerr << e.what() << std::endl;
             }
-            receivedDataHandler_ = [&](std::string &&data) { //全てキャプチャするのは嫌だが取り敢えずこうしておく。参照の寿命とラムダの寿命は同じ。
-                //メンバにする方が良いかな。多分そっちの方が良いな
-                std::string s(std::move(data));
-                CitbrainsMessage::SharingData shared_data;
-                shared_data.ParseFromString(s);
-                auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0))]; //atだからout of rangeで落ちる。
-                //------------data set-----------
-                set_target->setRecv_time();
-                set_target->cf_ball_.store(static_cast<uint32_t>(shared_data.cf_ball().at(0)));
-                set_target->status_.store(static_cast<uint32_t>(shared_data.status().at(0)));
-                set_target->fps_.store(static_cast<uint32_t>(shared_data.fps().at(0)));
-                set_target->voltage_.store(static_cast<uint32_t>(shared_data.voltage().at(0)));
-                set_target->temperature_.store(static_cast<uint32_t>(shared_data.temperature().at(0)));
-                set_target->highest_servo_.store(static_cast<uint32_t>(shared_data.highest_servo().at(0)));
-                set_target->command_.store(static_cast<uint32_t>(shared_data.command().at(0)));
-                set_target->current_behavior_name_.store(static_cast<uint32_t>(shared_data.current_behavior_name().at(0)));
-                set_target->is_detect_ball_.store(shared_data.is_detect_ball());
-                //--------object data set--------
-                if (0 < shared_data.our_robot_gl_size()) //持ってる時
-                {
-                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::OUR_ROBOT_GL)]);
-                    set_target->our_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t i = 0; i < shared_data.our_robot_gl_size(); i++)
-                    {
-                        auto itr = shared_data.mutable_our_robot_gl(i);
-                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
-                    }
-                }
-                if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
-                {
-                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::ENEMY_ROBOT_GL)]);
-                    set_target->enemy_robot_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t i = 0; i < shared_data.enemy_robot_gl_size(); i++)
-                    {
-                        auto itr = shared_data.mutable_enemy_robot_gl(i);
-                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
-                    }
-                }
-                if (0 < shared_data.black_pole_gl_size()) //持ってる時
-                {
-                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BLACK_POLE_GL)]);
-                    set_target->black_pole_gl_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t i = 0; i < shared_data.black_pole_gl_size(); i++)
-                    {
-                        auto itr = shared_data.mutable_black_pole_gl(i);
-                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
-                    }
-                }
-                if (0 < shared_data.target_pos_vec_size()) //持ってる時
-                {
-                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::TARGET_POS_VEC)]);
-                    set_target->target_pos_vec_.clear(); //どうせまた格納されるのでshrink_to_fitしない。
-                    for (int32_t i = 0; i < shared_data.target_pos_vec_size(); i++)
-                    {
-                        auto itr = shared_data.mutable_target_pos_vec(i);
-                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
-                    }
-                }
-            };
-            client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
-            server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select,1, ip_address);
+#endif //INFOSHARE_DEBUG
         }
-        int32_t InfoShare::sendCommonInfo(const Pos2DCf& ball_gl_cf,const Pos2DCf& self_pos_cf,const std::vector<Pos2D>& our_robot_gl,const std::vector<Pos2D>& enemy_robot_gl,const std::vector<Pos2D>& black_pole_gl,const int fps,const  std::string& message,const std::string& behavior_name,const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+
+        int32_t InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
-            auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void {
-
+            auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
+            {
                 target.set_pos_x(input.x);
                 target.set_pos_y(input.y);
                 target.set_pos_theta(input.th);
             };
 
-            auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void {
-                char c = std::clamp(static_cast<int32_t>(input.cf),0,100);
+            auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void
+            {
+                char c = std::clamp(static_cast<int8_t>(input.cf), static_cast<int8_t>(0), static_cast<int8_t>(100));
                 target.set_confidence(std::string{c}.c_str());
                 target.set_is_detect(input.is_detect);
                 target.mutable_position()->set_pos_x(input.pos.x);
                 target.mutable_position()->set_pos_y(input.pos.y);
                 target.mutable_position()->set_pos_theta(input.pos.th);
             };
-            
 
+            Pos2DCfsetter(ball_gl_cf, *(sharing_data.mutable_ball_gl_cf()));
+            Pos2DCfsetter(ball_gl_cf, *(sharing_data.mutable_self_pos_cf()));
+            for (const auto &input : our_robot_gl)
+            {
+                auto target_pos2d = sharing_data.add_our_robot_gl();
+                Pos2Dsetter(input, *target_pos2d);
+            }
+            for (const auto &input : enemy_robot_gl)
+            {
+                auto target_pos2d = sharing_data.add_enemy_robot_gl();
+                Pos2Dsetter(input, *target_pos2d);
+            }
+            for (const auto &input : black_pole_gl)
+            {
+                auto target_pos2d = sharing_data.add_black_pole_gl();
+                Pos2Dsetter(input, *target_pos2d);
+            }
+            for (const auto &input : target_pos_vec)
+            {
+                auto target_pos2d = sharing_data.add_target_pos_vec();
+                Pos2Dsetter(input, *target_pos2d);
+            }
+            std::string s = sharing_data.SerializeAsString();
+            client_->send(std::move(s));
+            return 0;
         }
 
-//-----------simple getter--------------------------------------------------------------------
+        //----------------------------simple getter--------------------------------------------------------
         int32_t InfoShare::getOurcolor() const noexcept
         {
             return our_color_;
@@ -374,6 +406,5 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->target_pos_vec_);
             }
         }
-
     }
 }

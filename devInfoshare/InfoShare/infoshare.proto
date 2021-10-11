@@ -43,5 +43,8 @@ message SharingData {
   repeated Pos2D enemy_robot_gl = 13; 
   repeated Pos2D black_pole_gl = 14; 
   repeated Pos2D target_pos_vec = 15; 
+
+  optional Pos2DCf ball_gl_cf = 16;
+  optional Pos2DCf self_pos_cf = 17;
 }
 
