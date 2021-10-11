@@ -8,13 +8,15 @@ int main(int argc, char const *argv[])
 {
 
     UDPClient client("127.0.0.1", 7120, SocketMode::broadcast_mode);
-    for (int j = 99; j >= 5; --j)
+    for (int j = 6; j >= 5; --j)
     {
         CitbrainsMessage::SharingData proto;
         char i = static_cast<char>((unsigned char)j);
         std::string s = {i};
         char c = 2;
-        proto.set_id(std::string{c}.c_str());
+
+        proto.set_id(std::string{static_cast<char>((unsigned char)c)}.c_str());
+
         char ucc = 5;
         proto.set_team_color(std::string{(char)ucc}.c_str());
         proto.set_fps(s.c_str());
@@ -29,7 +31,7 @@ int main(int argc, char const *argv[])
         proto.set_command(st);
         proto.set_current_behavior_name(st);
         //-------------------
-        proto.set_is_detect_ball(true);
+        // proto.set_is_detect_ball(true);
 
         CitbrainsMessage::Pos2D pos2d;
         CitbrainsMessage::Pos2DCf pos2dcf;

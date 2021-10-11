@@ -10,15 +10,16 @@ option(INFOSHARE_DEBUG "debugging infoshare" OFF)
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS infoshare.proto)
 
-set(InfoShareSrc test/main.cpp infoshare.cpp infoshare.h hajime_command.h try/sUDPSocket.hpp)
+set(InfoShareSrc  infoshare.cpp infoshare.h hajime_command.h try/sUDPSocket.hpp)
 
 if(NORMAL)
-    add_executable(main ${InfoShareSrc} ${PROTO_SRCS} ${PROTO_HDRS})
+    add_executable(main test/main.cpp ${InfoShareSrc} ${PROTO_SRCS} ${PROTO_HDRS})
     add_executable(sender test/sender.cpp ${PROTO_SRCS} ${PROTO_HDRS})
-    add_executable(receiver test/receiver.cpp ${PROTO_SRCS} ${PROTO_HDRS})
+    add_executable(receiver test/receiver.cpp ${InfoShareSrc} ${PROTO_SRCS} ${PROTO_HDRS})
     add_executable(test_dict test/check_dict_class.cpp infoshare.cpp  infoshare.h ${PROTO_SRCS} ${PROTO_HDRS})
     if(INFOSHARE_DEBUG)
         target_compile_definitions(main PRIVATE "INFOSHARE_DEBUG=1")
+        target_compile_definitions(receiver PRIVATE "INFOSHARE_DEBUG=1")
     endif()
     set(set_option_target main sender receiver test_dict)
 
