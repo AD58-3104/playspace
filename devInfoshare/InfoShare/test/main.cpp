@@ -25,7 +25,7 @@ int main(int argc, char const *argv[])
     std::this_thread::sleep_for(4000ms);
     for (int i = 1; i <= 4;i++)
     {
-        std::cout << "------------this is no " << i << " --------------------" << std::endl;
+        std::cout << "------------this is no " << i << " infomation --------------------" << std::endl;
         std::cout << "cf_own :" << info.getcf_own(i) << std::endl;
         std::cout << "votage :" << info.getvoltage(i) << std::endl;
         std::cout << "cf_ball :" << info.getcf_ball(i) << std::endl;

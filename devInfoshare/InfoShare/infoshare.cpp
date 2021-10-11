@@ -3,6 +3,47 @@
 #include <boost/asio.hpp>
 #include <ctime>
 using namespace std::literals::chrono_literals;
+
+#ifdef INFOSHARE_DEBUG
+auto debugPrint = [](CitbrainsMessage::SharingData data)
+{
+    try
+    {
+        std::cerr << "debug print " << std::endl;
+        std::string s = data.cf_ball();
+        if (data.has_cf_ball())
+            std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
+        int i = data.mutable_cf_ball()->at(0);
+        std::cout << "int " << i << std::endl;
+        if (data.has_is_detect_ball())
+            std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
+        if (data.has_cf_ball())
+            std::cout << 1 << (static_cast<int32_t>(data.cf_ball().at(0))) << std::endl;
+        if (data.has_cf_own())
+            std::cout << 2 << (static_cast<int32_t>(data.cf_own().at(0))) << std::endl;
+        if (data.has_status())
+            std::cout << 3 << (static_cast<int32_t>(data.status().at(0))) << std::endl;
+        if (data.has_fps())
+            std::cout << 4 << (static_cast<int32_t>(data.fps().at(0))) << std::endl;
+        if (data.has_voltage())
+            std::cout << 5 << (static_cast<int32_t>(data.voltage().at(0))) << std::endl;
+        if (data.has_temperature())
+            std::cout << 6 << (static_cast<int32_t>(data.temperature().at(0))) << std::endl;
+        if (data.has_highest_servo())
+            std::cout << 7 << (static_cast<int32_t>(data.highest_servo().at(0))) << std::endl;
+        if (data.has_command())
+            std::cout << 8 << (static_cast<int32_t>(data.command().at(0))) << std::endl;
+        if (data.has_current_behavior_name())
+            std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
+    }
+    catch (const std::runtime_error &e)
+    {
+        std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
+        std::cout << e.what() << std::endl;
+    }
+};
+#endif // INFOSHARE_DEBUG
+
 namespace Citbrains
 {
     namespace infosharemodule
@@ -41,7 +82,7 @@ namespace Citbrains
         // }
         void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select, const int32_t self_id, const int32_t our_color, const std::string ip_address, int32_t port, float (*timefunc)())
         {
-            assert(self_id >= 1); //self id must be 1 or more
+            assert((NUM_PLAYERS >= self_id) || (self_id >= 1)); //self id must be 1 or more and NUMPLAYERS or low
             static bool already_setup = false;
             if (already_setup)
             {
@@ -76,11 +117,20 @@ namespace Citbrains
                         std::string s(std::move(data));
                         CitbrainsMessage::SharingData shared_data;
                         shared_data.ParseFromString(s);
-                        auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0))]; //atだからout of rangeで落ちる。
+#ifdef INFOSHARE_DEBUG
+                        static int32_t received_num = 0;
+                        received_num++;
+                        std::cerr << "number of received " << received_num << std::endl;
+                        debugPrint(shared_data);
+                        std::cerr << "id is " << static_cast<uint32_t>(shared_data.id().at(0)) - 1 << std::endl;
+#endif                                                                                                          // INFOSHARE_DEBUG
+                        auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0)) - 1]; //atだからout of rangeで落ちる。
                         //------------data set----------------------------------------------------------------------
                         set_target->setRecv_time();
                         if (shared_data.has_cf_ball())
                             set_target->cf_ball_.store(static_cast<uint32_t>(shared_data.cf_ball().at(0)));
+                        if (shared_data.has_cf_own())
+                            set_target->cf_own_.store(static_cast<uint32_t>(shared_data.cf_own().at(0)));
                         if (shared_data.has_status())
                             set_target->status_.store(static_cast<uint32_t>(shared_data.status().at(0)));
                         if (shared_data.has_fps())
@@ -227,7 +277,7 @@ namespace Citbrains
 
         [[nodiscard]] int32_t InfoShare::getcf_own(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -238,7 +288,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getcf_ball(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -249,7 +299,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getstatus(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -260,7 +310,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getvoltage(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -271,7 +321,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getfps(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -282,7 +332,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::gettemperature(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -293,7 +343,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::gethighest_servo(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -304,7 +354,7 @@ namespace Citbrains
         }
         [[nodiscard]] bool InfoShare::getis_detect_ball(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return false;
             }
@@ -315,7 +365,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getstrategy_no(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -326,7 +376,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getcommand(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -337,7 +387,7 @@ namespace Citbrains
         }
         [[nodiscard]] int32_t InfoShare::getcurrent_behavior_name(const int32_t &id) const noexcept
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0;
             }
@@ -348,7 +398,7 @@ namespace Citbrains
         }
         [[nodiscard]] float InfoShare::getrecv_time(const int32_t &id) const
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return 0.0;
             }
@@ -360,7 +410,7 @@ namespace Citbrains
         }
         [[nodiscard]] std::vector<Pos2D> InfoShare::getour_robot_gl(const int32_t &id) const
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return {Pos2D()};
             }
@@ -372,7 +422,7 @@ namespace Citbrains
         }
         [[nodiscard]] std::vector<Pos2D> InfoShare::getenemy_robot_gl(const int32_t &id) const
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return {Pos2D()};
             }
@@ -384,7 +434,7 @@ namespace Citbrains
         }
         [[nodiscard]] std::vector<Pos2D> InfoShare::getblack_pole_gl(const int32_t &id) const
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return {Pos2D()};
             }
@@ -396,7 +446,7 @@ namespace Citbrains
         }
         [[nodiscard]] std::vector<Pos2D> InfoShare::gettarget_pos_vec(const int32_t &id) const
         {
-            if (id == self_id_)
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
                 return {Pos2D()};
             }
