@@ -21,7 +21,10 @@ int main(int argc, char const *argv[])
     info.setup(Citbrains::Udpsocket::SocketMode::unicast_mode, id, COLOR_MAGENTA, "127.0.0.1", 7110);
     assert(info.getOurcolor() == COLOR_MAGENTA);
     assert(info.getID() == id);
-    cout << "time " << info.getTime() << endl;
+    Pos2D pos2d(50,50,90);
+    Pos2DCf pos2dcf(pos2d,30,0);
+    std::vector<Pos2D> v{pos2d};
+    info.sendCommonInfo(pos2dcf,pos2dcf,v,v,v,20,"saiaku na debug","mendokusa",v, );
     std::this_thread::sleep_for(4000ms);
     for (int i = 1; i <= 4;i++)
     {

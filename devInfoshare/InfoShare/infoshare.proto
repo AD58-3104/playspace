@@ -1,7 +1,7 @@
 syntax = "proto2";
 
 package CitbrainsMessage;
-option optimize_for = CODE_SIZE; //これどうなんだっけわすれた
+// option optimize_for = CODE_SIZE; //これどうなんだっけわすれた
 
 message Pos2D {
   required sint32 pos_x = 1;  //intにして詰める。100倍して100で割る(暫定)
@@ -46,5 +46,7 @@ message SharingData {
 
   optional Pos2DCf ball_gl_cf = 16;
   optional Pos2DCf self_pos_cf = 17;
+
+  optional string command_st = 18;
 }
 

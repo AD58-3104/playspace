@@ -110,7 +110,7 @@ namespace Citbrains
                 receivedDataHandler_ = [&](std::string &&data) { //全てキャプチャするのは嫌だが取り敢えずこうしておく。参照の寿命とラムダの寿命は同じ。
                                                                  //メンバにする方が良いかな。多分そっちの方が良いな
 #ifdef INFOSHARE_DEBUG
-                    std::cout << "receive data" << std::endl;
+                    // std::cout << "receive data" << std::endl;
                     try
                     {
 #endif //INFOSHARE_DEBUG
@@ -118,33 +118,117 @@ namespace Citbrains
                         CitbrainsMessage::SharingData shared_data;
                         shared_data.ParseFromString(s);
 #ifdef INFOSHARE_DEBUG
-                        static int32_t received_num = 0;
+                        static int32_t received_num = 1;
+                        if(static_cast<int32_t>(shared_data.cf_own().at(0)) != received_num)
+                            std::cout << "num is not equaled cf_own " << static_cast<int32_t>(shared_data.cf_own().at(0)) << "and" << received_num<< std::endl;
                         received_num++;
                         std::cerr << "number of received " << received_num << std::endl;
-                        debugPrint(shared_data);
+                        std::cout << shared_data.DebugString() << std::endl;
+                        // debugPrint(shared_data);
                         std::cerr << "id is " << static_cast<uint32_t>(shared_data.id().at(0)) - 1 << std::endl;
 #endif                                                                                                          // INFOSHARE_DEBUG
                         auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0)) - 1]; //atだからout of rangeで落ちる。
                         //------------data set----------------------------------------------------------------------
                         set_target->setRecv_time();
                         if (shared_data.has_cf_ball())
-                            set_target->cf_ball_.store(static_cast<uint32_t>(shared_data.cf_ball().at(0)));
+                        {
+                            if (shared_data.cf_ball().size() == 0)
+                            {
+                                set_target->cf_ball_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->cf_ball_.store(static_cast<uint32_t>(shared_data.cf_ball().at(0)));
+                            }
+                        }
                         if (shared_data.has_cf_own())
-                            set_target->cf_own_.store(static_cast<uint32_t>(shared_data.cf_own().at(0)));
+                        {
+                            if (shared_data.cf_own().size() == 0)
+                            {
+                                set_target->cf_own_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->cf_own_.store(static_cast<uint32_t>(shared_data.cf_own().at(0)));
+                            }
+                        }
                         if (shared_data.has_status())
-                            set_target->status_.store(static_cast<uint32_t>(shared_data.status().at(0)));
+                        {
+                            if (shared_data.status().size() == 0)
+                            {
+                                set_target->status_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->status_.store(static_cast<uint32_t>(shared_data.status().at(0)));
+                            }
+                        }
                         if (shared_data.has_fps())
-                            set_target->fps_.store(static_cast<uint32_t>(shared_data.fps().at(0)));
+                        {
+                            if (shared_data.fps().size() == 0)
+                            {
+                                set_target->fps_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->fps_.store(static_cast<uint32_t>(shared_data.fps().at(0)));
+                            }
+                        }
                         if (shared_data.has_voltage())
-                            set_target->voltage_.store(static_cast<uint32_t>(shared_data.voltage().at(0)));
+                        {
+                            if (shared_data.voltage().size() == 0)
+                            {
+                                set_target->voltage_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->voltage_.store(static_cast<uint32_t>(shared_data.voltage().at(0)));
+                            }
+                        }
                         if (shared_data.has_temperature())
-                            set_target->temperature_.store(static_cast<uint32_t>(shared_data.temperature().at(0)));
+                        {
+                            if (shared_data.temperature().size() == 0)
+                            {
+                                set_target->temperature_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->temperature_.store(static_cast<uint32_t>(shared_data.temperature().at(0)));
+                            }
+                        }
                         if (shared_data.has_highest_servo())
-                            set_target->highest_servo_.store(static_cast<uint32_t>(shared_data.highest_servo().at(0)));
+                        {
+                            if (shared_data.highest_servo().size() == 0)
+                            {
+                                set_target->highest_servo_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->highest_servo_.store(static_cast<uint32_t>(shared_data.highest_servo().at(0)));
+                            }
+                        }
                         if (shared_data.has_command())
-                            set_target->command_.store(static_cast<uint32_t>(shared_data.command().at(0)));
+                        {
+                            if (shared_data.command().size() == 0)
+                            {
+                                set_target->command_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->command_.store(static_cast<uint32_t>(shared_data.command().at(0)));
+                            }
+                        }
                         if (shared_data.has_current_behavior_name())
-                            set_target->current_behavior_name_.store(static_cast<uint32_t>(shared_data.current_behavior_name().at(0)));
+                        {
+                            if (shared_data.current_behavior_name().size() == 0)
+                            {
+                                set_target->current_behavior_name_.store(static_cast<uint32_t>(0));
+                            }
+                            else
+                            {
+                                set_target->current_behavior_name_.store(static_cast<uint32_t>(shared_data.current_behavior_name().at(0)));
+                            }
+                        }
                         if (shared_data.has_is_detect_ball())
                             set_target->is_detect_ball_.store(shared_data.is_detect_ball());
                         //--------object data set-------------------------------------------------------------------

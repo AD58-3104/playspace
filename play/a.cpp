@@ -22,8 +22,7 @@ struct st
     }
 };
 
-void
-f(string s)
+void f(string s)
 {
     cout << "f is called string " << endl;
 }
@@ -34,13 +33,12 @@ void f(const char *s)
 
 int main(int argc, const char **argv)
 {
-    string s("inooooo");
-    f(s.c_str());
-    st(s.c_str());
-    cout << "-------------\n";
-    f("inoue satoshi");
-    f("inoue"s);
-    st("aaaaa");
-    st("aaa"s);
+    char c = 0;
+    string s{c};
+    
+    int32_t i = s.at(0);
+    cout << "size "<< s.size() << endl;
+    cout << s << endl;
+    cout << i << endl;
     return 0;
 }
