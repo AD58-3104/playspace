@@ -26,16 +26,20 @@ message Pos2DCf {
 
 
 message SharingData {
-  optional bytes id  = 1 ;  
+  enum TeamColor{
+    COLOR_OFFSET = 1; //0で送るとprotobufで面倒な処理が必要なのでそのオフセット
+  }
+  required bytes id  = 1 ;  
   optional bytes cf_own = 2; //ここ2つはpos2dcfの中に入れるべきかな
   optional bytes cf_ball = 3; //
   optional bytes status = 4;
-  optional bytes fps = 5;
+  optional bytes fps = 5;     //未実装
   optional bytes voltage = 6;     //今は使ってない。
   optional bytes temperature = 7;
   optional bytes highest_servo = 8;
-  optional bytes command = 9;
+  optional bytes command = 9; 
   optional bytes current_behavior_name = 10;
+  required bytes team_color = 19;
   
   optional bool is_detect_ball = 11;
 

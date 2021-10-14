@@ -48,7 +48,6 @@ namespace Citbrains
 {
     namespace infosharemodule
     {
-        //デフォルトの時間関数を使いたい場合は引数無し
         //必ずsetupを呼ぶ。
         InfoShare::InfoShare()
             : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false)
@@ -61,12 +60,11 @@ namespace Citbrains
 
         void InfoShare::terminate()
         {
-            //clientとserverのio_serviceをstopする為のterminateを呼ぶ。
             terminated_ = true;
             server_->terminate();
             client_->terminate();
         }
-        void InfoShare::changeColor(const int32_t color)
+        void InfoShare::changeColor(const int32_t &color)
         {
             our_color_ = color;
         }
@@ -80,7 +78,7 @@ namespace Citbrains
         //         itr->timeFunc_ = func;
         //     }
         // }
-        void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select, const int32_t self_id, const int32_t our_color, const std::string ip_address, int32_t port, float (*timefunc)())
+        void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select, const int32_t self_id, const int32_t our_color, const std::string ip_address, float (*timefunc)())
         {
             assert((NUM_PLAYERS >= self_id) || (self_id >= 1)); //self id must be 1 or more and NUMPLAYERS or low
             static bool already_setup = false;
@@ -90,13 +88,11 @@ namespace Citbrains
                 return;
             }
             already_setup = true;
-#ifdef INFOSHARE_DEBUG
-            std::cout << "debug in" << std::endl;
             try
             {
-#endif //INFOSHARE_DEBUG
                 assert((0 <= self_id) && (self_id < 4));
                 self_id_ = self_id;
+                int32_t port = COMM_INFO_PORT0 + self_id - 1;
                 assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN)); //color must be magenta or cyan
                 our_color_ = our_color;
                 if (timefunc != nullptr)
@@ -110,23 +106,22 @@ namespace Citbrains
                 receivedDataHandler_ = [&](std::string &&data) { //全てキャプチャするのは嫌だが取り敢えずこうしておく。参照の寿命とラムダの寿命は同じ。
                                                                  //メンバにする方が良いかな。多分そっちの方が良いな
 #ifdef INFOSHARE_DEBUG
-                    // std::cout << "receive data" << std::endl;
                     try
                     {
 #endif //INFOSHARE_DEBUG
                         std::string s(std::move(data));
                         CitbrainsMessage::SharingData shared_data;
                         shared_data.ParseFromString(s);
+                        if (static_cast<int32_t>(shared_data.team_color().at(0)) != (our_color_ + CitbrainsMessage::SharingData::COLOR_OFFSET))
+                            return;  //他チームの情報は無視
+                        if (self_id_ == static_cast<int32_t>(shared_data.id().at(0))) 
+                            return;  //自分の情報は無視
 #ifdef INFOSHARE_DEBUG
                         static int32_t received_num = 1;
-                        if(static_cast<int32_t>(shared_data.cf_own().at(0)) != received_num)
-                            std::cout << "num is not equaled cf_own " << static_cast<int32_t>(shared_data.cf_own().at(0)) << "and" << received_num<< std::endl;
                         received_num++;
                         std::cerr << "number of received " << received_num << std::endl;
                         std::cout << shared_data.DebugString() << std::endl;
-                        // debugPrint(shared_data);
-                        std::cerr << "id is " << static_cast<uint32_t>(shared_data.id().at(0)) - 1 << std::endl;
-#endif                                                                                                          // INFOSHARE_DEBUG
+#endif // INFOSHARE_DEBUG
                         auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0)) - 1]; //atだからout of rangeで落ちる。
                         //------------data set----------------------------------------------------------------------
                         set_target->setRecv_time();
@@ -274,7 +269,7 @@ namespace Citbrains
                         }
 #ifdef INFOSHARE_DEBUG
                     }
-                    catch (boost::system::system_error &e)
+                    catch (std::system_error &e)
                     {
                         std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
                         std::cerr << e.what() << std::endl;
@@ -284,27 +279,25 @@ namespace Citbrains
                 };
                 client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
                 server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, 1, ip_address);
-#ifdef INFOSHARE_DEBUG
             }
-            catch (boost::system::system_error &e)
+            catch (std::system_error &e)
             {
                 std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
                 std::cerr << e.what() << std::endl;
             }
-#endif //INFOSHARE_DEBUG
         }
 
         int32_t InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
-            auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
+            static auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
             {
                 target.set_pos_x(input.x);
                 target.set_pos_y(input.y);
                 target.set_pos_theta(input.th);
             };
 
-            auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void
+            static auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void
             {
                 char c = std::clamp(static_cast<int8_t>(input.cf), static_cast<int8_t>(0), static_cast<int8_t>(100));
                 target.set_confidence(std::string{c}.c_str());
@@ -336,6 +329,19 @@ namespace Citbrains
                 auto target_pos2d = sharing_data.add_target_pos_vec();
                 Pos2Dsetter(input, *target_pos2d);
             }
+            char status = (state.Posture != STATE_POSTURE_STAND) ? 0x01 : 0x00; // 転倒のフラグ TODO 読みやすくする
+            if (state.Active == STATE_IDLE)
+                status |= 0x02;                                   // アイドル状態かどうかのフラグ
+            char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
+            char temperature = 0xff & state.Temperature;          // モータの温度(degree)
+            char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
+            
+            sharing_data.set_id(std::string{static_cast<char>(self_id_)});
+            sharing_data.set_team_color(std::string{static_cast<char>(CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
+            sharing_data.set_status(std::string{static_cast<char>(status)});
+            sharing_data.set_voltage(std::string{static_cast<char>(voltage)});
+            sharing_data.set_temperature(std::string{static_cast<char>(temperature)});
+            sharing_data.set_highest_servo(std::string{static_cast<char>(highest_servo)});
             std::string s = sharing_data.SerializeAsString();
             client_->send(std::move(s));
             return 0;

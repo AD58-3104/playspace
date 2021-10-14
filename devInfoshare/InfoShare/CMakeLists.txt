@@ -14,8 +14,9 @@ set(InfoShareSrc test/main.cpp infoshare.cpp infoshare.h hajime_command.h try/sU
 if(NORMAL)
     add_executable(main ${InfoShareSrc} ${PROTO_SRCS} ${PROTO_HDRS})
     add_executable(sender test/sender.cpp ${PROTO_SRCS} ${PROTO_HDRS})
+    add_executable(receiver test/receiver.cpp ${PROTO_SRCS} ${PROTO_HDRS})
     target_compile_definitions(main PRIVATE "INFOSHARE_DEBUG=1")
-    set(set_option_target main sender)
+    set(set_option_target main sender receiver)
 
     foreach(target ${set_option_target})
         target_compile_features(${target} PUBLIC cxx_std_17)

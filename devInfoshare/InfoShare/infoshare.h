@@ -19,21 +19,21 @@ namespace Citbrains
 {
     namespace infosharemodule
     {
-/*
+        /*
         TODO!!!!
         commandstring 
         behavierstringをここにハードコーディングする
         
         
         */
-//inli{ne変数を使っているのでc++17以上でしかコンパイル出来ない。
-        using namespace Udpsocket; 
+        //inli{ne変数を使っているのでc++17以上でしかコンパイル出来ない。
+        using namespace Udpsocket;
 #ifdef __cpp_inline_variables
         // static_assert(false,"this environment has inline variables");確認用
         inline static constexpr int32_t NUM_PLAYERS = 4;
         inline static constexpr int32_t COMM_INFO_PORT0 = 7110; //!< CommInfoで使用するPORTのはじめのポート
                                                                 //1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
-        #define UDPSOCKET_MULTICAST_ADDRESS "224.0.0.169" 
+#define UDPSOCKET_MULTICAST_ADDRESS "224.0.0.169"
         inline static constexpr int32_t MAX_COMM_INFO_OBJ = 7; //!< 共有するオブジェクトの最大値(はじめはボール)
         inline static constexpr int32_t MAX_STRING = 42;       //!< メッセージの最大値
         inline static constexpr int32_t MAX_BEHAVIOR_STRING = 32;
@@ -48,8 +48,6 @@ namespace Citbrains
         inline static constexpr int32_t MAX_MAGENTA_OBJECTS = 3;                //!< マゼンタロボットの数
         inline static constexpr int32_t MAX_CYAN_OBJECTS = MAX_MAGENTA_OBJECTS; //!< シアンロボットの数
 
-        inline static constexpr int32_t NO_MAGENTA = 0; //!< マゼンタの番号(色の番号とは異なる)
-        inline static constexpr int32_t NO_CYAN = 1;    //!< シアンの番号
 #else
         //jetsonで無理だったら実装する.書くと長すぎて見にくいので.
         static_assert(false, "this environment doesn't have inline variables");
@@ -68,7 +66,7 @@ namespace Citbrains
             //scoped_lockして
             OtherRobotInfomation(int32_t id, float (*timeFunc)()) : id_(id), timeFunc_(timeFunc)
             {
-                assert((0 <= id) && (id <= 3));//内部で扱うidは0 indexed
+                assert((0 <= id) && (id <= 3)); //内部で扱うidは0 indexed
                 for (int32_t i = 0; i < static_cast<int32_t>(MutexTag::LENGTH); ++i)
                 {
                     dataMutexes_.emplace_back();
@@ -87,7 +85,10 @@ namespace Citbrains
                 {
                     recv_time_ = timeFunc_();
                 }
-                recv_time_ = (float)time(0);
+                else
+                {
+                    recv_time_ = (float)time(0);
+                }
             }
 
             const int32_t id_; //idは0スタートで管理する
@@ -96,10 +97,10 @@ namespace Citbrains
 
             //------------atomic datas----------------
             std::atomic_uint32_t cf_own_ = 0;
-            std::atomic_uint32_t cf_ball_ = 0; //fastにした方が良いのかもしれない
-            std::atomic_uint32_t status_ = 0;  //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべき。
+            std::atomic_uint32_t cf_ball_ = 0; 
+            std::atomic_uint32_t status_ = 0;  //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
             std::atomic_uint32_t fps_ = 0;
-            std::atomic_uint32_t voltage_ = 0; //使ってない。
+            std::atomic_uint32_t voltage_ = 0; 
             std::atomic_uint32_t temperature_ = 0;
             std::atomic_uint32_t highest_servo_ = 0;
             std::atomic_bool is_detect_ball_ = false;
@@ -107,8 +108,8 @@ namespace Citbrains
             std::atomic_uint32_t command_ = 0;               //文字列は長いので数字で管理する    returnで返すdataはどっかで文字列に変換して返すべき
             std::atomic_uint32_t current_behavior_name_ = 0; //上に同じく
             //-------------non atomic datas---------------
-            float recv_time_ = 0.0;           //これ整数でよくね？？
-            std::vector<Pos2D> our_robot_gl_; //扱いが良く分からんやつら
+            float recv_time_ = 0.0;           
+            std::vector<Pos2D> our_robot_gl_; //TODO　残り二つを追加するのとcf_ownとかを消す。
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
             std::vector<Pos2D> target_pos_vec_;
@@ -131,7 +132,7 @@ namespace Citbrains
             [[nodiscard]] int32_t getvoltage(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t gettemperature(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t gethighest_servo(const int32_t &id) const noexcept;
-            [[nodiscard]] bool    getis_detect_ball(const int32_t &id) const noexcept;
+            [[nodiscard]] bool getis_detect_ball(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getstrategy_no(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getcommand(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getcurrent_behavior_name(const int32_t &id) const noexcept;
@@ -144,14 +145,14 @@ namespace Citbrains
             //-------------------------------------------------------------------------
 
             void terminate();
-            void changeColor(const int32_t color);
+            void changeColor(const int32_t& color);
             // void setTimeFunc(float (*func)());
-            void setup(const Udpsocket::SocketMode::udpsocketmode_t select_mode,const int32_t self_id, const int32_t our_color, const std::string ip_address = UDPSOCKET_MULTICAST_ADDRESS, const int32_t port = COMM_INFO_PORT0, float (*func)() = nullptr);
+            void setup(const Udpsocket::SocketMode::udpsocketmode_t select_mode, const int32_t self_id, const int32_t our_color, const std::string ip_address = UDPSOCKET_MULTICAST_ADDRESS, float (*func)() = nullptr);
             float getTime() const; //getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
             //TODO:名前変える
-            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (const Pos2DCf& ball_gl_cf,const Pos2DCf& self_pos_cf,const std::vector<Pos2D> &our_robot_gl,const std::vector<Pos2D> &enemy_robot_gl,const std::vector<Pos2D> &black_pole_gl,const int fps,const std::string& message,const  std::string& behavior_name,const std::vector<Pos2D> &target_pos_vec, RobotStatus state); 
+            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
 
         private:
             int32_t self_id_;
@@ -161,9 +162,7 @@ namespace Citbrains
 
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
             std::function<void(std::string &&)> receivedDataHandler_;
-            //server-----------------------------------------------
             std::unique_ptr<UDPServer> server_;
-            //client-----------------------------------------------
             std::unique_ptr<UDPClient> client_;
         };
 
@@ -172,7 +171,7 @@ namespace Citbrains
 
 /*
  * memo
- * IDは内部での扱いは0スタート、インターフェースでは1スタートとする。 <-これ流石に全部0-indexedに統一しないとまずくない？
+ * IDは内部での扱いは0スタート、インターフェースでは1スタートとする。
  * hplから使っている必要なインターフェース
  * setup().多分IDと色とアドレスを設定する
  * terminate()普通にterminate
@@ -185,6 +184,10 @@ namespace Citbrains
  * get_command()コマンドの文字列返す
  * target_pos_vec(Pos2Dのやつ)のgetter.
  * 
+ * これout of rangeで落ちるようにしてるけど良いのかな
  * 
+ * 
+ * state
+ * 転倒　アイドル状態　電圧　温度　温度の高いモータ
  * 
  */

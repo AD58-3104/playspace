@@ -18,13 +18,18 @@ using namespace std::literals::chrono_literals;
 int main(int argc, char const *argv[])
 {
     int id = 1;
-    info.setup(Citbrains::Udpsocket::SocketMode::unicast_mode, id, COLOR_MAGENTA, "127.0.0.1", 7110);
+    info.setup(Citbrains::Udpsocket::SocketMode::broadcast_mode, id, COLOR_MAGENTA, "127.0.0.1");
     assert(info.getOurcolor() == COLOR_MAGENTA);
     assert(info.getID() == id);
-    Pos2D pos2d(50,50,90);
+    Pos2D pos2d(50.0,50.0,90.0);
     Pos2DCf pos2dcf(pos2d,30,0);
     std::vector<Pos2D> v{pos2d};
-    info.sendCommonInfo(pos2dcf,pos2dcf,v,v,v,20,"saiaku na debug","mendokusa",v, );
+    RobotStatus status;
+    status.Temperature = 30;
+    status.servo1temp = (45 << 8);
+    status.MotorVoltage = (12 << 3);
+    status.Posture = STATE_POSTURE_STAND;
+    info.sendCommonInfo(pos2dcf,pos2dcf,v,v,v,20,"saiaku na debug","mendokusa",v,status );
     std::this_thread::sleep_for(4000ms);
     for (int i = 1; i <= 4;i++)
     {
