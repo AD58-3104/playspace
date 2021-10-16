@@ -33,6 +33,7 @@ namespace Citbrains
         inline static constexpr int32_t NUM_PLAYERS = 4;
         inline static constexpr int32_t COMM_INFO_PORT0 = 7110; //!< CommInfoで使用するPORTのはじめのポート
                                                                 //1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
+        inline static constexpr int32_t BROADCAST_PORT = 7120;
 #define UDPSOCKET_MULTICAST_ADDRESS "224.0.0.169"
         inline static constexpr int32_t MAX_COMM_INFO_OBJ = 7; //!< 共有するオブジェクトの最大値(はじめはボール)
         inline static constexpr int32_t MAX_STRING = 42;       //!< メッセージの最大値
@@ -167,7 +168,7 @@ namespace Citbrains
             int32_t our_color_;
             float (*timeFunc_)();
             bool terminated_;
-
+            std::string toBroadcastIP(std::string);
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
             std::function<void(std::string &&)> receivedDataHandler_;
             std::unique_ptr<UDPServer> server_;

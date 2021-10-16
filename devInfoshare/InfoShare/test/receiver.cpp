@@ -1,3 +1,4 @@
+#include "infoshare.h"
 #include "sUDPSocket.hpp"
 using namespace Citbrains::Udpsocket;
 using namespace std;
@@ -6,12 +7,12 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
 
-    UDPServer server(7110,[](std::string&& s)->void{
+    UDPServer server(7111,[](std::string&& s)->void{
         CitbrainsMessage::SharingData data;
         data.ParseFromString(std::string(std::move(s)));
         std::cout << data.DebugString() << std::endl;
         return;
-    }, SocketMode::unicast_mode);
+    }, SocketMode::broadcast_mode,1,"127.0.0.1");
 
     std::this_thread::sleep_for(3000ms);
     std::cout << "\n\nend !!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;

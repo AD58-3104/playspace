@@ -279,8 +279,16 @@ namespace Citbrains
                     std::cout << "receive end" << std::endl;
 #endif // INFOSHARE_DEBUG
                 };
-                client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); // TODO そういやブロードキャストでは？
-                server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, 1, ip_address);
+                // if (Citbrains::Udpsocket::SocketMode::broadcast_mode == mode_select)
+                // {
+                //     client_ = std::make_unique<UDPClient>(ip_address, BROADCAST_PORT, mode_select); // TODO そういやブロードキャストでは？
+                //     server_ = std::make_unique<UDPServer>(BROADCAST_PORT, receivedDataHandler_, mode_select, 1, ip_address);
+                // }
+                // else
+                {
+                    client_ = std::make_unique<UDPClient>("127.0.255.255", port, mode_select); // TODO そういやブロードキャストでは？
+                    server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, 1, ip_address);
+                }
             }
             catch (std::system_error &e)
             {
@@ -337,7 +345,8 @@ namespace Citbrains
             char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
             char temperature = 0xff & state.Temperature;          // モータの温度(degree)
             char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
-
+            sharing_data.set_command(message);
+            sharing_data.set_current_behavior_name(behavior_name);
             sharing_data.set_id(std::string{static_cast<char>(self_id_)});
             sharing_data.set_team_color(std::string{static_cast<char>(CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
             sharing_data.set_status(std::string{static_cast<char>(status)});
@@ -347,6 +356,23 @@ namespace Citbrains
             std::string s = sharing_data.SerializeAsString();
             client_->send(std::move(s));
             return 0;
+        }
+        std::string InfoShare::getBroadcastIP(const std::string& ip_address)
+        {
+            // ブロードキャスト用にIPアドレスを変更
+            std::string broadcastip ip_address;
+            try
+            {
+                broadcastip = ip_address;
+                broadcastip.erase(broadcastip.find_last_of("."));
+                broadcastip += ".255";
+            }
+            catch (std::exception)
+            {
+                broadcastip = "255.255.255.255";
+            }
+
+            return broadcastip;
         }
 
         //----------------------------simple getter--------------------------------------------------------
@@ -466,7 +492,7 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->strategy_no_.load();
             }
         }
-        [[nodiscard]] std::string InfoShare::getcommand(const int32_t &id) const 
+        [[nodiscard]] std::string InfoShare::getcommand(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
@@ -478,7 +504,7 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->command_);
             }
         }
-        [[nodiscard]] std::string InfoShare::getcurrent_behavior_name(const int32_t &id) const 
+        [[nodiscard]] std::string InfoShare::getcurrent_behavior_name(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {

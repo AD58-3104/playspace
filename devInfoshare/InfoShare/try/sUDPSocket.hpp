@@ -113,16 +113,16 @@ using namespace std::literals::chrono_literals;
             void send(std::string &&bytestring)
             {
                 std::string send_data = std::move(bytestring);
-                if (allow_broadcast_)
-                {
-                    boost::asio::ip::udp::endpoint destination(boost::asio::ip::address_v4::broadcast(), port_);
-                    socket_.async_send_to(
-                        boost::asio::buffer(send_data),
-                        destination,
-                        [this](const boost::system::error_code &error, size_t bytes_transferred)
-                        { sendHandler(error, bytes_transferred); });
-                }
-                else
+                // if (allow_broadcast_)
+                // {
+                //     boost::asio::ip::udp::endpoint destination(boost::asio::ip::address_v4::broadcast(), port_);
+                //     socket_.async_send_to(
+                //         boost::asio::buffer(send_data),
+                //         destination,
+                //         [this](const boost::system::error_code &error, size_t bytes_transferred)
+                //         { sendHandler(error, bytes_transferred); });
+                // }
+                // else
                 {
                     boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
                     socket_.async_send_to(
@@ -220,8 +220,9 @@ using namespace std::literals::chrono_literals;
                         socket_.set_option(boost::asio::ip::multicast::enable_loopback(true));
                         socket_.set_option(boost::asio::ip::multicast::join_group(boost::asio::ip::address::from_string(multicast_address)));
                     }
-                    else
+                    else if(mode == SocketMode::broadcast_mode)
                     {
+                        socket_.set_option(boost::asio::socket_base::broadcast(true));
                         //TODO:broadcastとunicastは何もない。
                     }
                     server_thread_ = std::make_unique<std::thread>([&]()
