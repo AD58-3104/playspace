@@ -80,7 +80,7 @@ namespace Citbrains
         // }
         void InfoShare::setup(const Udpsocket::SocketMode::udpsocketmode_t mode_select, const int32_t self_id, const int32_t our_color, const std::string ip_address, float (*timefunc)())
         {
-            assert((NUM_PLAYERS >= self_id) || (self_id >= 1)); //self id must be 1 or more and NUMPLAYERS or low
+            assert((NUM_PLAYERS >= self_id) || (self_id >= 1)); // self id must be 1 or more and NUMPLAYERS or low
             static bool already_setup = false;
             if (already_setup)
             {
@@ -93,7 +93,7 @@ namespace Citbrains
                 assert((0 <= self_id) && (self_id < 4));
                 self_id_ = self_id;
                 int32_t port = COMM_INFO_PORT0 + self_id - 1;
-                assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN)); //color must be magenta or cyan
+                assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN)); // color must be magenta or cyan
                 our_color_ = our_color;
                 if (timefunc != nullptr)
                 {
@@ -108,21 +108,21 @@ namespace Citbrains
 #ifdef INFOSHARE_DEBUG
                     try
                     {
-#endif //INFOSHARE_DEBUG
+#endif // INFOSHARE_DEBUG
                         std::string s(std::move(data));
                         CitbrainsMessage::SharingData shared_data;
                         shared_data.ParseFromString(s);
                         if (static_cast<int32_t>(shared_data.team_color().at(0)) != (our_color_ + CitbrainsMessage::SharingData::COLOR_OFFSET))
-                            return;  //他チームの情報は無視
-                        if (self_id_ == static_cast<int32_t>(shared_data.id().at(0))) 
-                            return;  //自分の情報は無視
+                            return; //他チームの情報は無視
+                        if (self_id_ == static_cast<int32_t>(shared_data.id().at(0)))
+                            return; //自分の情報は無視
 #ifdef INFOSHARE_DEBUG
                         static int32_t received_num = 1;
                         received_num++;
                         std::cerr << "number of received " << received_num << std::endl;
                         std::cout << shared_data.DebugString() << std::endl;
-#endif // INFOSHARE_DEBUG
-                        auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0)) - 1]; //atだからout of rangeで落ちる。
+#endif                                                                                                          // INFOSHARE_DEBUG
+                        auto &set_target = robot_data_list_[static_cast<uint32_t>(shared_data.id().at(0)) - 1]; // atだからout of rangeで落ちる。
                         //------------data set----------------------------------------------------------------------
                         set_target->setRecv_time();
                         if (shared_data.has_cf_ball())
@@ -204,24 +204,26 @@ namespace Citbrains
                         }
                         if (shared_data.has_command())
                         {
+                            std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::COMMAND)]);
                             if (shared_data.command().size() == 0)
                             {
-                                set_target->command_.store(static_cast<uint32_t>(0));
+                                set_target->command_ = "";
                             }
                             else
                             {
-                                set_target->command_.store(static_cast<uint32_t>(shared_data.command().at(0)));
+                                set_target->command_ = shared_data.command();
                             }
                         }
                         if (shared_data.has_current_behavior_name())
                         {
+                            std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::CURRENT_BEHAVIOR_NAME)]);
                             if (shared_data.current_behavior_name().size() == 0)
                             {
-                                set_target->current_behavior_name_.store(static_cast<uint32_t>(0));
+                                set_target->command_ = "";
                             }
                             else
                             {
-                                set_target->current_behavior_name_.store(static_cast<uint32_t>(shared_data.current_behavior_name().at(0)));
+                                set_target->command_ = shared_data.current_behavior_name();
                             }
                         }
                         if (shared_data.has_is_detect_ball())
@@ -275,9 +277,9 @@ namespace Citbrains
                         std::cerr << e.what() << std::endl;
                     }
                     std::cout << "receive end" << std::endl;
-#endif //INFOSHARE_DEBUG
+#endif // INFOSHARE_DEBUG
                 };
-                client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); //TODO そういやブロードキャストでは？
+                client_ = std::make_unique<UDPClient>(ip_address, port, mode_select); // TODO そういやブロードキャストでは？
                 server_ = std::make_unique<UDPServer>(port, receivedDataHandler_, mode_select, 1, ip_address);
             }
             catch (std::system_error &e)
@@ -335,7 +337,7 @@ namespace Citbrains
             char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
             char temperature = 0xff & state.Temperature;          // モータの温度(degree)
             char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
-            
+
             sharing_data.set_id(std::string{static_cast<char>(self_id_)});
             sharing_data.set_team_color(std::string{static_cast<char>(CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
             sharing_data.set_status(std::string{static_cast<char>(status)});
@@ -464,26 +466,28 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->strategy_no_.load();
             }
         }
-        [[nodiscard]] int32_t InfoShare::getcommand(const int32_t &id) const noexcept
+        [[nodiscard]] std::string InfoShare::getcommand(const int32_t &id) const 
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
-                return 0;
+                return "";
             }
             else
             {
-                return robot_data_list_[id - 1]->command_.load();
+                std::lock_guard lock(robot_data_list_[id - 1]->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::COMMAND)]);
+                return (robot_data_list_[id - 1]->command_);
             }
         }
-        [[nodiscard]] int32_t InfoShare::getcurrent_behavior_name(const int32_t &id) const noexcept
+        [[nodiscard]] std::string InfoShare::getcurrent_behavior_name(const int32_t &id) const 
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
             {
-                return 0;
+                return "";
             }
             else
             {
-                return robot_data_list_[id - 1]->current_behavior_name_.load();
+                std::lock_guard lock(robot_data_list_[id - 1]->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::CURRENT_BEHAVIOR_NAME)]);
+                return (robot_data_list_[id - 1]->current_behavior_name_);
             }
         }
         [[nodiscard]] float InfoShare::getrecv_time(const int32_t &id) const
@@ -544,6 +548,30 @@ namespace Citbrains
             {
                 std::lock_guard lock(robot_data_list_[id - 1]->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::TARGET_POS_VEC)]);
                 return (robot_data_list_[id - 1]->target_pos_vec_);
+            }
+        }
+        [[nodiscard]] Pos2DCf InfoShare::getball_gl_cf(const int32_t &id) const
+        {
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
+            {
+                return {Pos2DCf()};
+            }
+            else
+            {
+                std::lock_guard lock(robot_data_list_[id - 1]->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BALL_GL_CF)]);
+                return (robot_data_list_[id - 1]->ball_gl_cf_);
+            }
+        }
+        [[nodiscard]] Pos2DCf InfoShare::getself_pos_cf(const int32_t &id) const
+        {
+            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
+            {
+                return {Pos2DCf()};
+            }
+            else
+            {
+                std::lock_guard lock(robot_data_list_[id - 1]->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::SELF_POS_CF)]);
+                return (robot_data_list_[id - 1]->self_pos_cf_);
             }
         }
     }

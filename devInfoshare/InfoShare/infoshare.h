@@ -61,6 +61,10 @@ namespace Citbrains
                 BLACK_POLE_GL,
                 TARGET_POS_VEC,
                 RECV_TIME,
+                SELF_POS_CF,
+                BALL_GL_CF,
+                COMMAND,
+                CURRENT_BEHAVIOR_NAME,
                 LENGTH //最大数を知りたい時に使うので何か追加する時はこれの前に追加する。
             };
             //scoped_lockして
@@ -105,14 +109,16 @@ namespace Citbrains
             std::atomic_uint32_t highest_servo_ = 0;
             std::atomic_bool is_detect_ball_ = false;
             std::atomic_uint32_t strategy_no_ = 0;
-            std::atomic_uint32_t command_ = 0;               //文字列は長いので数字で管理する    returnで返すdataはどっかで文字列に変換して返すべき
-            std::atomic_uint32_t current_behavior_name_ = 0; //上に同じく
             //-------------non atomic datas---------------
             float recv_time_ = 0.0;           
             std::vector<Pos2D> our_robot_gl_; //TODO　残り二つを追加するのとcf_ownとかを消す。
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
             std::vector<Pos2D> target_pos_vec_;
+            Pos2DCf self_pos_cf_;
+            Pos2DCf ball_gl_cf_;
+            std::string command_;
+            std::string current_behavior_name_; 
         };
 
         class InfoShare
@@ -134,14 +140,16 @@ namespace Citbrains
             [[nodiscard]] int32_t gethighest_servo(const int32_t &id) const noexcept;
             [[nodiscard]] bool getis_detect_ball(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getstrategy_no(const int32_t &id) const noexcept;
-            [[nodiscard]] int32_t getcommand(const int32_t &id) const noexcept;
-            [[nodiscard]] int32_t getcurrent_behavior_name(const int32_t &id) const noexcept;
             //----mutex付きのやつ
             [[nodiscard]] float getrecv_time(const int32_t &id) const; //残念ながらscoped_lockは例外を投げるらしい
             [[nodiscard]] std::vector<Pos2D> getour_robot_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> getenemy_robot_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> getblack_pole_gl(const int32_t &id) const;
             [[nodiscard]] std::vector<Pos2D> gettarget_pos_vec(const int32_t &id) const;
+            [[nodiscard]] Pos2DCf getball_gl_cf(const int32_t &id) const;
+            [[nodiscard]] Pos2DCf getself_pos_cf(const int32_t &id) const;
+            [[nodiscard]] std::string getcommand(const int32_t &id) const ;
+            [[nodiscard]] std::string getcurrent_behavior_name(const int32_t &id) const ;
             //-------------------------------------------------------------------------
 
             void terminate();
@@ -152,7 +160,7 @@ namespace Citbrains
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
             //TODO:名前変える
-            int32_t sendCommonInfo /* setSharingDataAndSendInfomationにしたい */ (const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
+            int32_t sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
 
         private:
             int32_t self_id_;
