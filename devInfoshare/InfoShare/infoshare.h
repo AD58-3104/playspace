@@ -26,7 +26,6 @@ namespace Citbrains
         
         
         */
-        //inli{ne変数を使っているのでc++17以上でしかコンパイル出来ない。
         using namespace Udpsocket;
 #ifdef __cpp_inline_variables
         // static_assert(false,"this environment has inline variables");確認用
@@ -102,16 +101,16 @@ namespace Citbrains
 
             //------------atomic datas----------------
             std::atomic_uint32_t cf_own_ = 0;
-            std::atomic_uint32_t cf_ball_ = 0; 
-            std::atomic_uint32_t status_ = 0;  //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
+            std::atomic_uint32_t cf_ball_ = 0;
+            std::atomic_uint32_t status_ = 0; //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
             std::atomic_uint32_t fps_ = 0;
-            std::atomic_uint32_t voltage_ = 0; 
+            std::atomic_uint32_t voltage_ = 0;
             std::atomic_uint32_t temperature_ = 0;
             std::atomic_uint32_t highest_servo_ = 0;
             std::atomic_bool is_detect_ball_ = false;
             std::atomic_uint32_t strategy_no_ = 0;
             //-------------non atomic datas---------------
-            float recv_time_ = 0.0;           
+            float recv_time_ = 0.0;
             std::vector<Pos2D> our_robot_gl_; //TODO　残り二つを追加するのとcf_ownとかを消す。
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
@@ -119,7 +118,7 @@ namespace Citbrains
             Pos2DCf self_pos_cf_;
             Pos2DCf ball_gl_cf_;
             std::string command_;
-            std::string current_behavior_name_; 
+            std::string current_behavior_name_;
         };
 
         class InfoShare
@@ -149,21 +148,23 @@ namespace Citbrains
             [[nodiscard]] std::vector<Pos2D> gettarget_pos_vec(const int32_t &id) const;
             [[nodiscard]] Pos2DCf getball_gl_cf(const int32_t &id) const;
             [[nodiscard]] Pos2DCf getself_pos_cf(const int32_t &id) const;
-            [[nodiscard]] std::string getcommand(const int32_t &id) const ;
-            [[nodiscard]] std::string getcurrent_behavior_name(const int32_t &id) const ;
+            [[nodiscard]] std::string getcommand(const int32_t &id) const;
+            [[nodiscard]] std::string getcurrent_behavior_name(const int32_t &id) const;
             //-------------------------------------------------------------------------
 
             void terminate();
-            void changeColor(const int32_t& color);
+            void changeColor(const int32_t &color);
             // void setTimeFunc(float (*func)());
-            void setup(const Udpsocket::SocketMode::udpsocketmode_t select_mode, const int32_t self_id, const int32_t our_color, const std::string ip_address = UDPSOCKET_MULTICAST_ADDRESS, float (*func)() = nullptr);
+            void setup(const Udpsocket::SocketMode::udpsocketmode_t& select_mode, const int32_t& self_id, const int32_t& our_color, const std::string& ip_address = UDPSOCKET_MULTICAST_ADDRESS, float (*func)() = nullptr);
             float getTime() const; //getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
+            std::string getBroadcastIP(const std::string &ip_address);
             //TODO:名前変える
             int32_t sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
 
         private:
+            void receivedDataHandler(std::string &&data);
             int32_t self_id_;
             int32_t our_color_;
             float (*timeFunc_)();

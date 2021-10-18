@@ -6,7 +6,7 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
 
-    UDPClient client("127.0.0.1", 7110, SocketMode::unicast_mode);
+    UDPClient client("127.0.0.1", 7120, SocketMode::unicast_mode);
     for (int j = 1; j <= 127; ++j)
     {
         CitbrainsMessage::SharingData proto;
@@ -15,6 +15,8 @@ int main(int argc, char const *argv[])
         char c = 2;
         proto.set_id(std::string{c}.c_str());
         proto.set_cf_own(s.c_str());
+        c  =4;
+        proto.set_team_color(std::string{c}.c_str());
         // proto.set_cf_ball(s.c_str());
         // proto.set_status(s.c_str());
         // proto.set_fps(s.c_str());

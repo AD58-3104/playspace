@@ -4,9 +4,9 @@ package CitbrainsMessage;
 // option optimize_for = CODE_SIZE; //これどうなんだっけわすれた
 
 message Pos2D {
-  required sint32 pos_x = 1;  //intにして詰める。100倍して100で割る(暫定)
-  required sint32 pos_y = 2;
-  required sint32 pos_theta = 3;
+  required sint32 pos_x = 1 ;  //intにして詰める。100倍して100で割る(暫定)
+  required sint32 pos_y = 2 ;
+  required sint32 pos_theta = 3 ;
 }
 
 message Pos2DCf {
@@ -35,13 +35,13 @@ message SharingData {
   optional bytes voltage = 6;     //今は使ってない。
   optional bytes temperature = 7;
   optional bytes highest_servo = 8;
-  optional string command = 9; 
-  optional string current_behavior_name = 10;
+  optional string command = 9 ;
+  optional string current_behavior_name = 10; 
   required bytes team_color = 19;
   
   optional bool is_detect_ball = 11;
   
-  repeated Pos2D our_robot_gl = 12; 
+  repeated Pos2D our_robot_gl = 12 ; 
   repeated Pos2D enemy_robot_gl = 13; 
   repeated Pos2D black_pole_gl = 14; 
   repeated Pos2D target_pos_vec = 15; 
