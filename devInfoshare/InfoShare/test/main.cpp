@@ -42,5 +42,6 @@ int main(int argc, char const *argv[])
         std::cout << "temperature :" << info.gettemperature(i) << std::endl;
         std::cout << "highest_servo :" << info.gethighest_servo(i) << std::endl;
     }
+    info.terminate();
     return 0;
 }

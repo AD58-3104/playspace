@@ -19,21 +19,15 @@ namespace Citbrains
 {
     namespace infosharemodule
     {
-        /*
-        TODO!!!!
-        commandstring 
-        behavierstringをここにハードコーディングする
-        
-        
-        */
         using namespace Udpsocket;
 #ifdef __cpp_inline_variables
-        // static_assert(false,"this environment has inline variables");確認用
         inline static constexpr int32_t NUM_PLAYERS = 4;
         inline static constexpr int32_t COMM_INFO_PORT0 = 7110; //!< CommInfoで使用するPORTのはじめのポート
-                                                                //1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
+                                                                // 1:7110, 2:7111, 3:7112, 4:7113, 5:7114, 6:7115
         inline static constexpr int32_t BROADCAST_PORT = 7120;
-#define UDPSOCKET_MULTICAST_ADDRESS "224.0.0.169"
+        inline static constexpr std::string_view UDPSOCKET_MULTICAST_ADDRESS{"224.0.0.169"};
+        inline static constexpr std::string_view UDPSOCKET_BROADCAST_ADDRESS{"192.168.4.160"};
+
         inline static constexpr int32_t MAX_COMM_INFO_OBJ = 7; //!< 共有するオブジェクトの最大値(はじめはボール)
         inline static constexpr int32_t MAX_STRING = 42;       //!< メッセージの最大値
         inline static constexpr int32_t MAX_BEHAVIOR_STRING = 32;
@@ -49,7 +43,7 @@ namespace Citbrains
         inline static constexpr int32_t MAX_CYAN_OBJECTS = MAX_MAGENTA_OBJECTS; //!< シアンロボットの数
 
 #else
-        //jetsonで無理だったら実装する.書くと長すぎて見にくいので.
+        // jetsonで無理だったら実装する.書くと長すぎて見にくいので.
         static_assert(false, "this environment doesn't have inline variables");
 #endif
         struct OtherRobotInfomation
@@ -67,7 +61,7 @@ namespace Citbrains
                 CURRENT_BEHAVIOR_NAME,
                 LENGTH //最大数を知りたい時に使うので何か追加する時はこれの前に追加する。
             };
-            //scoped_lockして
+
             OtherRobotInfomation(int32_t id, float (*timeFunc)()) : id_(id), timeFunc_(timeFunc)
             {
                 assert((0 <= id) && (id <= 3)); //内部で扱うidは0 indexed
@@ -95,23 +89,22 @@ namespace Citbrains
                 }
             }
 
-            const int32_t id_; //idは0スタートで管理する
+            const int32_t id_; // idは0スタートで管理する
             float (*timeFunc_)();
-            std::deque<std::mutex> dataMutexes_; //vectorだとmutexのコピーコンストラクタを呼んでしまうのでdeque
-
+            std::deque<std::mutex> dataMutexes_; // vectorだとmutexのコピーコンストラクタを呼んでしまうのでdeque
             //------------atomic datas----------------
-            std::atomic_uint32_t cf_own_ = 0;
-            std::atomic_uint32_t cf_ball_ = 0;
-            std::atomic_uint32_t status_ = 0; //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
-            std::atomic_uint32_t fps_ = 0;
-            std::atomic_uint32_t voltage_ = 0;
-            std::atomic_uint32_t temperature_ = 0;
-            std::atomic_uint32_t highest_servo_ = 0;
+            std::atomic_int32_t cf_own_ = 0;
+            std::atomic_int32_t cf_ball_ = 0;
+            std::atomic_int32_t status_ = 0; //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
+            std::atomic_int32_t fps_ = 0;
+            std::atomic_int32_t voltage_ = 0;
+            std::atomic_int32_t temperature_ = 0;
+            std::atomic_int32_t highest_servo_ = 0;
             std::atomic_bool is_detect_ball_ = false;
-            std::atomic_uint32_t strategy_no_ = 0;
+            std::atomic_int32_t strategy_no_ = 0;
             //-------------non atomic datas---------------
             float recv_time_ = 0.0;
-            std::vector<Pos2D> our_robot_gl_; //TODO　残り二つを追加するのとcf_ownとかを消す。
+            std::vector<Pos2D> our_robot_gl_; // TODO　残り二つを追加するのとcf_ownとかを消す。
             std::vector<Pos2D> enemy_robot_gl_;
             std::vector<Pos2D> black_pole_gl_;
             std::vector<Pos2D> target_pos_vec_;
@@ -119,6 +112,9 @@ namespace Citbrains
             Pos2DCf ball_gl_cf_;
             std::string command_;
             std::string current_behavior_name_;
+            //追加したい
+            std::list<uint16_t> command_num;
+            std::list<uint16_t> current_behavior_name_num;
         };
 
         class InfoShare
@@ -153,23 +149,22 @@ namespace Citbrains
             //-------------------------------------------------------------------------
 
             void terminate();
-            void changeColor(const int32_t &color);
+            void changeColor(const int32_t &color) noexcept;
             // void setTimeFunc(float (*func)());
-            void setup(const Udpsocket::SocketMode::udpsocketmode_t& select_mode, const int32_t& self_id, const int32_t& our_color, const std::string& ip_address = UDPSOCKET_MULTICAST_ADDRESS, float (*func)() = nullptr);
-            float getTime() const; //getelapsedtimeとかの方が良いかも
+            void setup(const Udpsocket::SocketMode::udpsocketmode_t &select_mode, const int32_t &self_id, const int32_t &our_color, const std::string &ip_address = UDPSOCKET_BROADCAST_ADDRESS.data(), float (*func)() = nullptr);
+            float getTime() const; // getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
-            std::string getBroadcastIP(const std::string &ip_address);
-            //TODO:名前変える
+            // TODO:名前変える
             int32_t sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
 
         private:
+            std::string toBroadcastIP(const std::string& s);
             void receivedDataHandler(std::string &&data);
             int32_t self_id_;
             int32_t our_color_;
             float (*timeFunc_)();
             bool terminated_;
-            std::string toBroadcastIP(std::string);
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
             std::function<void(std::string &&)> receivedDataHandler_;
             std::unique_ptr<UDPServer> server_;
@@ -189,15 +184,15 @@ namespace Citbrains
  * get_ourcolor
  * changecolor()
  * sendCommonInfo
- * 
+ *
  * -----一連のgetter
  * get_command()コマンドの文字列返す
  * target_pos_vec(Pos2Dのやつ)のgetter.
- * 
+ *
  * これout of rangeで落ちるようにしてるけど良いのかな
- * 
- * 
+ *
+ *
  * state
  * 転倒　アイドル状態　電圧　温度　温度の高いモータ
- * 
+ *
  */
