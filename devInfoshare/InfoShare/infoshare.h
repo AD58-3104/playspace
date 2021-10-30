@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <forward_list>
 #include <cassert>
 #include "hpl_types.h"
 #include "infoshare.pb.h"
@@ -28,6 +29,9 @@ namespace Citbrains
         inline static constexpr std::string_view UDPSOCKET_MULTICAST_ADDRESS{"224.0.0.169"};
         inline static constexpr std::string_view UDPSOCKET_BROADCAST_ADDRESS{"192.168.4.160"};
 
+        inline static constexpr std::string_view COMMAND_DICTIONARY_LOCATION{"command_dict.dat"};
+        inline static constexpr std::string_view BEHAVIOR_NAME_DICTIONARY_LOCATION{"behavior_name_dict.dat"};
+
         inline static constexpr int32_t MAX_COMM_INFO_OBJ = 7; //!< 共有するオブジェクトの最大値(はじめはボール)
         inline static constexpr int32_t MAX_STRING = 42;       //!< メッセージの最大値
         inline static constexpr int32_t MAX_BEHAVIOR_STRING = 32;
@@ -46,6 +50,10 @@ namespace Citbrains
         // jetsonで無理だったら実装する.書くと長すぎて見にくいので.
         static_assert(false, "this environment doesn't have inline variables");
 #endif
+        /**
+         * @brief 共有された他ロボット情報を格納するクラス
+         * @details 情報はプリミティブ型はatomicだが、それ以外はmutexで保護する。
+         */
         struct OtherRobotInfomation
         {
             enum class MutexTag : int32_t
@@ -64,18 +72,19 @@ namespace Citbrains
 
             OtherRobotInfomation(int32_t id, float (*timeFunc)()) : id_(id), timeFunc_(timeFunc)
             {
-                assert((0 <= id) && (id <= 3)); //内部で扱うidは0 indexed
+                assert((0 <= id) && (id <= NUM_PLAYERS - 1)); //内部で扱うidは0 indexed
                 for (int32_t i = 0; i < static_cast<int32_t>(MutexTag::LENGTH); ++i)
                 {
                     dataMutexes_.emplace_back();
                 }
                 setRecv_time();
             }
-            // void setTimeFunc(float (*timeFunc)())
-            // {
-            //     timeFunc_ = timeFunc;
-            // }
 
+            /**
+             * @brief 情報を受け取った時間を記録する
+             * @param[in] void
+             * @return void
+             */
             void setRecv_time(void)
             {
                 std::lock_guard lock(dataMutexes_[static_cast<int32_t>(MutexTag::RECV_TIME)]);
@@ -89,13 +98,13 @@ namespace Citbrains
                 }
             }
 
-            const int32_t id_; // idは0スタートで管理する
+            const int32_t id_; // idは0indexedで管理する
             float (*timeFunc_)();
             std::deque<std::mutex> dataMutexes_; // vectorだとmutexのコピーコンストラクタを呼んでしまうのでdeque
             //------------atomic datas----------------
             std::atomic_int32_t cf_own_ = 0;
             std::atomic_int32_t cf_ball_ = 0;
-            std::atomic_int32_t status_ = 0; //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
+            std::atomic_uint32_t status_ = 0; //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
             std::atomic_int32_t fps_ = 0;
             std::atomic_int32_t voltage_ = 0;
             std::atomic_int32_t temperature_ = 0;
@@ -113,10 +122,15 @@ namespace Citbrains
             std::string command_;
             std::string current_behavior_name_;
             //追加したい
-            std::list<uint16_t> command_num;
-            std::list<uint16_t> current_behavior_name_num;
+            std::forward_list<uint8_t> command_serialized_num;
+            std::forward_list<uint8_t> current_behavior_name_serialized_num;
         };
 
+        /**
+         * @brief 情報共有クラス
+         * @details 一つのプロセスで1つのインスタンスしか起動出来なくしてある。
+         * @todo signed char と unsigne charの変換が多いのでどうにかするべき
+         */
         class InfoShare
         {
         public:
@@ -150,16 +164,17 @@ namespace Citbrains
 
             void terminate();
             void changeColor(const int32_t &color) noexcept;
-            // void setTimeFunc(float (*func)());
             void setup(const Udpsocket::SocketMode::udpsocketmode_t &select_mode, const int32_t &self_id, const int32_t &our_color, const std::string &ip_address = UDPSOCKET_BROADCAST_ADDRESS.data(), float (*func)() = nullptr);
             float getTime() const; // getelapsedtimeとかの方が良いかも
             int32_t getOurcolor() const noexcept;
             int32_t getID() const noexcept;
             // TODO:名前変える
-            int32_t sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
+            void sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
 
         private:
-            std::string toBroadcastIP(const std::string& s);
+            std::string toBroadcastIP(const std::string &s);
+            std::forward_list<uint8_t> serializeCommandByDict(const std::string &command);
+            std::forward_list<uint8_t> serializeBehaviorNameByDict(const std::string &behavior_name);
             void receivedDataHandler(std::string &&data);
             int32_t self_id_;
             int32_t our_color_;
@@ -189,10 +204,11 @@ namespace Citbrains
  * get_command()コマンドの文字列返す
  * target_pos_vec(Pos2Dのやつ)のgetter.
  *
- * これout of rangeで落ちるようにしてるけど良いのかな
+ * これout of rangeで落ちるようにしてるけど良いのかな　<-良いです
  *
  *
  * state
  * 転倒　アイドル状態　電圧　温度　温度の高いモータ
  *
+ * char <-> ucharの間の変換なら恐らく問題は起きない。最終的に必ずucharを経由して他の型に変換する.
  */

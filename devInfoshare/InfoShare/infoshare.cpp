@@ -6,18 +6,21 @@ using namespace std::literals::chrono_literals;
 
 /**
  * @brief protobufオブジェクトのデバッグ関数.INFOSHARE_DEBUGがONの時のみ有効.
- * @param[in] data　protobufのオブジェクト
+ * @param[in] data protobufのオブジェクト
  */
-static void debugPrint(CitbrainsMessage::SharingData data)
+static void debugPrint(const CitbrainsMessage::SharingData &data)
 {
-#ifdef INFOSHARE_DEBUG
+    static int32_t received_num = 1;
+    received_num++;
+    std::cerr << "number of received " << received_num << std::endl;
+    std::cout << data.DebugString() << std::endl;
     try
     {
         std::cerr << "debug print " << std::endl;
         std::string s = data.cf_ball();
         if (data.has_cf_ball())
             std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
-        int i = data.mutable_cf_ball()->at(0);
+        int i = data.cf_ball().at(0);
         std::cout << "int " << i << std::endl;
         if (data.has_is_detect_ball())
             std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
@@ -40,12 +43,11 @@ static void debugPrint(CitbrainsMessage::SharingData data)
         if (data.has_current_behavior_name())
             std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
     }
-    catch (const std::runtime_error &e)
+    catch (const std::exception &e)
     {
         std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
         std::cout << e.what() << std::endl;
     }
-#endif // INFOSHARE_DEBUG
 };
 
 namespace Citbrains
@@ -60,10 +62,15 @@ namespace Citbrains
             : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false)
         {
         }
+        /**
+         * @brief デストラクタ
+         * @details 必ずterminateを呼ぶ.
+         */
         InfoShare::~InfoShare()
         {
             terminate();
         }
+
         /**
          * @brief 終了関数
          * @details 終了したい時に呼ぶ.デストラクタでも呼ばれる.
@@ -74,9 +81,11 @@ namespace Citbrains
             server_->terminate();
             client_->terminate();
         }
+
         /**
-         * @brief　色の変更
-         * @details COLOR_CYAN or COLOR_MAGENTA以外が入力されると弾く
+         * @brief 色の変更をする
+         * @param[in] color COLOR_MAGENTA(4) or COLOR_CYAN(5) in hpl_types.h
+         * @details COLOR_CYAN or COLOR_MAGENTA以外が入力された場合は何も変更しない.
          */
         void InfoShare::changeColor(const int32_t &color) noexcept
         {
@@ -84,20 +93,11 @@ namespace Citbrains
                 return;
             our_color_ = color;
         }
-        // void InfoShare::setTimeFunc(float (*func)())
-        // {
-        //     timeFunc_ = func;
-        //     //TODO implement 全部にセットする
-        //     for (auto &&itr : robot_data_list_)
-        //     {
-        //         std::lock_guard lock(itr->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::RECV_TIME)]);
-        //         itr->timeFunc_ = func;
-        //     }
-        // }
+
         /**
-         * @brief 初期化と通信開始の関数
+         * @brief 初期化と通信開始の関数.呼び出しは一度しか許容されない.
          * @param[in] mode_select 通信モード選択(基本はbroadcastにする)
-         * @param[in] self_id ロボットのID 1-4
+         * @param[in] self_id ロボットのID 1 ～ NUM_PLAYERS
          * @param[in] our_color ロボットの色 COLOR_MAGENTA(4), COLOR_CYAN(5)
          * @param[in] ip_address IPアドレス.デフォルトだとbroadcast用のアドレスが入力される.
          * @param[in] timefunc 受信時間記録の為の関数ポインタ.デフォルトはtime.h(ctime)のtime().
@@ -156,8 +156,22 @@ namespace Citbrains
                 std::cerr << e.what() << std::endl;
             }
         }
-
-        int32_t InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+        /**
+         * @brief 情報をシリアライズして送信.必要が無い
+         * @param[in] ball_gl_cf ボールの確信度付き位置情報.
+         * @param[in] self_pos_cf 自己位置の確信度付き位置情報.
+         * @param[in] our_robot_gl 自チームのロボットのグローバル座標
+         * @param[in] enemy_robot_gl 敵チームロボットのグローバル座標
+         * @param[in] black_pole_gl その他の障害物のグローバル座標
+         * @param[in] fps HPLのメインループの周期。モニター用 8bit
+         * @param[in] message
+         * @param[in] behavior_name ロボットが現在行っているbehaviorの文字列
+         * @param[in] target_pos_vec ロボットが向かおうとしている座標
+         * @param[in] state ロボットの現在の状態(転倒しているかどうか,voltage,サーボ温度等)
+         * @todo behaviorとmessageの辞書によるシリアライズをする
+         * @return void
+         */
+        void InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
             static auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
@@ -169,7 +183,7 @@ namespace Citbrains
 
             static auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void
             {
-                char c = std::clamp(static_cast<int8_t>(input.cf), static_cast<int8_t>(0), static_cast<int8_t>(100));
+                char c = std::clamp<uint8_t>(static_cast<uint8_t>(input.cf), static_cast<uint8_t>(0), static_cast<uint8_t>(100));
                 target.set_confidence(std::string{c}.c_str());
                 target.set_is_detect(input.is_detect);
                 target.mutable_position()->set_pos_x(input.pos.x);
@@ -205,23 +219,23 @@ namespace Citbrains
             char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
             char temperature = 0xff & state.Temperature;          // モータの温度(degree)
             char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
-            sharing_data.set_command(message);
-            sharing_data.set_current_behavior_name(behavior_name);
             sharing_data.set_id(std::string{static_cast<char>(self_id_)});
             sharing_data.set_team_color(std::string{static_cast<char>(CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
             sharing_data.set_status(std::string{static_cast<char>(status)});
+            sharing_data.set_status(std::string{static_cast<char>(std::clamp<char>(fps, 0, std::numeric_limits<char>::max()))});
             sharing_data.set_voltage(std::string{static_cast<char>(voltage)});
             sharing_data.set_temperature(std::string{static_cast<char>(temperature)});
             sharing_data.set_highest_servo(std::string{static_cast<char>(highest_servo)});
+            sharing_data.set_command(message);
+            sharing_data.set_current_behavior_name(behavior_name);
             std::string s = sharing_data.SerializeAsString();
             client_->send(std::move(s));
-            return 0;
         }
 
         /**
          * @brief broadcast用アドレスへの変換
-         * @param[in] ip_address　変換元のアドレス
-         * @return string IPアドレス
+         * @param[in] ip_address 変換元のアドレス
+         * @return string broadcast用のIPアドレス
          */
         std::string InfoShare::toBroadcastIP(const std::string &ip_address)
         {
@@ -240,9 +254,33 @@ namespace Citbrains
         }
 
         /**
-         * @brief UDPClientが受け取った情報
+         * @brief commandの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
+         * @param[in] command 送信されるcommandの文字列
+         * @return 辞書の対応する番号で構成される数字列 
+         * @details InfoShareディレクトリ内の辞書を参考にして数字に変換 
+         * @todo implement docに辞書の場所を書く
+         */
+        std::forward_list<uint8_t> InfoShare::serializeCommandByDict(const std::string &command)
+        {
+            static ifstream ifs(COMMAND_DICTIONARY_LOCATION.data());
+            
+        }
+
+        /**
+         * @brief behavior_nameの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
+         * @param[in] behavior_name 送信されるbehavior_nameの文字列
+         * @return 辞書の対応する番号で構成される数字列 
+         * @details InfoShareディレクトリ内の辞書を参考にして数字に変換 
+         * @todo implement docに辞書の場所を書く
+         */
+        std::forward_list<uint8_t> InfoShare::serializeBehaviorNameByDict(const std::string &behavior_name)
+        {
+        }
+
+        /**
+         * @brief UDPClientが受け取った情報のハンドラ.
          * @param[in] data UDPのクライアントが受け取ったバイト列
-         * @details 受け取ったバイト列をシリアライズしてOtherRobotInfomationに格納する.protobufのbytesは0の場合
+         * @details 受け取ったバイト列をシリアライズしてOtherRobotInfomationに格納する.protobufのbytesは0の場合壊れるのでわざわざ分岐している.
          */
         void InfoShare::receivedDataHandler(std::string &&data)
         {
@@ -255,10 +293,7 @@ namespace Citbrains
                 if (self_id_ == static_cast<int32_t>(shared_data.id().at(0)))
                     return; //自分の情報は無視
 #ifdef INFOSHARE_DEBUG
-                static int32_t received_num = 1;
-                received_num++;
-                std::cerr << "number of received " << received_num << std::endl;
-                std::cout << shared_data.DebugString() << std::endl;
+                debugPrint(shared_data);
 #endif // INFOSHARE_DEBUG
                 auto &set_target = robot_data_list_[static_cast<int32_t>(shared_data.id().at(0)) - 1];
                 //------------data set-----------------------------------------------------------------
