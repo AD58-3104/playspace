@@ -48,7 +48,7 @@ static void debugPrint(const CitbrainsMessage::SharingData &data)
         std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
         std::cout << e.what() << std::endl;
     }
-};
+}
 
 namespace Citbrains
 {
@@ -152,7 +152,7 @@ namespace Citbrains
             }
             catch (std::exception &e)
             {
-                std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
+                std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
                 std::cerr << e.what() << std::endl;
             }
         }
@@ -251,30 +251,6 @@ namespace Citbrains
                 broadcastip = "255.255.255.255";
             }
             return broadcastip;
-        }
-
-        /**
-         * @brief commandの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
-         * @param[in] command 送信されるcommandの文字列
-         * @return 辞書の対応する番号で構成される数字列 
-         * @details InfoShareディレクトリ内の辞書を参考にして数字に変換 
-         * @todo implement docに辞書の場所を書く
-         */
-        std::forward_list<uint8_t> InfoShare::serializeCommandByDict(const std::string &command)
-        {
-            static ifstream ifs(COMMAND_DICTIONARY_LOCATION.data());
-            
-        }
-
-        /**
-         * @brief behavior_nameの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
-         * @param[in] behavior_name 送信されるbehavior_nameの文字列
-         * @return 辞書の対応する番号で構成される数字列 
-         * @details InfoShareディレクトリ内の辞書を参考にして数字に変換 
-         * @todo implement docに辞書の場所を書く
-         */
-        std::forward_list<uint8_t> InfoShare::serializeBehaviorNameByDict(const std::string &behavior_name)
-        {
         }
 
         /**
@@ -445,7 +421,7 @@ namespace Citbrains
             }
             catch (std::system_error &e)
             {
-                std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
+                std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
                 std::cerr << e.what() << std::endl;
             }
         }
@@ -480,6 +456,11 @@ namespace Citbrains
         }
 
         //共有された情報のgetter------------------------------------------------------------------------
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::getcf_own(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -491,6 +472,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->cf_own_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::getcf_ball(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -502,6 +488,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->cf_ball_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::getstatus(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -513,6 +504,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->status_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::getvoltage(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -524,6 +520,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->voltage_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::getfps(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -535,6 +536,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->fps_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::gettemperature(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -546,6 +552,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->temperature_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::gethighest_servo(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -557,6 +568,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->highest_servo_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] bool InfoShare::getis_detect_ball(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -568,6 +584,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->is_detect_ball_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return int32_t
+         */
         [[nodiscard]] int32_t InfoShare::getstrategy_no(const int32_t &id) const noexcept
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -579,6 +600,11 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->strategy_no_.load();
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return string
+         */
         [[nodiscard]] std::string InfoShare::getcommand(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -591,6 +617,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->command_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return string
+         */
         [[nodiscard]] std::string InfoShare::getcurrent_behavior_name(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -603,6 +634,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->current_behavior_name_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return float
+         */
         [[nodiscard]] float InfoShare::getrecv_time(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -615,6 +651,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->recv_time_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return std::vector<Pos2D>
+         */
         [[nodiscard]] std::vector<Pos2D> InfoShare::getour_robot_gl(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -627,6 +668,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->our_robot_gl_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return std::vector<Pos2D>
+         */
         [[nodiscard]] std::vector<Pos2D> InfoShare::getenemy_robot_gl(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -639,6 +685,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->enemy_robot_gl_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return std::vector<Pos2D>
+         */
         [[nodiscard]] std::vector<Pos2D> InfoShare::getblack_pole_gl(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -651,6 +702,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->black_pole_gl_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return std::vector<Pos2D>
+         */
         [[nodiscard]] std::vector<Pos2D> InfoShare::gettarget_pos_vec(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -663,6 +719,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->target_pos_vec_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return Pos2DCf
+         */
         [[nodiscard]] Pos2DCf InfoShare::getball_gl_cf(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -675,6 +736,11 @@ namespace Citbrains
                 return (robot_data_list_[id - 1]->ball_gl_cf_);
             }
         }
+        /**
+         * @brief 関数名の変数に対するgetter
+         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @return Pos2DCf
+         */
         [[nodiscard]] Pos2DCf InfoShare::getself_pos_cf(const int32_t &id) const
         {
             if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
@@ -686,6 +752,98 @@ namespace Citbrains
                 std::lock_guard lock(robot_data_list_[id - 1]->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::SELF_POS_CF)]);
                 return (robot_data_list_[id - 1]->self_pos_cf_);
             }
+        }
+
+        /**
+         * @brief commandの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
+         * @param[in] command 送信されるcommandの文字列
+         * @return 辞書の対応する番号で構成される数字列
+         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換
+         */
+        SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::commandToNumSequence(const std::string &command)
+        {
+            std::string word;
+            SerializeStringByDict::ReturnNumSequenceType return_seq;
+            auto not_contain = command_to_num.end();
+            try
+            {
+                for (const auto &character : command)
+                {
+                    word.push_back(character);
+                    if (command_to_num.find(word) != not_contain)
+                    {
+                        return_seq.push_back(command_to_num[word]);
+                        word.clear();
+                    }
+                }
+            }
+            catch (std::exception &e)
+            {
+                std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
+                std::cerr << e.what() << std::endl;
+            }
+            return return_seq;
+        }
+
+        /**
+         * @brief behavior_nameの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
+         * @param[in] behavior_name 送信されるbehavior_nameの文字列
+         * @return 辞書の対応する番号で構成される数字列
+         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換
+         */
+        SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::behaviorNameToNumSequence(const std::string &behavior_name)
+        {
+            std::string word;
+            SerializeStringByDict::ReturnNumSequenceType return_seq;
+            auto not_contain = behavior_name_to_num.end();
+            try
+            {
+                for (const auto &character : behavior_name)
+                {
+                    word.push_back(character);
+                    if (behavior_name_to_num.find(word) != not_contain)
+                    {
+                        return_seq.push_back(behavior_name_to_num[word]);
+                        word.clear();
+                    }
+                }
+            }
+            catch (std::exception &e)
+            {
+                std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
+                std::cerr << e.what() << std::endl;
+            }
+            return return_seq;
+        }
+        /**
+         * @brief 受信したcommandの数字列を文字列に変換
+         * @param[in] command_number_seq 受信した数字列
+         * @return command文字列
+         * @details pyfilesディレクトリ内の辞書を参考にして単語に変換
+         */
+        std::string SerializeStringByDict::numSequenceToCommand(const SerializeStringByDict::ProtobufNumSequenceType &command_number_seq)
+        {
+            std::string return_str;
+            for (const auto &num : command_number_seq)
+            {
+                return_str += num_to_command[num];
+            }
+            return return_str;
+        }
+        /**
+         * @brief 受信したbehavior_nameの数字列を文字列に変換
+         * @param[in] behavior_name_number_seq 受信した数字列
+         * @return behavior_name文字列
+         * @details pyfilesディレクトリ内の辞書を参考にして単語に変換
+         */
+        std::string SerializeStringByDict::numSequenceToBehaviorName(const SerializeStringByDict::ProtobufNumSequenceType &behavior_name_number_seq)
+        {
+            std::string return_str;
+            for (const auto &num : behavior_name_number_seq)
+            {
+                return_str += num_to_behavior_name[num];
+            }
+            return return_str;
         }
     }
 }
@@ -860,7 +1018,7 @@ namespace Citbrains
 //                     }
 //                     catch (std::system_error &e)
 //                     {
-//                         std::cerr << "error thrown in " << __FILE__ << "::" << __LINE__ << std::endl;
+//                         std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
 //                         std::cerr << e.what() << std::endl;
 //                     }
 //                     std::cout << "receive end" << std::endl;

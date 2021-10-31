@@ -9,7 +9,9 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
-#include <forward_list>
+#include <list>
+#include <unordered_map>
+#include <fstream>
 #include <cassert>
 #include "hpl_types.h"
 #include "infoshare.pb.h"
@@ -69,8 +71,10 @@ namespace Citbrains
                 CURRENT_BEHAVIOR_NAME,
                 LENGTH //最大数を知りたい時に使うので何か追加する時はこれの前に追加する。
             };
-
-            OtherRobotInfomation(int32_t id, float (*timeFunc)()) : id_(id), timeFunc_(timeFunc)
+            /**
+             * @brief idは0 ～ (NUM_PLAYERS - 1).timeFuncはコンストラクタでのみ指定可能。デフォルトの場合はtime.h(ctime)のtime(0)
+             */
+            OtherRobotInfomation(int32_t id, float (*timeFunc)() = nullptr) : id_(id), timeFunc_(timeFunc)
             {
                 assert((0 <= id) && (id <= NUM_PLAYERS - 1)); //内部で扱うidは0 indexed
                 for (int32_t i = 0; i < static_cast<int32_t>(MutexTag::LENGTH); ++i)
@@ -121,9 +125,6 @@ namespace Citbrains
             Pos2DCf ball_gl_cf_;
             std::string command_;
             std::string current_behavior_name_;
-            //追加したい
-            std::forward_list<uint8_t> command_serialized_num;
-            std::forward_list<uint8_t> current_behavior_name_serialized_num;
         };
 
         /**
@@ -173,8 +174,7 @@ namespace Citbrains
 
         private:
             std::string toBroadcastIP(const std::string &s);
-            std::forward_list<uint8_t> serializeCommandByDict(const std::string &command);
-            std::forward_list<uint8_t> serializeBehaviorNameByDict(const std::string &behavior_name);
+
             void receivedDataHandler(std::string &&data);
             int32_t self_id_;
             int32_t our_color_;
@@ -186,8 +186,76 @@ namespace Citbrains
             std::unique_ptr<UDPClient> client_;
         };
 
+        /**
+         * @brief command文字列とbehavior_name文字列を数字の列に圧縮するクラス
+         * @details 辞書は1単語毎に改行する.commandとbehaviorで別のファイルを作り両方共単語のみ列挙する.
+         * @todo SWIGでバイナリがどこに置かれるのか謎.runstrategy.pyが実行される場所かな.
+         */
+        class SerializeStringByDict
+        {
+            public:
+            /**
+             * @brief コンストラクタ.辞書ファイルを読み込む.デフォルトはpyfiles直下.
+             * @param[in] command_dict_location command辞書のファイル名まで含む相対パス.
+             * @param[in] behavior_name_dict_location behavior_name辞書のファイル名まで含む相対パス.
+             */
+            SerializeStringByDict(const std::string &command_dict_location = "command_dict.dat", const std::string &behavior_name_dict_location = "behavior_name_dict.dat")
+            {
+                try
+                {
+                    {
+                        std::ifstream ifs(command_dict_location);
+                        std::string s;
+                        int32_t cnt = 0;
+                        while (std::getline(ifs, s))
+                        {
+                            command_to_num[s] = cnt;
+                            num_to_command[cnt] = s;
+                            ++cnt;
+                        }
+                        ifs.close();
+                    }
+                    {
+                        std::ifstream ifs(behavior_name_dict_location);
+                        std::string s;
+                        int32_t cnt = 0;
+                        while (std::getline(ifs, s))
+                        {
+                            behavior_name_to_num[s] = cnt;
+                            num_to_behavior_name[cnt] = s;
+                            ++cnt;
+                        }
+                        ifs.close();
+                    }
+                }
+                catch (std::exception &e)
+                {
+                    std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
+                    std::cerr << e.what() << std::endl;
+                }
+            }
+            using ProtobufNumSequenceType = std::string; // 0-255で足りるなら効率の良いproto2のbytesで送る.そうでないならvectorにでも.
+            using ReturnNumSequenceType = std::list<uint8_t>; 
+            ReturnNumSequenceType commandToNumSequence(const std::string &command);
+            ReturnNumSequenceType behaviorNameToNumSequence(const std::string &behavior_name);
+            std::string numSequenceToCommand(const ProtobufNumSequenceType &command_number_seq);
+            std::string numSequenceToBehaviorName(const ProtobufNumSequenceType &behavior_name_number_seq);
+
+        private:
+            std::unordered_map<int32_t, std::string> num_to_command;
+            std::unordered_map<int32_t, std::string> num_to_behavior_name;
+            std::unordered_map<std::string, int32_t> command_to_num;
+            std::unordered_map<std::string, int32_t> behavior_name_to_num;
+        };
+
     }
 }
+
+/*
+ *todo:moveの使い方を最後に確認
+ *todo:例外の扱い方
+ */
+
 
 /*
  * memo
