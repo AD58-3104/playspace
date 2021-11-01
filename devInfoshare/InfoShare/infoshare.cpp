@@ -61,7 +61,7 @@ namespace Citbrains
          * @details コンストラクタは何もしないので必ずsetupを呼び初期化する.
          */
         InfoShare::InfoShare()
-            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false)
+            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false),dictionary()
         {
         }
         /**
@@ -173,7 +173,7 @@ namespace Citbrains
          * @todo behaviorとmessageの辞書によるシリアライズをする
          * @return void
          */
-        void InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+        void InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int& fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
             static auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
@@ -218,18 +218,18 @@ namespace Citbrains
             char status = (state.Posture != STATE_POSTURE_STAND) ? 0x01 : 0x00; // 転倒のフラグ TODO 読みやすくする
             if (state.Active == STATE_IDLE)
                 status |= 0x02;                                   // アイドル状態かどうかのフラグ
-            char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
-            char temperature = 0xff & state.Temperature;          // モータの温度(degree)
-            char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
+            unsigned char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
+            unsigned char temperature = 0xff & state.Temperature;          // モータの温度(degree)
+            unsigned char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
             sharing_data.set_id(std::string{static_cast<char>(self_id_)});
             sharing_data.set_team_color(std::string{static_cast<char>(CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
             sharing_data.set_status(std::string{static_cast<char>(status)});
-            sharing_data.set_status(std::string{static_cast<char>(std::clamp<char>(fps, 0, std::numeric_limits<char>::max()))});
+            sharing_data.set_fps(std::string{static_cast<char>(fps)});
             sharing_data.set_voltage(std::string{static_cast<char>(voltage)});
             sharing_data.set_temperature(std::string{static_cast<char>(temperature)});
             sharing_data.set_highest_servo(std::string{static_cast<char>(highest_servo)});
-            sharing_data.set_command(message);
-            sharing_data.set_current_behavior_name(behavior_name);
+            sharing_data.set_command(dictionary.commandToNumSequence(message));
+            sharing_data.set_current_behavior_name(dictionary.behaviorNameToNumSequence(behavior_name));
             std::string s = sharing_data.SerializeAsString();
             client_->send(std::move(s));
         }
@@ -362,7 +362,7 @@ namespace Citbrains
                     }
                     else
                     {
-                        set_target->command_ = shared_data.command();
+                        set_target->command_ = dictionary.numSequenceToCommand(shared_data.command());
                     }
                 }
                 if (shared_data.has_current_behavior_name())
@@ -374,7 +374,7 @@ namespace Citbrains
                     }
                     else
                     {
-                        set_target->command_ = shared_data.current_behavior_name();
+                        set_target->command_ = dictionary.numSequenceToBehaviorName(shared_data.current_behavior_name());
                     }
                 }
                 if (shared_data.has_is_detect_ball())
