@@ -1,5 +1,7 @@
 #include "infoshare.h"
 
+using namespace Citbrains::infosharemodule;
+
 int main(int argc, char const *argv[])
 {
     std::vector<std::string> commands;
@@ -29,16 +31,27 @@ int main(int argc, char const *argv[])
         Citbrains::infosharemodule::SerializeStringByDict dict;
         for (const auto &itr : commands)
         {
-            std::cout << itr << " is ";
-            for (const int32_t &num : dict.commandToNumSequence(itr))
-                std::cout << num;
+            if (itr == dict.numSequenceToCommand(dict.commandToNumSequence(itr)))
+            {
+                std::cout << "serialize of ->" << itr << " is succeed";
+            }
+            else
+            {
+                std::cout << "serialize of ->" << itr << " is failed----------------------------";
+            }
             std::cout << std::endl;
         }
+        std::cout << "-----------------------------------behaviors--------------------------------------------\n";
         for (const auto &itr : behaviors)
         {
-            std::cout << itr << " is ";
-            for (const int32_t &num : dict.behaviorNameToNumSequence(itr))
-                std::cout << num;
+            if (itr == dict.numSequenceToBehaviorName(dict.behaviorNameToNumSequence(itr)))
+            {
+                std::cout << "serialize of ->" << itr << " is succeed";
+            }
+            else
+            {
+                std::cout << "serialize of ->" << itr << " is failed----------------------------";
+            }
             std::cout << std::endl;
         }
     }

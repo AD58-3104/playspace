@@ -186,6 +186,21 @@ namespace Citbrains
             std::unique_ptr<UDPClient> client_;
         };
 
+        namespace Metafunc
+        {
+            template <class, class = void>
+            struct has_iterator
+                : std::false_type
+            {
+            };
+
+            template <class T>
+            struct has_iterator<T, std::void_t<typename T::iterator>>
+                : std::true_type
+            {
+            };
+        }
+        
         /**
          * @brief command文字列とbehavior_name文字列を数字の列に圧縮するクラス
          * @details 辞書は1単語毎に改行する.commandとbehaviorで別のファイルを作り両方共単語のみ列挙する.
@@ -193,7 +208,7 @@ namespace Citbrains
          */
         class SerializeStringByDict
         {
-            public:
+        public:
             /**
              * @brief コンストラクタ.辞書ファイルを読み込む.デフォルトはpyfiles直下.
              * @param[in] command_dict_location command辞書のファイル名まで含む相対パス.
@@ -234,12 +249,43 @@ namespace Citbrains
                     std::cerr << e.what() << std::endl;
                 }
             }
-            using ProtobufNumSequenceType = std::string; // 0-255で足りるなら効率の良いproto2のbytesで送る.そうでないならvectorにでも.
-            using ReturnNumSequenceType = std::list<uint8_t>; 
+            using ReturnNumSequenceType = std::vector<uint8_t>; // protobufで1文字8bitにシリアライズしているので.
             ReturnNumSequenceType commandToNumSequence(const std::string &command);
             ReturnNumSequenceType behaviorNameToNumSequence(const std::string &behavior_name);
-            std::string numSequenceToCommand(const ProtobufNumSequenceType &command_number_seq);
-            std::string numSequenceToBehaviorName(const ProtobufNumSequenceType &behavior_name_number_seq);
+            /**
+             * @brief 受信したcommandの数字列を文字列に変換
+             * @param[in] command_number_seq 受信した数字列
+             * @return command文字列
+             * @details pyfilesディレクトリ内の辞書を参考にして単語に変換
+             */
+            template <class NumSequenceType>
+            std::string numSequenceToCommand(const NumSequenceType &command_number_seq)
+            {
+                static_assert(Metafunc::has_iterator<NumSequenceType>::value, "arg must have iterator");
+                std::string return_str;
+                for (const auto &num : command_number_seq)
+                {
+                    return_str += num_to_command[num];
+                }
+                return return_str;
+            }
+            /**
+             * @brief 受信したbehavior_nameの数字列を文字列に変換
+             * @param[in] behavior_name_number_seq 受信した数字列
+             * @return behavior_name文字列
+             * @details pyfilesディレクトリ内の辞書を参考にして単語に変換
+             */
+            template <class NumSequenceType>
+            std::string numSequenceToBehaviorName(const NumSequenceType &behavior_name_number_seq)
+            {
+                static_assert(Metafunc::has_iterator<NumSequenceType>::value, "arg must have iterator");
+                std::string return_str;
+                for (const auto &num : behavior_name_number_seq)
+                {
+                    return_str += num_to_behavior_name[num];
+                }
+                return return_str;
+            }
 
         private:
             std::unordered_map<int32_t, std::string> num_to_command;
@@ -255,7 +301,6 @@ namespace Citbrains
  *todo:moveの使い方を最後に確認
  *todo:例外の扱い方
  */
-
 
 /*
  * memo
