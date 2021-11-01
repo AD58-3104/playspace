@@ -420,8 +420,11 @@ namespace Citbrains
                         set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
                     }
                 }
+                if(shared_data.has_ball_gl_cf()){
+                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::COMMAND)]);
+                }
             }
-            catch (std::system_error &e)
+            catch (std::exception &e)
             {
                 std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
                 std::cerr << e.what() << std::endl;
