@@ -162,7 +162,7 @@ namespace Citbrains
                     {
                         std::ifstream ifs(command_dict_location);
                         std::string s;
-                        int32_t cnt = 0;
+                        int32_t cnt = 1; //0だとprotobufで送る時に面倒なので,1-indexedにする.
                         while (std::getline(ifs, s))
                         {
                             command_to_num[s] = cnt;
@@ -174,7 +174,7 @@ namespace Citbrains
                     {
                         std::ifstream ifs(behavior_name_dict_location);
                         std::string s;
-                        int32_t cnt = 0;
+                        int32_t cnt = 1; //0だとprotobufで送る時に面倒なので,1-indexedにする.
                         while (std::getline(ifs, s))
                         {
                             behavior_name_to_num[s] = cnt;

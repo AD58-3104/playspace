@@ -51,17 +51,17 @@ static void debugPrint(const CitbrainsMessage::SharingData &data)
     }
 }
 
-
 namespace Citbrains
 {
     namespace infosharemodule
     {
+        static inline constexpr float INT_FLOAT_CONVERT_SCALE = 1000.0; // floatで送ると効率が良くないのでintに変換して送信している.今は小数点以下3桁.
         /**
          * @brief コンストラクタ
          * @details コンストラクタは何もしないので必ずsetupを呼び初期化する.
          */
         InfoShare::InfoShare()
-            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false),dictionary()
+            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false), dictionary()
         {
         }
         /**
@@ -173,24 +173,25 @@ namespace Citbrains
          * @todo behaviorとmessageの辞書によるシリアライズをする
          * @return void
          */
-        void InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int& fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
+        void InfoShare::sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int &fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state)
         {
             CitbrainsMessage::SharingData sharing_data;
+            // 100倍にしてintにしてから送る.受け取った時に戻す.
             static auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
             {
-                target.set_pos_x(input.x);
-                target.set_pos_y(input.y);
-                target.set_pos_theta(input.th);
+                target.set_pos_x(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.x));
+                target.set_pos_y(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.y));
+                target.set_pos_theta(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.th));
             };
-
+            // 100倍してintにしてから送る.受け取った時に戻す.
             static auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void
             {
                 char c = std::clamp<uint8_t>(static_cast<uint8_t>(input.cf), static_cast<uint8_t>(0), static_cast<uint8_t>(100));
                 target.set_confidence(std::string{c}.c_str());
                 target.set_is_detect(input.is_detect);
-                target.mutable_position()->set_pos_x(input.pos.x);
-                target.mutable_position()->set_pos_y(input.pos.y);
-                target.mutable_position()->set_pos_theta(input.pos.th);
+                target.mutable_position()->set_pos_x(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.pos.x));
+                target.mutable_position()->set_pos_y(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.pos.y));
+                target.mutable_position()->set_pos_theta(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.pos.th));
             };
 
             Pos2DCfsetter(ball_gl_cf, *(sharing_data.mutable_ball_gl_cf()));
@@ -217,7 +218,7 @@ namespace Citbrains
             }
             char status = (state.Posture != STATE_POSTURE_STAND) ? 0x01 : 0x00; // 転倒のフラグ TODO 読みやすくする
             if (state.Active == STATE_IDLE)
-                status |= 0x02;                                   // アイドル状態かどうかのフラグ
+                status |= 0x02;                                            // アイドル状態かどうかのフラグ
             unsigned char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
             unsigned char temperature = 0xff & state.Temperature;          // モータの温度(degree)
             unsigned char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
@@ -387,7 +388,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.our_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_our_robot_gl(i);
-                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
                     }
                 }
                 if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
@@ -397,7 +398,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.enemy_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_enemy_robot_gl(i);
-                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
                     }
                 }
                 if (0 < shared_data.black_pole_gl_size()) //持ってる時
@@ -407,7 +408,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.black_pole_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_black_pole_gl(i);
-                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
                     }
                 }
                 if (0 < shared_data.target_pos_vec_size()) //持ってる時
@@ -417,11 +418,26 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.target_pos_vec_size(); i++)
                     {
                         auto itr = shared_data.mutable_target_pos_vec(i);
-                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / 100.0), static_cast<float>(itr->pos_y() / 100.0), static_cast<float>(itr->pos_theta() / 100.0));
+                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
                     }
                 }
-                if(shared_data.has_ball_gl_cf()){
-                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::COMMAND)]);
+                if (shared_data.has_ball_gl_cf())
+                {
+                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BALL_GL_CF)]);
+                    set_target->ball_gl_cf_.cf = shared_data.ball_gl_cf().confidence()[0];
+                    set_target->ball_gl_cf_.is_detect = shared_data.ball_gl_cf().is_detect();
+                    set_target->ball_gl_cf_.pos.x = static_cast<float>(shared_data.ball_gl_cf().position().pos_x() / INT_FLOAT_CONVERT_SCALE);
+                    set_target->ball_gl_cf_.pos.y = static_cast<float>(shared_data.ball_gl_cf().position().pos_y() / INT_FLOAT_CONVERT_SCALE);
+                    set_target->ball_gl_cf_.pos.th = static_cast<float>(shared_data.ball_gl_cf().position().pos_theta() / INT_FLOAT_CONVERT_SCALE);
+                }
+                if (shared_data.has_self_pos_cf())
+                {
+                    std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::SELF_POS_CF)]);
+                    set_target->self_pos_cf_.cf = shared_data.self_pos_cf().confidence()[0];
+                    set_target->self_pos_cf_.is_detect = shared_data.self_pos_cf().is_detect();
+                    set_target->self_pos_cf_.pos.x = static_cast<float>(shared_data.self_pos_cf().position().pos_x() / INT_FLOAT_CONVERT_SCALE);
+                    set_target->self_pos_cf_.pos.y = static_cast<float>(shared_data.self_pos_cf().position().pos_y() / INT_FLOAT_CONVERT_SCALE);
+                    set_target->self_pos_cf_.pos.th = static_cast<float>(shared_data.self_pos_cf().position().pos_theta() / INT_FLOAT_CONVERT_SCALE);
                 }
             }
             catch (std::exception &e)
@@ -448,7 +464,7 @@ namespace Citbrains
             return self_id_;
         }
         /**
-         * @brief 現在時間の取得.デフォルトはtime.h(ctime)のtime().
+         * @brief 現在時間の取得.デフォルトはtime.h(ctime)のtime(0).
          * @return float
          */
         float InfoShare::getTime() const
@@ -463,7 +479,7 @@ namespace Citbrains
         //共有された情報のgetter------------------------------------------------------------------------
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::getcf_own(const int32_t &id) const noexcept
@@ -479,7 +495,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::getcf_ball(const int32_t &id) const noexcept
@@ -495,7 +511,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::getstatus(const int32_t &id) const noexcept
@@ -511,7 +527,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::getvoltage(const int32_t &id) const noexcept
@@ -527,7 +543,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::getfps(const int32_t &id) const noexcept
@@ -543,7 +559,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::gettemperature(const int32_t &id) const noexcept
@@ -559,7 +575,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::gethighest_servo(const int32_t &id) const noexcept
@@ -575,7 +591,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] bool InfoShare::getis_detect_ball(const int32_t &id) const noexcept
@@ -591,7 +607,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return int32_t
          */
         [[nodiscard]] int32_t InfoShare::getstrategy_no(const int32_t &id) const noexcept
@@ -607,7 +623,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return string
          */
         [[nodiscard]] std::string InfoShare::getcommand(const int32_t &id) const
@@ -624,7 +640,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return string
          */
         [[nodiscard]] std::string InfoShare::getcurrent_behavior_name(const int32_t &id) const
@@ -641,7 +657,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return float
          */
         [[nodiscard]] float InfoShare::getrecv_time(const int32_t &id) const
@@ -658,7 +674,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return std::vector<Pos2D>
          */
         [[nodiscard]] std::vector<Pos2D> InfoShare::getour_robot_gl(const int32_t &id) const
@@ -675,7 +691,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return std::vector<Pos2D>
          */
         [[nodiscard]] std::vector<Pos2D> InfoShare::getenemy_robot_gl(const int32_t &id) const
@@ -692,7 +708,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return std::vector<Pos2D>
          */
         [[nodiscard]] std::vector<Pos2D> InfoShare::getblack_pole_gl(const int32_t &id) const
@@ -709,7 +725,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return std::vector<Pos2D>
          */
         [[nodiscard]] std::vector<Pos2D> InfoShare::gettarget_pos_vec(const int32_t &id) const
@@ -726,7 +742,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return Pos2DCf
          */
         [[nodiscard]] Pos2DCf InfoShare::getball_gl_cf(const int32_t &id) const
@@ -743,7 +759,7 @@ namespace Citbrains
         }
         /**
          * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. (1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
          * @return Pos2DCf
          */
         [[nodiscard]] Pos2DCf InfoShare::getself_pos_cf(const int32_t &id) const
