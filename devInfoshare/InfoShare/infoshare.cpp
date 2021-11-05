@@ -265,12 +265,24 @@ namespace Citbrains
         {
             try
             {
+
                 CitbrainsMessage::SharingData shared_data;
                 shared_data.ParseFromString(std::move(data));
                 if (static_cast<int32_t>(shared_data.team_color().at(0)) != (our_color_ + CitbrainsMessage::SharingData::COLOR_OFFSET))
+                {
+#ifdef INFOSHARE_DEBUG
+                    std::cout << CitbrainsMessage::SharingData::COLOR_OFFSET << ::std::endl;
+                    std::cout << "color is " << static_cast<int32_t>(shared_data.team_color().at(0)) << " another team color " << std::endl;
+#endif                      // INFOSHARE_DEBUG
                     return; //他チームの情報は無視
+                }
                 if (self_id_ == static_cast<int32_t>(shared_data.id().at(0)))
+                {
+#ifdef INFOSHARE_DEBUG
+                    std::cout << "my infomation" << std::endl;
+#endif                      // INFOSHARE_DEBUG
                     return; //自分の情報は無視
+                }
 #ifdef INFOSHARE_DEBUG
                 debugPrint(shared_data);
 #endif // INFOSHARE_DEBUG

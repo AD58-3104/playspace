@@ -6,6 +6,7 @@ set(Boost_USE_MULTITHREAD ON)
 
 option(NORMAL "nomal build" ON)
 option(PROTO_DBG "proto debug build" OFF)
+option(INFOSHARE_DEBUG "debugging infoshare" OFF)
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS infoshare.proto)
 
@@ -16,7 +17,9 @@ if(NORMAL)
     add_executable(sender test/sender.cpp ${PROTO_SRCS} ${PROTO_HDRS})
     add_executable(receiver test/receiver.cpp ${PROTO_SRCS} ${PROTO_HDRS})
     add_executable(test_dict test/check_dict_class.cpp infoshare.cpp  infoshare.h ${PROTO_SRCS} ${PROTO_HDRS})
-    target_compile_definitions(main PRIVATE "INFOSHARE_DEBUG=1")
+    if(INFOSHARE_DEBUG)
+        target_compile_definitions(main PRIVATE "INFOSHARE_DEBUG=1")
+    endif()
     set(set_option_target main sender receiver test_dict)
 
     foreach(target ${set_option_target})
