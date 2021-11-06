@@ -18,7 +18,7 @@ static void debugPrint(const CitbrainsMessage::SharingData &data)
     std::cout << data.DebugString() << std::endl;
     if(data.has_timestamp()){
         using namespace google::protobuf::util;
-        std::cout << 
+        std::cout << ToString( data.timestamp().nanos() - GetEpoch().nanos()) << std::endl;
     }
     try
     {
