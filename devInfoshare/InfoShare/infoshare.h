@@ -162,7 +162,7 @@ namespace Citbrains
                     {
                         std::ifstream ifs(command_dict_location);
                         std::string s;
-                        int32_t cnt = 1; //0だとprotobufで送る時に面倒なので,1-indexedにする.
+                        int32_t cnt = 1; // 0だとprotobufで送る時に面倒なので,1-indexedにする.
                         while (std::getline(ifs, s))
                         {
                             command_to_num[s] = cnt;
@@ -174,7 +174,7 @@ namespace Citbrains
                     {
                         std::ifstream ifs(behavior_name_dict_location);
                         std::string s;
-                        int32_t cnt = 1; //0だとprotobufで送る時に面倒なので,1-indexedにする.
+                        int32_t cnt = 1; // 0だとprotobufで送る時に面倒なので,1-indexedにする.
                         while (std::getline(ifs, s))
                         {
                             behavior_name_to_num[s] = cnt;
@@ -183,6 +183,18 @@ namespace Citbrains
                         }
                         ifs.close();
                     }
+#ifdef INFOSHARE_DEBUG
+                    std::cout << "----------------- command list ------------------------\n";
+                    for (const auto &itr : command_to_num)
+                    {
+                        std::cout << itr.first << std::endl;
+                    }
+                    std::cout << "----------------- behavior list ------------------------\n";
+                    for (const auto &itr : behavior_name_to_num)
+                    {
+                        std::cout << itr.first << std::endl;
+                    }
+#endif // INFOSHARE_DEBUG
                 }
                 catch (std::exception &e)
                 {
@@ -200,7 +212,7 @@ namespace Citbrains
              * @details pyfilesディレクトリ内の辞書を参考にして単語に変換
              */
             template <class NumSequenceType>
-            std::string numSequenceToCommand(const NumSequenceType &command_number_seq)
+            [[nodiscard]] std::string numSequenceToCommand(const NumSequenceType &command_number_seq)
             {
                 static_assert(Metafunc::has_iterator<NumSequenceType>::value, "arg must have iterator");
                 std::string return_str;
@@ -217,7 +229,7 @@ namespace Citbrains
              * @details pyfilesディレクトリ内の辞書を参考にして単語に変換
              */
             template <class NumSequenceType>
-            std::string numSequenceToBehaviorName(const NumSequenceType &behavior_name_number_seq)
+            [[nodiscard]] std::string numSequenceToBehaviorName(const NumSequenceType &behavior_name_number_seq)
             {
                 static_assert(Metafunc::has_iterator<NumSequenceType>::value, "arg must have iterator");
                 std::string return_str;
@@ -250,8 +262,8 @@ namespace Citbrains
 
             //-----------------------other robot data getter--------------------------
             //自分のidを指定された場合0に相当するものを返す。
-            [[nodiscard]] int32_t getcf_own(const int32_t &id) const noexcept;
-            [[nodiscard]] int32_t getcf_ball(const int32_t &id) const noexcept;
+            [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getcf_own(const int32_t &id) const noexcept;
+            [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getcf_ball(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getstatus(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getfps(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getvoltage(const int32_t &id) const noexcept;
@@ -274,15 +286,14 @@ namespace Citbrains
             void terminate();
             void changeColor(const int32_t &color) noexcept;
             void setup(const Udpsocket::SocketMode::udpsocketmode_t &select_mode, const int32_t &self_id, const int32_t &our_color, const std::string &ip_address = UDPSOCKET_BROADCAST_ADDRESS.data(), float (*func)() = nullptr);
-            float getTime() const; // getelapsedtimeとかの方が良いかも
-            int32_t getOurcolor() const noexcept;
-            int32_t getID() const noexcept;
+            [[nodiscard]] float getTime() const; // getelapsedtimeとかの方が良いかも
+            [[nodiscard]] int32_t getOurcolor() const noexcept;
+            [[nodiscard]] int32_t getID() const noexcept;
             // TODO:名前変える
-            void sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int& fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
+            void sendCommonInfo(const Pos2DCf &ball_gl_cf, const Pos2DCf &self_pos_cf, const std::vector<Pos2D> &our_robot_gl, const std::vector<Pos2D> &enemy_robot_gl, const std::vector<Pos2D> &black_pole_gl, const int &fps, const std::string &message, const std::string &behavior_name, const std::vector<Pos2D> &target_pos_vec, RobotStatus state);
 
         private:
             std::string toBroadcastIP(const std::string &s);
-
             void receivedDataHandler(std::string &&data);
             int32_t self_id_;
             int32_t our_color_;

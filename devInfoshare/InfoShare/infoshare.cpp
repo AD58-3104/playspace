@@ -3,10 +3,11 @@
 #include <boost/asio.hpp>
 #include <ctime>
 #include <type_traits>
+#include <google/protobuf/util/time_util.h>
 using namespace std::literals::chrono_literals;
 
 /**
- * @brief protobufオブジェクトのデバッグ関数.INFOSHARE_DEBUGがONの時のみ有効.
+ * @brief protobufオブジェクトのデバッグ関数.INFOSHARE_DEBUGがONの時のみ有効.debugの時に適当に書き換えていいです.
  * @param[in] data protobufのオブジェクト
  */
 static void debugPrint(const CitbrainsMessage::SharingData &data)
@@ -15,34 +16,38 @@ static void debugPrint(const CitbrainsMessage::SharingData &data)
     received_num++;
     std::cerr << "number of received " << received_num << std::endl;
     std::cout << data.DebugString() << std::endl;
+    if(data.has_timestamp()){
+        using namespace google::protobuf::util;
+        std::cout << 
+    }
     try
     {
-        std::cerr << "debug print " << std::endl;
-        std::string s = data.cf_ball();
-        if (data.has_cf_ball())
-            std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
-        int i = data.cf_ball().at(0);
-        std::cout << "int " << i << std::endl;
-        if (data.has_is_detect_ball())
-            std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
-        if (data.has_cf_ball())
-            std::cout << 1 << (static_cast<int32_t>(data.cf_ball().at(0))) << std::endl;
-        if (data.has_cf_own())
-            std::cout << 2 << (static_cast<int32_t>(data.cf_own().at(0))) << std::endl;
-        if (data.has_status())
-            std::cout << 3 << (static_cast<int32_t>(data.status().at(0))) << std::endl;
-        if (data.has_fps())
-            std::cout << 4 << (static_cast<int32_t>(data.fps().at(0))) << std::endl;
-        if (data.has_voltage())
-            std::cout << 5 << (static_cast<int32_t>(data.voltage().at(0))) << std::endl;
-        if (data.has_temperature())
-            std::cout << 6 << (static_cast<int32_t>(data.temperature().at(0))) << std::endl;
-        if (data.has_highest_servo())
-            std::cout << 7 << (static_cast<int32_t>(data.highest_servo().at(0))) << std::endl;
-        if (data.has_command())
-            std::cout << 8 << (static_cast<int32_t>(data.command().at(0))) << std::endl;
-        if (data.has_current_behavior_name())
-            std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
+        // std::cerr << "debug print " << std::endl;
+        // std::string s = data.cf_ball();
+        // if (data.has_cf_ball())
+        //     std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
+        // int i = data.cf_ball().at(0);
+        // std::cout << "int " << i << std::endl;
+        // if (data.has_is_detect_ball())
+        //     std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
+        // if (data.has_cf_ball())
+        //     std::cout << 1 << (static_cast<int32_t>(data.cf_ball().at(0))) << std::endl;
+        // if (data.has_cf_own())
+        //     std::cout << 2 << (static_cast<int32_t>(data.cf_own().at(0))) << std::endl;
+        // if (data.has_status())
+        //     std::cout << 3 << (static_cast<int32_t>(data.status().at(0))) << std::endl;
+        // if (data.has_fps())
+        //     std::cout << 4 << (static_cast<int32_t>(data.fps().at(0))) << std::endl;
+        // if (data.has_voltage())
+        //     std::cout << 5 << (static_cast<int32_t>(data.voltage().at(0))) << std::endl;
+        // if (data.has_temperature())
+        //     std::cout << 6 << (static_cast<int32_t>(data.temperature().at(0))) << std::endl;
+        // if (data.has_highest_servo())
+        //     std::cout << 7 << (static_cast<int32_t>(data.highest_servo().at(0))) << std::endl;
+        // if (data.has_command())
+        //     std::cout << 8 << (static_cast<int32_t>(data.command().at(0))) << std::endl;
+        // if (data.has_current_behavior_name())
+        //     std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
     }
     catch (const std::exception &e)
     {
@@ -166,7 +171,7 @@ namespace Citbrains
          * @param[in] enemy_robot_gl 敵チームロボットのグローバル座標
          * @param[in] black_pole_gl その他の障害物のグローバル座標
          * @param[in] fps HPLのメインループの周期。モニター用 8bit
-         * @param[in] message
+         * @param[in] message roleとgoalが組み合わさった文字列
          * @param[in] behavior_name ロボットが現在行っているbehaviorの文字列
          * @param[in] target_pos_vec ロボットが向かおうとしている座標
          * @param[in] state ロボットの現在の状態(転倒しているかどうか,voltage,サーボ温度等)
@@ -383,11 +388,11 @@ namespace Citbrains
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::CURRENT_BEHAVIOR_NAME)]);
                     if (shared_data.current_behavior_name().size() == 0)
                     {
-                        set_target->command_ = "";
+                        set_target->current_behavior_name_ = "";
                     }
                     else
                     {
-                        set_target->command_ = dictionary.numSequenceToBehaviorName(shared_data.current_behavior_name());
+                        set_target->current_behavior_name_ = dictionary.numSequenceToBehaviorName(shared_data.current_behavior_name());
                     }
                 }
                 if (shared_data.has_is_detect_ball())
