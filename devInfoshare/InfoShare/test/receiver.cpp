@@ -7,7 +7,7 @@ using namespace std;
 int main(int argc, char const *argv[])
 {
 
-    UDPServer server(7111,[](std::string&& s)->void{
+    UDPServer server(7120,[](std::string&& s)->void{
         CitbrainsMessage::SharingData data;
         data.ParseFromString(std::string(std::move(s)));
         std::cout << data.DebugString() << std::endl;

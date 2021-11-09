@@ -17,8 +17,6 @@ int main(int argc, char const *argv[])
         proto.set_id(std::string{c}.c_str());
         char ucc = 5;
         proto.set_team_color(std::string{(char)ucc}.c_str());
-        // proto.set_cf_own(s.c_str());
-        // proto.set_cf_ball(s.c_str());
         proto.set_fps(s.c_str());
         proto.set_voltage(s.c_str());
         proto.set_temperature(s.c_str());
@@ -51,13 +49,10 @@ int main(int argc, char const *argv[])
         proto.mutable_ball_gl_cf()->CopyFrom(pos2dcf);
         proto.mutable_self_pos_cf()->CopyFrom(pos2dcf);
 
-        // std::cout << google::protobuf::util::TimeUtil::TimestampToNanoseconds(google::protobuf::util::TimeUtil::GetCurrentTime());
         auto tim = google::protobuf::util::TimeUtil::NanosecondsToTimestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
         proto.mutable_timestamp()->CopyFrom(tim);
         s = proto.SerializeAsString();
         client.send(std::move(s));
-        std::cout << tim.seconds() << " | " <<  tim.nanos() << std::endl;
-        std::cout << "packet size is " << s.size() << std::endl;
         std::this_thread::sleep_for(1ms);
     }
     std::this_thread::sleep_for(1500ms);

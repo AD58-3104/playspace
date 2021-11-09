@@ -7,9 +7,13 @@
 #include <fstream>
 using namespace std::literals::chrono_literals;
 
+/**
+ * @brief デバッグ用の名前空間
+ */
 namespace debug
 {
-    static std::vector<std::pair<int32_t,int64_t>> time_log;
+    static std::vector<std::pair<int32_t, int64_t>> time_log;
+    static bool receive_timestamp = false;
     /**
      * @brief protobufオブジェクトのデバッグ関数.INFOSHARE_DEBUGがONの時のみ有効.debugの時に適当に書き換えていいです.
      * @param[in] data protobufのオブジェクト
@@ -20,39 +24,15 @@ namespace debug
         received_num++;
         // std::cerr << "number of received " << received_num << std::endl;
         // std::cout << data.DebugString() << "\n"; //正確に時間計測するならこの二行の出力は無くすべき.
-        if (data.has_timestamp())
-        {
-            using namespace google::protobuf::util;
-            time_log.push_back(std::make_pair(received_num,TimeUtil::DurationToNanoseconds(TimeUtil::NanosecondsToTimestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) - data.timestamp())));
-        }
+
         try
         {
-            // std::cerr << "debug print " << std::endl;
-            // std::string s = data.cf_ball();
-            // if (data.has_cf_ball())
-            //     std::cout << "string" << s << " size is " << data.cf_ball().size() << std::endl;
-            // int i = data.cf_ball().at(0);
-            // std::cout << "int " << i << std::endl;
-            // if (data.has_is_detect_ball())
-            //     std::cout << "detect flag" << (data.is_detect_ball()) << std::endl;
-            // if (data.has_cf_ball())
-            //     std::cout << 1 << (static_cast<int32_t>(data.cf_ball().at(0))) << std::endl;
-            // if (data.has_cf_own())
-            //     std::cout << 2 << (static_cast<int32_t>(data.cf_own().at(0))) << std::endl;
-            // if (data.has_status())
-            //     std::cout << 3 << (static_cast<int32_t>(data.status().at(0))) << std::endl;
-            // if (data.has_fps())
-            //     std::cout << 4 << (static_cast<int32_t>(data.fps().at(0))) << std::endl;
-            // if (data.has_voltage())
-            //     std::cout << 5 << (static_cast<int32_t>(data.voltage().at(0))) << std::endl;
-            // if (data.has_temperature())
-            //     std::cout << 6 << (static_cast<int32_t>(data.temperature().at(0))) << std::endl;
-            // if (data.has_highest_servo())
-            //     std::cout << 7 << (static_cast<int32_t>(data.highest_servo().at(0))) << std::endl;
-            // if (data.has_command())
-            //     std::cout << 8 << (static_cast<int32_t>(data.command().at(0))) << std::endl;
-            // if (data.has_current_behavior_name())
-            //     std::cout << 9 << (static_cast<int32_t>(data.current_behavior_name().at(0))) << std::endl;
+            if (data.has_timestamp())
+            {
+                using namespace google::protobuf::util;
+                receive_timestamp = true;
+                time_log.push_back(std::make_pair(received_num, TimeUtil::DurationToNanoseconds(TimeUtil::NanosecondsToTimestamp(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) - data.timestamp())));
+            }
         }
         catch (const std::exception &e)
         {
@@ -60,19 +40,44 @@ namespace debug
             std::cout << e.what() << std::endl;
         }
     }
+
     /**
      * @brief protobufオブジェクトのデバッグを終了する時に呼ぶ関数.主にファイルに書き込む.
      */
     void finishDebug()
     {
-        std::ofstream ofs;
-        ofs.open("receive_time_log.txt");
-        for(const auto& [receive_num,time_nanos]:time_log){
-            ofs << "number " << receive_num << " reached " << time_nanos << "nano seconds" << std::endl;
+        try
+        {
+            if (receive_timestamp)
+            {
+                std::ofstream ofs;
+                ofs.open("receive_time_log.txt");
+                int32_t total_received = 0;
+                int64_t total_time = 0;
+                for (const auto &[receive_num, time_nanos] : time_log)
+                {
+                    ofs << "number " << receive_num << " reached " << time_nanos << "nano seconds" << std::endl;
+                    ++total_received;
+                    total_time += time_nanos;
+                }
+                ofs.close();
+                std::ifstream ifs;
+                ifs.open("receive_time_log.txt");
+                std::string s;
+                while (std::getline(ifs, s))
+                {
+                    std::cout << s << std::endl;
+                }
+                ifs.close();
+                std::cout << "average time is " << total_time / total_received << " nano seconds" << std::endl;
+            }
         }
-        ofs.close();
+        catch (const std::exception &e)
+        {
+            std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
+            std::cout << e.what() << std::endl;
+        }
     }
-
 }
 namespace Citbrains
 {
@@ -84,7 +89,7 @@ namespace Citbrains
          * @details コンストラクタは何もしないので必ずsetupを呼び初期化する.
          */
         InfoShare::InfoShare()
-            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false), dictionary()
+            : self_id_(1), our_color_(COLOR_MAGENTA), timeFunc_(nullptr), terminated_(false), socket_mode_(0), dictionary()
         {
         }
         /**
@@ -93,10 +98,10 @@ namespace Citbrains
          */
         InfoShare::~InfoShare()
         {
-            terminate();
 #ifdef INFOSHARE_DEBUG
             debug::finishDebug();
 #endif // INFOSHARE_DEBUG
+            terminate();
         }
 
         /**
@@ -147,7 +152,7 @@ namespace Citbrains
                 assert((our_color == COLOR_MAGENTA) || (our_color == COLOR_CYAN)); // color must be magenta or cyan
                 self_id_ = self_id;
                 our_color_ = our_color;
-
+                socket_mode_ = mode_select;
                 if (timefunc != nullptr)
                 {
                     timeFunc_ = timefunc;
@@ -170,10 +175,10 @@ namespace Citbrains
                 }
                 else
                 {
-                    int32_t port = COMM_INFO_PORT0 + self_id - 1;
-                    client_ = std::make_unique<UDPClient>(ip_address, port, mode_select);
+                    int32_t receive_port = COMM_INFO_PORT0 + self_id_ - 1;
+                    client_ = std::make_unique<UDPClient>(ip_address, receive_port, mode_select);
                     server_ = std::make_unique<UDPServer>(
-                        port, [this](std::string &&s)
+                        receive_port, [this](std::string &&s)
                         { receivedDataHandler(std::move(s)); },
                         mode_select, 1, ip_address);
                 }
@@ -258,7 +263,19 @@ namespace Citbrains
             sharing_data.set_command(dictionary.commandToNumSequence(message));
             sharing_data.set_current_behavior_name(dictionary.behaviorNameToNumSequence(behavior_name));
             std::string s = sharing_data.SerializeAsString();
-            client_->send(std::move(s));
+            if (socket_mode_ == Citbrains::Udpsocket::SockedtMode::unicast_mode)
+            {
+                for(int i = 0;i < 4;++i){
+                    if(i == self_id_ -1){
+                        continue;
+                    }
+                    client_->send(std::move(s),COMM_INFO_PORT0 + self_id_ - 1,)
+                }
+            }
+            else
+            {
+                client_->send(std::move(s));
+            }
         }
 
         /**

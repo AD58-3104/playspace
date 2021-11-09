@@ -25,7 +25,6 @@ int main(int argc, char const *argv[])
     int id = 1;
     info.setup(Citbrains::Udpsocket::SocketMode::broadcast_mode, id, COLOR_MAGENTA, "127.0.0.1");
     assert(info.getOurcolor() == COLOR_MAGENTA);
-    std::cout << info.getOurcolor()<< std::endl;
     assert(info.getID() == id);
     Pos2D pos2d(50.0, 50.0, 90.0);
     Pos2DCf pos2dcf(pos2d, 30, 0);
@@ -40,9 +39,9 @@ int main(int argc, char const *argv[])
     for (int i = 2; i <= 2; i++)
     {
         std::cout << "------------this is no " << i << " infomation --------------------" << std::endl;
-        std::cout << "cf_own :" << info.getcf_own(i) << std::endl;
-        std::cout << "votage :" << info.getvoltage(i) << std::endl;
-        std::cout << "cf_ball :" << info.getcf_ball(i) << std::endl;
+        // std::cout << "cf_own :" << info.getcf_own(i) << std::endl;
+        std::cout << "voltage :" << info.getvoltage(i) << std::endl;
+        // std::cout << "cf_ball :" << info.getcf_ball(i) << std::endl;
         std::cout << "fps :" << info.getfps(i) << std::endl;
         std::cout << "status :" << info.getstatus(i) << std::endl;
         std::cout << "temperature :" << info.gettemperature(i) << std::endl;

@@ -113,18 +113,22 @@ using namespace std::literals::chrono_literals;
             void send(std::string &&bytestring)
             {
                 std::string send_data = std::move(bytestring);
-                // if (allow_broadcast_)
-                // {
-                //     boost::asio::ip::udp::endpoint destination(boost::asio::ip::address_v4::broadcast(), port_);
-                //     socket_.async_send_to(
-                //         boost::asio::buffer(send_data),
-                //         destination,
-                //         [this](const boost::system::error_code &error, size_t bytes_transferred)
-                //         { sendHandler(error, bytes_transferred); });
-                // }
-                // else
                 {
                     boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address_), port_);
+                    socket_.async_send_to(
+                        boost::asio::buffer(send_data),
+                        destination,
+                        [this](const boost::system::error_code &error, size_t bytes_transferred)
+                        { sendHandler(error, bytes_transferred); });
+                }
+            }
+
+            // メッセージ送信
+            void send(std::string &&bytestring,int32_t port,std::string ip_address)
+            {
+                std::string send_data = std::move(bytestring);
+                {
+                    boost::asio::ip::udp::endpoint destination(boost::asio::ip::address::from_string(ip_address), port);
                     socket_.async_send_to(
                         boost::asio::buffer(send_data),
                         destination,

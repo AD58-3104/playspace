@@ -299,6 +299,7 @@ namespace Citbrains
             int32_t our_color_;
             float (*timeFunc_)();
             bool terminated_;
+            Udpsocket::SocketMode::udpsocketmode_t socket_mode_;
             std::vector<std::unique_ptr<Citbrains::infosharemodule::OtherRobotInfomation>> robot_data_list_;
             std::function<void(std::string &&)> receivedDataHandler_;
             std::unique_ptr<UDPServer> server_;
