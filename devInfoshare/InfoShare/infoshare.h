@@ -106,15 +106,15 @@ namespace Citbrains
             float (*timeFunc_)();
             std::deque<std::mutex> dataMutexes_; // vectorだとmutexのコピーコンストラクタを呼んでしまうのでdeque
             //------------atomic datas----------------
-            std::atomic_int32_t cf_own_ = 0;
-            std::atomic_int32_t cf_ball_ = 0;
+            // std::atomic_int32_t cf_own_ = 0;
+            // std::atomic_int32_t cf_ball_ = 0;
             std::atomic_uint32_t status_ = 0; //なんかこれフラグの詰め合わせっぽいので分けてatomic_boolで持つべきかも。
             std::atomic_int32_t fps_ = 0;
             std::atomic_int32_t voltage_ = 0;
             std::atomic_int32_t temperature_ = 0;
             std::atomic_int32_t highest_servo_ = 0;
-            std::atomic_bool is_detect_ball_ = false;
-            std::atomic_int32_t strategy_no_ = 0;
+            // std::atomic_bool is_detect_ball_ = false;
+            // std::atomic_int32_t strategy_no_ = 0;
             //-------------non atomic datas---------------
             float recv_time_ = 0.0;
             std::vector<Pos2D> our_robot_gl_; // TODO　残り二つを追加するのとcf_ownとかを消す。
@@ -262,15 +262,15 @@ namespace Citbrains
 
             //-----------------------other robot data getter--------------------------
             //自分のidを指定された場合0に相当するものを返す。
-            [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getcf_own(const int32_t &id) const noexcept;
-            [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getcf_ball(const int32_t &id) const noexcept;
+            // [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getcf_own(const int32_t &id) const noexcept;
+            // [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getcf_ball(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getstatus(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getfps(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t getvoltage(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t gettemperature(const int32_t &id) const noexcept;
             [[nodiscard]] int32_t gethighest_servo(const int32_t &id) const noexcept;
-            [[nodiscard]] bool getis_detect_ball(const int32_t &id) const noexcept;
-            [[nodiscard]] int32_t getstrategy_no(const int32_t &id) const noexcept;
+            // [[deprecated("this variable don't use now")]] [[nodiscard]] bool getis_detect_ball(const int32_t &id) const noexcept;
+            // [[deprecated("this variable don't use now")]] [[nodiscard]] int32_t getstrategy_no(const int32_t &id) const noexcept;
             //----mutex付きのやつ
             [[nodiscard]] float getrecv_time(const int32_t &id) const; //残念ながらscoped_lockは例外を投げるらしい
             [[nodiscard]] std::vector<Pos2D> getour_robot_gl(const int32_t &id) const;

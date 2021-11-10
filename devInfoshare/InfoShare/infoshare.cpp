@@ -83,7 +83,8 @@ namespace Citbrains
 {
     namespace infosharemodule
     {
-        static inline constexpr float INT_FLOAT_CONVERT_SCALE = 1000.0; // floatで送ると効率が良くないのでintに変換して送信している.今は小数点以下3桁.
+        static inline constexpr float INT_FLOAT_CONVERT_SCALE_XY = 1.0; // floatで送ると効率が良くないのでintに変換して送信している.今は小数点以下全て切り捨て.
+        static inline constexpr float INT_FLOAT_CONVERT_SCALE_THETA = 100.0;
         /**
          * @brief コンストラクタ
          * @details コンストラクタは何もしないので必ずsetupを呼び初期化する.
@@ -129,7 +130,7 @@ namespace Citbrains
 
         /**
          * @brief 初期化と通信開始の関数.呼び出しは一度しか許容されない.
-         * @param[in] mode_select 通信モード選択(基本はbroadcastにする)
+         * @param[in] mode_select 通信モード選択.実機はbroadcast,webots等PC内で動かす場合はunicast.
          * @param[in] self_id ロボットのID 1 ～ NUM_PLAYERS
          * @param[in] our_color ロボットの色 COLOR_MAGENTA(4), COLOR_CYAN(5)
          * @param[in] ip_address IPアドレス.デフォルトだとbroadcast用のアドレスが入力される.
@@ -210,9 +211,9 @@ namespace Citbrains
             // 100倍にしてintにしてから送る.受け取った時に戻す.
             static auto Pos2Dsetter = [](const Pos2D &input, CitbrainsMessage::Pos2D &target) -> void
             {
-                target.set_pos_x(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.x));
-                target.set_pos_y(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.y));
-                target.set_pos_theta(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.th));
+                target.set_pos_x(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE_XY * input.x));
+                target.set_pos_y(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE_XY * input.y));
+                target.set_pos_theta(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE_THETA * input.th));
             };
             // 100倍してintにしてから送る.受け取った時に戻す.
             static auto Pos2DCfsetter = [](const Pos2DCf &input, CitbrainsMessage::Pos2DCf &target) -> void
@@ -220,9 +221,9 @@ namespace Citbrains
                 char c = std::clamp<uint8_t>(static_cast<uint8_t>(input.cf), static_cast<uint8_t>(0), static_cast<uint8_t>(100));
                 target.set_confidence(std::string{c}.c_str());
                 target.set_is_detect(input.is_detect);
-                target.mutable_position()->set_pos_x(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.pos.x));
-                target.mutable_position()->set_pos_y(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.pos.y));
-                target.mutable_position()->set_pos_theta(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE * input.pos.th));
+                target.mutable_position()->set_pos_x(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE_XY * input.pos.x));
+                target.mutable_position()->set_pos_y(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE_XY * input.pos.y));
+                target.mutable_position()->set_pos_theta(static_cast<int32_t>(INT_FLOAT_CONVERT_SCALE_THETA * input.pos.th));
             };
 
             Pos2DCfsetter(ball_gl_cf, *(sharing_data.mutable_ball_gl_cf()));
@@ -247,34 +248,38 @@ namespace Citbrains
                 auto target_pos2d = sharing_data.add_target_pos_vec();
                 Pos2Dsetter(input, *target_pos2d);
             }
-            char status = (state.Posture != STATE_POSTURE_STAND) ? 0x01 : 0x00; // 転倒のフラグ TODO 読みやすくする
+            unsigned char status = (state.Posture != STATE_POSTURE_STAND) ? 0x01 : 0x00; // 転倒のフラグ TODO 読みやすくする
             if (state.Active == STATE_IDLE)
                 status |= 0x02;                                            // アイドル状態かどうかのフラグ
             unsigned char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
             unsigned char temperature = 0xff & state.Temperature;          // モータの温度(degree)
-            unsigned char highest_servo = 0xff & (state.Temperature >> 8); // 最も温度の高いモータ
-            sharing_data.set_id(std::string{static_cast<char>(self_id_)});
-            sharing_data.set_team_color(std::string{static_cast<char>(CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
-            sharing_data.set_status(std::string{static_cast<char>(status)});
-            sharing_data.set_fps(std::string{static_cast<char>(fps)});
-            sharing_data.set_voltage(std::string{static_cast<char>(voltage)});
-            sharing_data.set_temperature(std::string{static_cast<char>(temperature)});
-            sharing_data.set_highest_servo(std::string{static_cast<char>(highest_servo)});
+            unsigned char highest_servo = 0xff & (state.servo1temp >> 8); // 最も温度の高いモータ
+            sharing_data.set_id(std::string{static_cast<char>((unsigned char)self_id_)});
+            sharing_data.set_team_color(std::string{static_cast<char>((unsigned char)CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
+            sharing_data.set_status(std::string{static_cast<char>((unsigned char)status)});
+            sharing_data.set_fps(std::string{static_cast<char>((unsigned char)fps)});
+            sharing_data.set_voltage(std::string{static_cast<char>((unsigned char)voltage)});
+            sharing_data.set_temperature(std::string{static_cast<char>((unsigned char)temperature)});
+            sharing_data.set_highest_servo(std::string{static_cast<char>((unsigned char)highest_servo)});
             sharing_data.set_command(dictionary.commandToNumSequence(message));
             sharing_data.set_current_behavior_name(dictionary.behaviorNameToNumSequence(behavior_name));
-            std::string s = sharing_data.SerializeAsString();
-            if (socket_mode_ == Citbrains::Udpsocket::SockedtMode::unicast_mode)
+            std::string serialized_data = sharing_data.SerializeAsString();
+            std::cout << "size is " << serialized_data.size() << std::endl;
+            if (socket_mode_ == Citbrains::Udpsocket::SocketMode::unicast_mode)
             {
-                for(int i = 0;i < 4;++i){
-                    if(i == self_id_ -1){
+                for (int i = 0; i < NUM_PLAYERS; ++i)
+                {
+                    if (i == self_id_ - 1)
+                    {
                         continue;
                     }
-                    client_->send(std::move(s),COMM_INFO_PORT0 + self_id_ - 1,)
+                    std::string s = serialized_data;
+                    client_->send(std::move(s), COMM_INFO_PORT0 + i, "127.0.0.1"); //折角moveにしたのに勿体ないけど仕方ない.
                 }
             }
             else
             {
-                client_->send(std::move(s));
+                client_->send(std::move(serialized_data));
             }
         }
 
@@ -331,28 +336,28 @@ namespace Citbrains
                 auto &set_target = robot_data_list_[static_cast<int32_t>(shared_data.id().at(0)) - 1];
                 //------------data set-----------------------------------------------------------------
                 set_target->setRecv_time();
-                if (shared_data.has_cf_ball())
-                {
-                    if (shared_data.cf_ball().size() == 0)
-                    {
-                        set_target->cf_ball_.store(static_cast<int32_t>(0));
-                    }
-                    else
-                    {
-                        set_target->cf_ball_.store(static_cast<int32_t>(shared_data.cf_ball().at(0)));
-                    }
-                }
-                if (shared_data.has_cf_own())
-                {
-                    if (shared_data.cf_own().size() == 0)
-                    {
-                        set_target->cf_own_.store(static_cast<int32_t>(0));
-                    }
-                    else
-                    {
-                        set_target->cf_own_.store(static_cast<int32_t>(shared_data.cf_own().at(0)));
-                    }
-                }
+                // if (shared_data.has_cf_ball())
+                // {
+                //     if (shared_data.cf_ball().size() == 0)
+                //     {
+                //         set_target->cf_ball_.store(static_cast<int32_t>(0));
+                //     }
+                //     else
+                //     {
+                //         set_target->cf_ball_.store(static_cast<int32_t>(shared_data.cf_ball().at(0)));
+                //     }
+                // }
+                // if (shared_data.has_cf_own())
+                // {
+                //     if (shared_data.cf_own().size() == 0)
+                //     {
+                //         set_target->cf_own_.store(static_cast<int32_t>(0));
+                //     }
+                //     else
+                //     {
+                //         set_target->cf_own_.store(static_cast<int32_t>(shared_data.cf_own().at(0)));
+                //     }
+                // }
                 if (shared_data.has_status())
                 {
                     if (shared_data.status().size() == 0)
@@ -432,8 +437,8 @@ namespace Citbrains
                         set_target->current_behavior_name_ = dictionary.numSequenceToBehaviorName(shared_data.current_behavior_name());
                     }
                 }
-                if (shared_data.has_is_detect_ball())
-                    set_target->is_detect_ball_.store(shared_data.is_detect_ball());
+                // if (shared_data.has_is_detect_ball())
+                //     set_target->is_detect_ball_.store(shared_data.is_detect_ball());
                 //--------object data set-------------------------------------------------------------------
                 if (0 < shared_data.our_robot_gl_size()) //持ってる時
                 {
@@ -442,7 +447,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.our_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_our_robot_gl(i);
-                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
+                        set_target->our_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE_THETA));
                     }
                 }
                 if (0 < shared_data.enemy_robot_gl_size()) //持ってる時
@@ -452,7 +457,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.enemy_robot_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_enemy_robot_gl(i);
-                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
+                        set_target->enemy_robot_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE_THETA));
                     }
                 }
                 if (0 < shared_data.black_pole_gl_size()) //持ってる時
@@ -462,7 +467,7 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.black_pole_gl_size(); i++)
                     {
                         auto itr = shared_data.mutable_black_pole_gl(i);
-                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
+                        set_target->black_pole_gl_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE_THETA));
                     }
                 }
                 if (0 < shared_data.target_pos_vec_size()) //持ってる時
@@ -472,26 +477,41 @@ namespace Citbrains
                     for (int32_t i = 0; i < shared_data.target_pos_vec_size(); i++)
                     {
                         auto itr = shared_data.mutable_target_pos_vec(i);
-                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE));
+                        set_target->target_pos_vec_.emplace_back(static_cast<float>(itr->pos_x() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_y() / INT_FLOAT_CONVERT_SCALE_XY), static_cast<float>(itr->pos_theta() / INT_FLOAT_CONVERT_SCALE_THETA));
                     }
                 }
                 if (shared_data.has_ball_gl_cf())
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::BALL_GL_CF)]);
-                    set_target->ball_gl_cf_.cf = shared_data.ball_gl_cf().confidence()[0];
+                    if (shared_data.ball_gl_cf().has_confidence())
+                    {
+                        set_target->ball_gl_cf_.cf = shared_data.ball_gl_cf().confidence()[0];
+                    }
+                    else
+                    {
+                        set_target->ball_gl_cf_.cf = 0;
+                    }
                     set_target->ball_gl_cf_.is_detect = shared_data.ball_gl_cf().is_detect();
-                    set_target->ball_gl_cf_.pos.x = static_cast<float>(shared_data.ball_gl_cf().position().pos_x() / INT_FLOAT_CONVERT_SCALE);
-                    set_target->ball_gl_cf_.pos.y = static_cast<float>(shared_data.ball_gl_cf().position().pos_y() / INT_FLOAT_CONVERT_SCALE);
-                    set_target->ball_gl_cf_.pos.th = static_cast<float>(shared_data.ball_gl_cf().position().pos_theta() / INT_FLOAT_CONVERT_SCALE);
+                    set_target->ball_gl_cf_.pos.x = static_cast<float>(shared_data.ball_gl_cf().position().pos_x() / INT_FLOAT_CONVERT_SCALE_XY);
+                    set_target->ball_gl_cf_.pos.y = static_cast<float>(shared_data.ball_gl_cf().position().pos_y() / INT_FLOAT_CONVERT_SCALE_XY);
+                    set_target->ball_gl_cf_.pos.th = static_cast<float>(shared_data.ball_gl_cf().position().pos_theta() / INT_FLOAT_CONVERT_SCALE_THETA);
                 }
                 if (shared_data.has_self_pos_cf())
                 {
                     std::lock_guard lock(set_target->dataMutexes_[static_cast<int32_t>(OtherRobotInfomation::MutexTag::SELF_POS_CF)]);
+                    if (shared_data.self_pos_cf().has_confidence())
+                    {
+                        set_target->self_pos_cf_.cf = shared_data.self_pos_cf().confidence()[0];
+                    }
+                    else
+                    {
+                        set_target->self_pos_cf_.cf = 0;
+                    }
                     set_target->self_pos_cf_.cf = shared_data.self_pos_cf().confidence()[0];
                     set_target->self_pos_cf_.is_detect = shared_data.self_pos_cf().is_detect();
-                    set_target->self_pos_cf_.pos.x = static_cast<float>(shared_data.self_pos_cf().position().pos_x() / INT_FLOAT_CONVERT_SCALE);
-                    set_target->self_pos_cf_.pos.y = static_cast<float>(shared_data.self_pos_cf().position().pos_y() / INT_FLOAT_CONVERT_SCALE);
-                    set_target->self_pos_cf_.pos.th = static_cast<float>(shared_data.self_pos_cf().position().pos_theta() / INT_FLOAT_CONVERT_SCALE);
+                    set_target->self_pos_cf_.pos.x = static_cast<float>(shared_data.self_pos_cf().position().pos_x() / INT_FLOAT_CONVERT_SCALE_XY);
+                    set_target->self_pos_cf_.pos.y = static_cast<float>(shared_data.self_pos_cf().position().pos_y() / INT_FLOAT_CONVERT_SCALE_XY);
+                    set_target->self_pos_cf_.pos.th = static_cast<float>(shared_data.self_pos_cf().position().pos_theta() / INT_FLOAT_CONVERT_SCALE_THETA);
                 }
             }
             catch (std::exception &e)
@@ -531,38 +551,38 @@ namespace Citbrains
         }
 
         //共有された情報のgetter------------------------------------------------------------------------
-        /**
-         * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
-         * @return int32_t
-         */
-        [[nodiscard]] int32_t InfoShare::getcf_own(const int32_t &id) const noexcept
-        {
-            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
-            {
-                return 0;
-            }
-            else
-            {
-                return robot_data_list_[id - 1]->cf_own_.load();
-            }
-        }
-        /**
-         * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
-         * @return int32_t
-         */
-        [[nodiscard]] int32_t InfoShare::getcf_ball(const int32_t &id) const noexcept
-        {
-            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
-            {
-                return 0;
-            }
-            else
-            {
-                return robot_data_list_[id - 1]->cf_ball_.load();
-            }
-        }
+        // /**
+        //  * @brief 関数名の変数に対するgetter
+        //  * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+        //  * @return int32_t
+        //  */
+        // [[nodiscard]] int32_t InfoShare::getcf_own(const int32_t &id) const noexcept
+        // {
+        //     if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
+        //     {
+        //         return 0;
+        //     }
+        //     else
+        //     {
+        //         return robot_data_list_[id - 1]->cf_own_.load();
+        //     }
+        // }
+        // /**
+        //  * @brief 関数名の変数に対するgetter
+        //  * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+        //  * @return int32_t
+        //  */
+        // [[nodiscard]] int32_t InfoShare::getcf_ball(const int32_t &id) const noexcept
+        // {
+        //     if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
+        //     {
+        //         return 0;
+        //     }
+        //     else
+        //     {
+        //         return robot_data_list_[id - 1]->cf_ball_.load();
+        //     }
+        // }
         /**
          * @brief 関数名の変数に対するgetter
          * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
@@ -643,38 +663,38 @@ namespace Citbrains
                 return robot_data_list_[id - 1]->highest_servo_.load();
             }
         }
+        // /**
+        //  * @brief 関数名の変数に対するgetter
+        //  * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+        //  * @return int32_t
+        //  */
+        // [[nodiscard]] bool InfoShare::getis_detect_ball(const int32_t &id) const noexcept
+        // {
+        //     if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
+        //     {
+        //         return false;
+        //     }
+        //     else
+        //     {
+        //         return robot_data_list_[id - 1]->is_detect_ball_.load();
+        //     }
+        // }
         /**
-         * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
-         * @return int32_t
-         */
-        [[nodiscard]] bool InfoShare::getis_detect_ball(const int32_t &id) const noexcept
-        {
-            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
-            {
-                return false;
-            }
-            else
-            {
-                return robot_data_list_[id - 1]->is_detect_ball_.load();
-            }
-        }
-        /**
-         * @brief 関数名の変数に対するgetter
-         * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
-         * @return int32_t
-         */
-        [[nodiscard]] int32_t InfoShare::getstrategy_no(const int32_t &id) const noexcept
-        {
-            if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
-            {
-                return 0;
-            }
-            else
-            {
-                return robot_data_list_[id - 1]->strategy_no_.load();
-            }
-        }
+        //  * @brief 関数名の変数に対するgetter
+        //  * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
+        //  * @return int32_t
+        //  */
+        // [[nodiscard]] int32_t InfoShare::getstrategy_no(const int32_t &id) const noexcept
+        // {
+        //     if ((id == self_id_) || (id < 1) || (NUM_PLAYERS < id))
+        //     {
+        //         return 0;
+        //     }
+        //     else
+        //     {
+        //         return robot_data_list_[id - 1]->strategy_no_.load();
+        //     }
+        // }
         /**
          * @brief 関数名の変数に対するgetter
          * @param[in] id 情報が欲しいロボットの番号. id == self_idの時,また(1 < id < NUM_PLAYERS)を満たさない場合は0に値するものを返す.
