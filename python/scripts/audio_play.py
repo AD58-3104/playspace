@@ -7,7 +7,7 @@ def sound_play(sound_number:int):
     aplay:str = 'aplay '
     echo:str = 'echo '
     if sound_number < len(names):
-        os.system(echo + dirname + names[sound_number])
+        os.system(aplay + dirname + "/" + names[sound_number])
     else :
         print('there is no sound which match inputed number')
 
