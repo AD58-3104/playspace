@@ -1,0 +1,185 @@
+# -*- Mode: Python; indent-tabs-mode: nil; py-indent-offset: 4; tab-width: 4 -*-
+# vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4:
+
+##########################################################################
+ # Copyright (c) 2017 CIT Brains All Rights Reserved.                   #
+ #                                                                      #
+ # @file goal.py                                                        #
+ # @brief Goal of the soccer agent                                      #
+ # @author Daiki Maekawa                                                #
+ # @date 2017-08-17                                                     #
+##########################################################################
+
+import rcl
+import kid.role
+
+class HaveBall(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_HAVE_BALL, True)]
+
+class KnowBallPos(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_KNOW_BALL_POS, True)]
+
+class KnowSelfPos(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_KNOW_SELF_POS, True)]
+
+class BallInGoal(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+
+    def get_target_type(self):
+        return rcl.Strategy.T_ENEMY_GOAL
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_BALL_IN_TARGET, True)]
+
+class ClearBallOutOfArea(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+
+    def get_target_type(self):
+        return rcl.Strategy.T_CLEAR_AREA
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_BALL_IN_TARGET, True)]
+
+class ReceiverHaveBall(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return rcl.Strategy.T_RECEIVER
+
+    def get_goal_state(self):
+        return [(HLKidWS.K_BALL_IN_TARGET, HLKidWS.EQUAL, HLKidWS.V_TRUE)]
+
+class Idling(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_IDLE, True)]
+
+class OnTargetPos(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_ON_TARGET_POS, True)]
+
+class KeepFormation(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(HLKidWS.K_ON_FORMATION_POS, HLKidWS.EQUAL, HLKidWS.V_TRUE), 
+                (HLKidWS.K_FACING_FORMATION_ANGLE, HLKidWS.EQUAL, HLKidWS.V_TRUE)]
+
+class TrackingBall(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_TRACKING_BALL, True)]
+
+class WaitKickoff(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_PERMITTED_INTRUSION_CIRCLE, True)]
+
+class SideEntry(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_SIDE_ENTRY_STATE, False)]
+
+class WalkingBackward(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(rcl.WorldState.K_ON_TARGET_POS, True)]
+
+class StandBetweenGoalAndBall(rcl.ActionGoal):
+    def __init__(self, id_):
+        rcl.ActionGoal.__init__(self, id_)
+    
+    def get_target_type(self):
+        return None
+
+    def get_goal_state(self):
+        return [(kid.role.Keeper.K_STAND_BETWEEN_GOAL_AND_BALL, True)]
+
+__goal_cls_list = [
+    Idling,
+    OnTargetPos,
+    KeepFormation,
+    KnowBallPos,
+    KnowSelfPos,
+    BallInGoal,
+    ClearBallOutOfArea,
+    ReceiverHaveBall,
+    TrackingBall,
+    HaveBall,
+    WaitKickoff,
+    SideEntry,
+    WalkingBackward,
+    StandBetweenGoalAndBall
+]
+
+__goal_list = [__goal_cls_list[i](str(i)) for i in range(len(__goal_cls_list))]
+
+idling, on_target_pos, keep_formation, know_ball_pos, know_self_pos, ball_in_goal, clear_ball_out_of_area, receiver_have_ball, tracking_ball, have_ball, wait_kickoff, side_entry, walking_backward, stand_between_goal_and_ball = __goal_list
+
+goal_from_id = {g.id: g for g in __goal_list}
+goal_from_id[''] = None
+
+asdfoijawefoij
+awef
+waef
+awe
+f
+awef
+aw
+ef
+wa
+ef
+wae
+f
+awe
+f

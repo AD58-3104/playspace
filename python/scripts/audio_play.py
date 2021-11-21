@@ -14,7 +14,7 @@ def sound_play(sound_number:int):
     else :
         print('there is no sound which match inputed number')
 
-if __name__ == '__main__':
-    while(True):
-        inp = int(input())
-        sound_play(inp)
+# if __name__ == '__main__':
+#     while(True):
+#         inp = int(input())
+#         sound_play(inp)
