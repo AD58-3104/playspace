@@ -1,5 +1,7 @@
-interface Hello
+module Demo
 {
-    idempotent void sayHello(int delay);
-    void shutdown();
+    interface Printer
+    {
+        void printString(string s);
+    }
 }
