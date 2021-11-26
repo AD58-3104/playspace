@@ -159,17 +159,23 @@ namespace Citbrains
             {
                 try
                 {
+                    // int res = ::system("python3 parse_htn_name.py ./");
+
                     {
                         std::ifstream ifs(command_dict_location);
                         std::string s;
                         int32_t cnt = 1; // 0だとprotobufで送る時に面倒なので,1-indexedにする.
                         while (std::getline(ifs, s))
                         {
-                            command_to_num[s] = cnt;
-                            num_to_command[cnt] = s;
+                            command_to_num_[s] = cnt;
+                            num_to_command_[cnt] = s;
                             ++cnt;
                         }
                         ifs.close();
+                        if (command_to_num_.empty())
+                        {
+                            throw std::string("----Error!!!---- There is nothing written in command_dict.dat");
+                        }
                     }
                     {
                         std::ifstream ifs(behavior_name_dict_location);
@@ -177,20 +183,24 @@ namespace Citbrains
                         int32_t cnt = 1; // 0だとprotobufで送る時に面倒なので,1-indexedにする.
                         while (std::getline(ifs, s))
                         {
-                            behavior_name_to_num[s] = cnt;
-                            num_to_behavior_name[cnt] = s;
+                            behavior_name_to_num_[s] = cnt;
+                            num_to_behavior_name_[cnt] = s;
                             ++cnt;
                         }
                         ifs.close();
+                        if (behavior_name_to_num_.empty())
+                        {
+                            throw std::string("----Error!!!---- There is nothing written in behavior_name_dict.dat");
+                        }
                     }
 #ifdef INFOSHARE_DEBUG
                     std::cout << "----------------- command list ------------------------\n";
-                    for (const auto &itr : command_to_num)
+                    for (const auto &itr : command_to_num_)
                     {
                         std::cout << itr.first << std::endl;
                     }
                     std::cout << "----------------- behavior list ------------------------\n";
-                    for (const auto &itr : behavior_name_to_num)
+                    for (const auto &itr : behavior_name_to_num_)
                     {
                         std::cout << itr.first << std::endl;
                     }
@@ -201,10 +211,15 @@ namespace Citbrains
                     std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
                     std::cerr << e.what() << std::endl;
                 }
+                catch (std::string &es)
+                {
+                    std::cerr << es << std::endl;
+                    std::terminate();
+                }
             }
             using ReturnNumSequenceType = std::string; // protobufで1文字8bitにシリアライズしているのでbyte列として利用.
-            ReturnNumSequenceType commandToNumSequence(const std::string &command);
-            ReturnNumSequenceType behaviorNameToNumSequence(const std::string &behavior_name);
+            [[nodiscard]]ReturnNumSequenceType commandToNumSequence(const std::string &command);
+            [[nodiscard]]ReturnNumSequenceType behaviorNameToNumSequence(const std::string &behavior_name);
             /**
              * @brief 受信したcommandの数字列を文字列に変換
              * @param[in] command_number_seq 受信した数字列
@@ -218,7 +233,7 @@ namespace Citbrains
                 std::string return_str;
                 for (const auto &num : command_number_seq)
                 {
-                    return_str += num_to_command[num];
+                    return_str += num_to_command_[num];
                 }
                 return return_str;
             }
@@ -235,16 +250,17 @@ namespace Citbrains
                 std::string return_str;
                 for (const auto &num : behavior_name_number_seq)
                 {
-                    return_str += num_to_behavior_name[num];
+                    return_str += num_to_behavior_name_[num];
                 }
                 return return_str;
             }
 
         private:
-            std::unordered_map<int32_t, std::string> num_to_command;
-            std::unordered_map<int32_t, std::string> num_to_behavior_name;
-            std::unordered_map<std::string, int32_t> command_to_num;
-            std::unordered_map<std::string, int32_t> behavior_name_to_num;
+            ReturnNumSequenceType serializeTextImpl(const std::string &text, const std::unordered_map<std::string, int32_t> &dictionary) noexcept;
+            std::unordered_map<int32_t, std::string> num_to_command_;
+            std::unordered_map<int32_t, std::string> num_to_behavior_name_;
+            std::unordered_map<std::string, int32_t> command_to_num_;
+            std::unordered_map<std::string, int32_t> behavior_name_to_num_;
         };
 
         /**

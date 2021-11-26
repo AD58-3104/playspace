@@ -20,6 +20,7 @@ namespace debug
      */
     static void debugPrint(const CitbrainsMessage::SharingData &data)
     {
+#ifdef INFOSHARE_DEBUG
         static int32_t received_num = 1;
         received_num++;
         // std::cerr << "number of received " << received_num << std::endl;
@@ -39,6 +40,7 @@ namespace debug
             std::cout << "exception catched in" << __FILE__ << __LINE__ << std::endl;
             std::cout << e.what() << std::endl;
         }
+#endif // INFOSHARE_DEBUG
     }
 
     /**
@@ -250,9 +252,9 @@ namespace Citbrains
             }
             unsigned char status = (state.Posture != STATE_POSTURE_STAND) ? 0x01 : 0x00; // 転倒のフラグ TODO 読みやすくする
             if (state.Active == STATE_IDLE)
-                status |= 0x02;                                            // アイドル状態かどうかのフラグ
-            unsigned char voltage = 0xff & (state.MotorVoltage >> 3);      // モータの電圧(mV) >> 3
-            unsigned char temperature = 0xff & state.Temperature;          // モータの温度(degree)
+                status |= 0x02;                                           // アイドル状態かどうかのフラグ
+            unsigned char voltage = 0xff & (state.MotorVoltage >> 3);     // モータの電圧(mV) >> 3
+            unsigned char temperature = 0xff & state.Temperature;         // モータの温度(degree)
             unsigned char highest_servo = 0xff & (state.servo1temp >> 8); // 最も温度の高いモータ
             sharing_data.set_id(std::string{static_cast<char>((unsigned char)self_id_)});
             sharing_data.set_team_color(std::string{static_cast<char>((unsigned char)CitbrainsMessage::SharingData::COLOR_OFFSET + our_color_)});
@@ -330,9 +332,7 @@ namespace Citbrains
 #endif                      // INFOSHARE_DEBUG
                     return; //自分の情報は無視
                 }
-#ifdef INFOSHARE_DEBUG
                 debug::debugPrint(shared_data);
-#endif // INFOSHARE_DEBUG
                 auto &set_target = robot_data_list_[static_cast<int32_t>(shared_data.id().at(0)) - 1];
                 //------------data set-----------------------------------------------------------------
                 set_target->setRecv_time();
@@ -853,30 +853,11 @@ namespace Citbrains
          * @brief commandの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
          * @param[in] command 送信されるcommandの文字列
          * @return 辞書の対応する番号で構成される数字列
-         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換
+         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換.
          */
-        SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::commandToNumSequence(const std::string &command)
+        [[nodiscard]] SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::commandToNumSequence(const std::string &command)
         {
-            std::string word;
-            SerializeStringByDict::ReturnNumSequenceType return_seq;
-            auto not_contain = command_to_num.end();
-            try
-            {
-                for (const auto &character : command)
-                {
-                    word.push_back(character);
-                    if (command_to_num.find(word) != not_contain)
-                    {
-                        return_seq.push_back(command_to_num[word]);
-                        word.clear();
-                    }
-                }
-            }
-            catch (std::exception &e)
-            {
-                std::cerr << "error catched in " << __FILE__ << "::" << __LINE__ << std::endl;
-                std::cerr << e.what() << std::endl;
-            }
+            SerializeStringByDict::ReturnNumSequenceType return_seq = serializeTextImpl(command, command_to_num_);
             return return_seq;
         }
 
@@ -884,22 +865,48 @@ namespace Citbrains
          * @brief behavior_nameの文字列を送信する前に辞書を参照して最小単位毎に数字に変える
          * @param[in] behavior_name 送信されるbehavior_nameの文字列
          * @return 辞書の対応する番号で構成される数字列
-         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換
+         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換.
          */
-        SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::behaviorNameToNumSequence(const std::string &behavior_name)
+        [[nodiscard]] SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::behaviorNameToNumSequence(const std::string &behavior_name)
         {
-            std::string word;
+            SerializeStringByDict::ReturnNumSequenceType return_seq = serializeTextImpl(behavior_name, behavior_name_to_num_);
+            return return_seq;
+        }
+
+        /**
+         * @brief 文字列を辞書を参照して最小単位毎に数字に変える動作の実装
+         * @param[in] text シリアライズする文字列
+         * @return 辞書の対応する番号で構成される数字列
+         * @details pyfilesディレクトリ内の辞書を参考にして数字に変換.
+         */
+        SerializeStringByDict::ReturnNumSequenceType SerializeStringByDict::serializeTextImpl(const std::string &text, const std::unordered_map<std::string, int32_t> &dictionary) noexcept
+        {
             SerializeStringByDict::ReturnNumSequenceType return_seq;
-            auto not_contain = behavior_name_to_num.end();
             try
             {
-                for (const auto &character : behavior_name)
+                std::string sub_string;
+                std::string found_word;
+                auto not_contain = dictionary.end();
+                auto text_end = text.end();
+                auto word_end_pos = text.begin();
+                for (auto itr = text.begin(); itr != text_end; ++itr)
                 {
-                    word.push_back(character);
-                    if (behavior_name_to_num.find(word) != not_contain)
+                    sub_string.push_back(*itr);
+                    if (dictionary.find(sub_string) != not_contain)
                     {
-                        return_seq.push_back(behavior_name_to_num[word]);
-                        word.clear();
+                        word_end_pos = itr;
+                        found_word = sub_string;
+                    }
+                    if (itr == text_end - 1)
+                    {
+                        return_seq.push_back(dictionary.at(found_word));
+                        found_word.clear();
+                        sub_string.clear();
+                        if (word_end_pos == text_end - 1)
+                        {
+                            break;
+                        }
+                        itr = word_end_pos;
                     }
                 }
             }
