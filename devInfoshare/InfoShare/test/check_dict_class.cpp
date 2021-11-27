@@ -44,6 +44,15 @@ int main(int argc, char const *argv[])
         {
             commands.push_back(commands[i] + commands[cmd_len - 1 - i] + commands[commands.size() - 1]); //最後の方2倍に近い形で長くなるので注意
         }
+        //----corner case----
+        behaviors.push_back("FreeKickFreeKickMode");
+        behaviors.push_back("FreeKickFreeKickReady");
+        behaviors.push_back("FreeKickReadyFreeKickFreeKickMode");
+        behaviors.push_back("FreeKickFreeKickFreeKick");
+        behaviors.push_back("ReadyReadyReadyToEnter");
+        behaviors.push_back("FreeKickKickModeKickBall");
+        behaviors.push_back("KickModeKickBall");
+        //-------------------
         for (int i = 0; i < behv_len; ++i)
         {
             behaviors.push_back(behaviors[i] + behaviors[behv_len - 1 - i] + behaviors[behaviors.size() - 1]);
@@ -73,6 +82,8 @@ int main(int argc, char const *argv[])
             else
             {
                 std::cout << "\033[31m serialize of ->" << itr << " is failed---------------------------- \033[m";
+                std::cout << "result is  " << dict.numSequenceToBehaviorName(dict.behaviorNameToNumSequence(itr)) << std::endl;
+
             }
             std::cout << std::endl;
         }
