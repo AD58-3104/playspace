@@ -15,26 +15,21 @@ def parseAndWriteDictionaryFile(readfile_fd,word_list):
 
 def main(path_to_kid_dir):
     behavior_name_list = set()
-    readfile = open(path_to_kid_dir + 'common_network.py', 'r')
-    behavior_name_list = parseAndWriteDictionaryFile(readfile,behavior_name_list)
-    readfile = open(path_to_kid_dir + 'root_network.py','r')
-    behavior_name_list = parseAndWriteDictionaryFile(readfile,behavior_name_list)
+    readfiles = ['common_network.py','root_network.py']
+    for readfile in readfiles:
+        behavior_name_list = parseAndWriteDictionaryFile(open(path_to_kid_dir + readfile, 'r'),behavior_name_list)
     writefile = open('behavior_name_dict.dat','w')
     for word in behavior_name_list:
         writefile.write(word + '\n')
-    print('--------------------------------------------------')
+
     commnad_name_list = set()
-    readfile = open(path_to_kid_dir + 'goal.py','r')
-    commnad_name_list = parseAndWriteDictionaryFile(readfile,commnad_name_list)
-    readfile = open(path_to_kid_dir + 'role.py','r')
-    commnad_name_list = parseAndWriteDictionaryFile(readfile,commnad_name_list)
-    readfile = open(path_to_kid_dir + 'tactics.py','r')
-    commnad_name_list = parseAndWriteDictionaryFile(readfile,commnad_name_list)
+    readfiles = ['goal.py','role.py','tactics.py']
+    for readfile in readfiles:
+        commnad_name_list = parseAndWriteDictionaryFile(open(path_to_kid_dir + readfile,'r'),commnad_name_list)
     writefile = open('command_dict.dat','w')
     for word in commnad_name_list:
         writefile.write(word + '\n')
 
 
 if __name__ == '__main__': 
-    
     main(sys.argv[1])
