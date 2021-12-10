@@ -1,0 +1,56 @@
+syntax = "proto2";
+import "google/protobuf/timestamp.proto";
+package CitbrainsMessage;
+/*
+基本的にPos2Dの中身以外の数字はbytes(=8bit)で送信する.
+*/
+
+
+message Pos2D {
+  required sint32 pos_x = 1 ;  //intにして詰める。現在はミリ単位で、小数点以下は切り捨てて送信.つまり->3.12345mmは3mmに切り捨てられる.
+  required sint32 pos_y = 2 ;
+  required sint32 pos_theta = 3 ; //単位がラジアンなので小数点以下2桁まで送信. 3.1415->3.14に切り捨て.
+}
+
+message Pos2DCf {
+  required Pos2D position = 1;
+  required bytes confidence = 2; //0-100の整数にclampして送信
+  optional bool is_detect = 3;
+}
+
+
+message SharingData {
+  enum TeamColor{
+    COLOR_OFFSET = 1; //0で送るとprotobufの仕様上面倒な処理が必要なのでそのオフセット
+  }
+  required bytes id  = 1 ;  
+  required bytes team_color = 19;
+
+  optional bytes status = 4;
+  optional bytes fps = 5;
+  optional bytes voltage = 6;
+  optional bytes temperature = 7;
+  optional bytes highest_servo = 8;
+  
+  optional bytes command = 9 ;        //以下2つは文字列を数字列に変換して送信.変換用の辞書のインデックスは256で十分なので8bitで送信.
+  optional bytes current_behavior_name = 10; 
+  
+  
+  repeated Pos2D our_robot_gl = 12; 
+  repeated Pos2D enemy_robot_gl = 13; 
+  repeated Pos2D black_pole_gl = 14; 
+  repeated Pos2D target_pos_vec = 15; 
+  
+  optional Pos2DCf ball_gl_cf = 16;
+  optional Pos2DCf self_pos_cf = 17;
+  
+  
+  //------------- maybe unused -------------------------
+  // optional bool is_detect_ball = 11;
+  // optional bytes cf_own = 2;
+  // optional bytes cf_ball = 3;
+
+  //------------- for debugging -------------------------
+  optional google.protobuf.Timestamp timestamp = 20;
+}
+
