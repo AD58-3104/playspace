@@ -13,12 +13,14 @@ void Pub(zmq::context_t &ctx)
 {
     zmq::socket_t publisher(ctx, zmq::socket_type::pub);
     publisher.bind("ipc://test_desu");
+    int i = 0;
     while (true)
     {
         //  Write three messages, each with an envelope and content
-        publisher.send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
-        publisher.send(zmq::str_buffer("Message deeeeeeeeeeeeeeeeees"));
+        publisher.send(zmq::str_buffer("Message A::"), zmq::send_flags::sndmore);
+        publisher.send(zmq::buffer(std::to_string(i)));
         std::this_thread::sleep_for(std::chrono::milliseconds(700));
+        i++;
     }
 }
 
