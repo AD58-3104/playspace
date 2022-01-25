@@ -4,6 +4,7 @@
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 #include <string>
+#include <optional>
 
 namespace Citbrains
 {
@@ -13,7 +14,7 @@ namespace Citbrains
         static const std::string command_topic("ipc:///tmp/robot_command");
         enum class option
         {
-            block;
+            block,
             nonblock
         };
         /**
@@ -38,32 +39,71 @@ namespace Citbrains
              * @return std::string
              */
 
-            std::string recv_command(option op = option::block)
+            std::optional<std::string> recv_command()
             {
                 // todo これで平気かな？？逆に作りまくられたらどうしよう...
-                thread_local static std::array<uint8_t, buf_size> buf_data;
+                thread_local static std::array<uint8_t, buf_size_> buf_data;
                 zmq::mutable_buffer buf(buf_data.data(), buf_data.size());
-
+                buf_data.fill(0);
+                zmq::recv_buffer_result_t result = sub_.recv(buf);
+                if (result.has_value())
+                {
+                    if (result->truncated())
+                    {
+                        return std::nullopt;
+                    }
+                    return std::optional<std::string>(std::string(reinterpret_cast<char *>(buf.data()), result->size));
+                }
+                return std::nullopt;
+            };
+            void send_state(std::string data, option op = option::nonblock)
+            {
                 if (op == option::block)
                 {
-                    zmq::recv_buffer_result_t result = sub_.recv(buf); //,zmq::recv_flags::dontwait);
+                    zmq::send_result_t result = pub_.send(zmq::buffer(data));
                 }
                 else
                 {
-                    zmq::recv_buffer_result_t result = sub_.recv(buf, zmq::recv_flags::dontwait);
+                    zmq::send_result_t result = pub_.send(zmq::buffer(data), zmq::send_flags::dontwait);
                 }
-                buf_data.fill(0);
             };
-            void send_state(std::string data);
 
         private:
             zmq::context_t ctx_;
-            constexpr size_t buf_size_ = 256;
+            inline static constexpr size_t buf_size_ = 256;
             zmq::socket_t pub_;
             zmq::socket_t sub_;
         };
+        /**
+         * @brief こっちはユーザ側で使う事が多いのでprotobufのパースまでこちらでやる。
+         * コンテキストが沢山作られるのが嫌なので仕方無く大量に関数を定義します。
+         */
         class walkCommunicationClient
         {
+        public:
+            using proto_q_t = void;
+            using proto_state_t = void; // robotStatusを返すべきかも
+            proto_q_t get_quaternion()
+            {
+            }
+            proto_state_t get_state()
+            {
+            }
+            void hajime_walk(int num, int angle, int stridex, int period, int stridey);
+            void hajime_accurate_walk(int num, float x, float y, float th); // x[mm], y[mm], th[deg]
+            void hajime_accurate_one_step(float x, float y, float th);      // x[mm], y[mm], th[deg]
+            void hajime_cancel();
+            void hajime_pan(int pan, int time);
+            void hajime_tilt(int tilt, int time);
+            void hajime_motion(int no, int repeat, bool ignoresuspend = false);
+            void hajime_variable_motion(int no, int shift);
+            void hajime_pantilt(int pan, int tilt, int time);
+            void hajime_power(int OnOff);
+            void hajime_power(const std::string &OnOff); //���̃��\�b�h�͕s�v
+            void hajime_set_suspended(bool sus);
+            float getVoltage();
+            RobotStatus getStatus();
+            RobotStatus getStatusQuaternion();
         };
-    };
-};
+    }
+}
