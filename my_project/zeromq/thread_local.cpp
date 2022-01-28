@@ -39,7 +39,7 @@ struct lcl
     }
     ~lcl()
     {
-        // std::cout << "destruct lcl::" << num << std::endl;
+        std::cout << "destruct lcl::" << num << std::endl;
     }
     inline static int i = 0;
     int num;
@@ -56,12 +56,16 @@ struct test
 void th_f()
 {
     // static thread_local lcl ins;
+    std::this_thread::sleep_for(1ms);
     test a;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 40; ++i)
     {
         a.f();
+        // std::cout << i << "\n";
+        std::this_thread::sleep_for(1ms);
     }
-    std::this_thread::sleep_for(1000ms);
+    for (int i = 0; i < 10; ++i)
+        a.f();
 }
 
 int main(int argc, const char **argv)
@@ -70,9 +74,9 @@ int main(int argc, const char **argv)
     for (int i = 0; i < 10; i++)
     {
         v.emplace_back(std::async(std::launch::async, th_f));
-        std::this_thread::sleep_for(50ms);
+        std::this_thread::sleep_for(3ms);
     }
-    std::this_thread::sleep_for(500ms);
+    std::this_thread::sleep_for(700ms);
     std::cout << "-------------end----------------" << std::endl;
     return 0;
 }
