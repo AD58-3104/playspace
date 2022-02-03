@@ -7,8 +7,8 @@
 #include <optional>
 #include <atomic>
 
-/*todo list
-    例外の伝播をどうするかを考える
+/*todo list memo
+    例外の伝播をどうするかを考える -> 
 
 */
 
@@ -83,6 +83,8 @@ namespace Citbrains
             zmq::socket_t pub_;
             zmq::socket_t sub_;
         };
+
+
         /**
          * @brief こっちはユーザ側で使う事が多いのでprotobufのパースまでこちらでやる。
          * コンテキストが沢山作られるのが嫌なので仕方無く大量に関数を定義します。
@@ -104,18 +106,19 @@ namespace Citbrains
             proto_state_t get_state() //こちらだけで十分では
             {
             }
-            void hajime_walk(int num, int angle, int stridex, int period, int stridey);
-            void hajime_accurate_walk(int num, float x, float y, float th); // x[mm], y[mm], th[deg]
-            void hajime_accurate_one_step(float x, float y, float th);      // x[mm], y[mm], th[deg]
-            void hajime_cancel();
-            void hajime_pan(int pan, int time);
-            void hajime_tilt(int tilt, int time);
-            void hajime_motion(int no, int repeat, bool ignoresuspend = false);
-            void hajime_variable_motion(int no, int shift);
-            void hajime_pantilt(int pan, int tilt, int time);
-            void hajime_power(int OnOff);
-            void hajime_set_suspended(bool suspend);
-            float getVoltage();
+            //noexceptの変わりに失敗した時はログを残す。
+            void hajime_walk(int num, int angle, int stridex, int period, int stridey) noexcept;
+            void hajime_accurate_walk(int num, float x, float y, float th) noexcept; // x[mm], y[mm], th[deg]
+            void hajime_accurate_one_step(float x, float y, float th) noexcept;      // x[mm], y[mm], th[deg]
+            void hajime_cancel() noexcept;
+            void hajime_pan(int pan, int time) noexcept;
+            void hajime_tilt(int tilt, int time) noexcept;
+            void hajime_motion(int no, int repeat, bool ignoresuspend = false) noexcept;
+            void hajime_variable_motion(int no, int shift) noexcept;
+            void hajime_pantilt(int pan, int tilt, int time) noexcept;
+            void hajime_power(int OnOff) noexcept;
+            void hajime_set_suspended(bool suspend) noexcept;
+            float getVoltage() noexcept;
             proto_state_t getStatus();
             proto_state_t getStatusQuaternion();
 
@@ -154,7 +157,7 @@ namespace Citbrains
              * @param data 
              * @param op 
              */
-            void send_command(string&& data, option op = option::nonblock)
+            void send_command(std::string&& data, option op = option::nonblock)
             {
                 if (op == option::block)
                 {

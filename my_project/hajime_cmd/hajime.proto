@@ -1,0 +1,72 @@
+syntax = "proto2";
+import "google/protobuf/timestamp.proto";
+package ControlMessage;
+/*
+TODO:RobotStatusのgyroとかを固定長にする
+*/
+
+//TODO:requiredかどうか決める
+message RobotStatus {
+	optional sint32   type  = 1;
+	optional sint32 Active = 2;
+	optional bytes  Command = 3;
+	optional sint32 Posture = 4;
+	optional sint32 Temperature = 5;
+	optional sint32 servo1temp = 6;
+	optional sint32 MotorVoltage = 7;
+	repeated sint32 Odometry = 8; //size = 3 
+	optional float gyroMotion = 9; //rad
+	repeated sint32 Servo = 10; //size = モーターの数、下と同じ数にする
+	repeated float servo_rad = 11; //size = モーターの数、上と同じ数にする
+	repeated float quaternion = 12; //size = 3
+}
+
+message walkCommand{
+    enum CommandNum{
+        WALK = 0;
+        ACCURATE_WALK = 1;
+        CANCEL = 2;
+        PAN = 3;
+        TILT = 4;
+        PANTILT = 5;
+        MOTION = 6;
+        POWER = 7;
+        GETSTATUS = 8;
+        GETSTATUSQUATERNION = 9;
+    }
+    required uint32 command_num = 1;
+    message walk{
+        required sint32 num = 1;
+        required sint32 angle = 2;
+        required sint32 stridex = 3;
+        required sint32 stridey = 4;
+        required sint32 period = 5;
+    }
+    message accurate_walk{
+        required sint32 steps = 1; //onestepなら一歩に指定すれば良いのでは
+        required float x = 2;
+        required float y = 3;
+        required float th = 4;
+    }
+    message pan_or_tilt{
+        optional sint32 pan = 1;
+        optional sint32 tilt = 2;
+        required sint32 time = 3;
+    }
+    message motion{
+        required uint32 no = 1;
+        required uint32 repeat = 2;
+        required bool ignoresuspend = 3;
+    }
+    message power{
+        required bool On = 1;
+    }
+    optional walk walk_args = 2;
+    optional pan_or_tilt pan_args = 3;
+    optional pan_or_tilt tilt_args = 4;
+    optional motion motion_args = 5;
+    optional pan_or_tilt pantilt_args = 6;
+    optional power power_args = 7;
+    optional google.protobuf.Timestamp timestamp = 8;
+}
+
