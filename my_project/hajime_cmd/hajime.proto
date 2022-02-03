@@ -7,18 +7,18 @@ TODO:RobotStatusのgyroとかを固定長にする
 
 //TODO:requiredかどうか決める
 message RobotStatus {
-	optional sint32   type  = 1;
+	optional sint32 type  = 1;
 	optional sint32 Active = 2;
-	optional bytes  Command = 3;
+	optional sint32  Command = 3; //元はcharだけど多分intで良い
 	optional sint32 Posture = 4;
 	optional sint32 Temperature = 5;
 	optional sint32 servo1temp = 6;
 	optional sint32 MotorVoltage = 7;
 	repeated sint32 Odometry = 8; //size = 3 
-	optional float gyroMotion = 9; //rad
+	optional float  gyroMotion = 9; //rad
 	repeated sint32 Servo = 10; //size = モーターの数、下と同じ数にする
-	repeated float servo_rad = 11; //size = モーターの数、上と同じ数にする
-	repeated float quaternion = 12; //size = 3
+	repeated float  servo_rad = 11; //size = モーターの数、上と同じ数にする
+	repeated float  quaternion = 12; //size = 3
 }
 
 message walkCommand{

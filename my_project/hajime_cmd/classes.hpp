@@ -1,3 +1,5 @@
+#ifndef WALK_COMMUNICATOR_H_
+#define WALK_COMMUNICATOR_H_
 #include <iostream>
 #include <vector>
 #include <array>
@@ -6,17 +8,32 @@
 #include <string>
 #include <optional>
 #include <atomic>
+#include "hajime.pb.h"
 
 /*todo list memo
-    例外の伝播をどうするかを考える -> 
+    例外の伝播をどうするかを考える ->
 
 */
-
 
 namespace Citbrains
 {
     namespace walkCommunication
     {
+        // struct RobotStatus
+        // {
+        //     int32_t type;
+        //     int32_t Active;
+        //     int32_t Command;
+        //     int32_t Posture;
+        //     int32_t Temperature;
+        //     int32_t servo1temp;
+        //     int32_t MotorVoltage;
+        //     int32_t Odometry[3];
+        //     float gyroMotion; // rad
+        //     int32_t Servo[STATE_MOTOR_NUM];
+        //     float servo_rad[STATE_MOTOR_NUM];
+        //     float quaternion[4];
+        // };
 
         static const std::string robot_state_topic("ipc:///tmp/robot_quaternion");
         static const std::string command_topic("ipc:///tmp/robot_command");
@@ -84,7 +101,6 @@ namespace Citbrains
             zmq::socket_t sub_;
         };
 
-
         /**
          * @brief こっちはユーザ側で使う事が多いのでprotobufのパースまでこちらでやる。
          * コンテキストが沢山作られるのが嫌なので仕方無く大量に関数を定義します。
@@ -93,20 +109,15 @@ namespace Citbrains
         {
         public:
             using proto_q_t = void;
-            using proto_state_t = void; // robotStatusを返すべきかも
+            using RobotStatus_t = ControlMessage::RobotStatus; // robotStatusを返すべきかも
             using proto_command_t = void;
-            walkCommunicationClient():suspended_(false),ctx_(),pub_(ctx_, zmq::socket_type::pub),sub_(ctx_, zmq::socket_type::sub){
+            walkCommunicationClient() : suspended_(false), ctx_(), pub_(ctx_, zmq::socket_type::pub), sub_(ctx_, zmq::socket_type::sub)
+            {
                 pub_.connect(command_topic);
                 sub_.connect(robot_state_topic);
-                sub_.set(zmq::sockopt::subscribe,"");
+                sub_.set(zmq::sockopt::subscribe, "");
             }
-            proto_state_t get_quaternion() //ここ分ける必要無さそうな気もする。
-            {
-            }
-            proto_state_t get_state() //こちらだけで十分では
-            {
-            }
-            //noexceptの変わりに失敗した時はログを残す。
+            // noexceptの変わりに失敗した時はログを残す。
             void hajime_walk(int num, int angle, int stridex, int period, int stridey) noexcept;
             void hajime_accurate_walk(int num, float x, float y, float th) noexcept; // x[mm], y[mm], th[deg]
             void hajime_accurate_one_step(float x, float y, float th) noexcept;      // x[mm], y[mm], th[deg]
@@ -118,9 +129,9 @@ namespace Citbrains
             void hajime_pantilt(int pan, int tilt, int time) noexcept;
             void hajime_power(int OnOff) noexcept;
             void hajime_set_suspended(bool suspend) noexcept;
-            float getVoltage() noexcept;
-            proto_state_t getStatus();
-            proto_state_t getStatusQuaternion();
+            std::optional<float> getVoltage() noexcept;
+            std::optional<RobotStatus_t> getStatus() noexcept;
+            std::optional<RobotStatus_t> getStatusQuaternion() noexcept;
 
         private:
             std::atomic_bool suspended_;
@@ -153,11 +164,11 @@ namespace Citbrains
             };
             /**
              * @brief swigを通すと例外を伝播出来ないっぽいので
-             * 
-             * @param data 
-             * @param op 
+             *
+             * @param data
+             * @param op
              */
-            void send_command(std::string&& data, option op = option::nonblock)
+            void send_command(std::string &&data, option op = option::nonblock)
             {
                 if (op == option::block)
                 {
@@ -171,3 +182,4 @@ namespace Citbrains
         };
     }
 }
+#endif // !WALK_COMMUNICATOR_H_
