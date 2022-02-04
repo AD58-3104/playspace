@@ -11,7 +11,8 @@
 #include "hajime.pb.h"
 
 /*todo list memo
-    例外の伝播をどうするかを考える ->
+    例外の伝播をどうするかを考える ->1つ上でやる
+    zmqを扱うクラス作っとけば良かった...。
 
 */
 
@@ -132,7 +133,7 @@ static_assert(false, "------------------------------cppzmq version is old!!!!---
             using proto_q_t = void;
             using RobotStatus_t = ControlMessage::RobotStatus; // robotStatusを返すべきかも
             using proto_command_t = void;
-            walkCommunicationClient() : suspended_(false), ctx_(), pub_(ctx_, zmq::socket_type::pub), sub_(ctx_, zmq::socket_type::sub)
+            walkCommunicationClient() : is_suspended_(false), ctx_(), pub_(ctx_, zmq::socket_type::pub), sub_(ctx_, zmq::socket_type::sub)
             {
                 pub_.connect(command_topic);
                 sub_.connect(robot_state_topic);
@@ -140,13 +141,12 @@ static_assert(false, "------------------------------cppzmq version is old!!!!---
             }
             // noexceptの変わりに失敗した時はログを残す。
             void hajimeWalk(int num, int angle, int stridex, int period, int stridey) noexcept;
-            void hajimeAccurateWalk(int num, float x, float y, float th) noexcept; // x[mm], y[mm], th[deg]
+            void hajimeAccurateWalk(int steps, float x, float y, float th) noexcept; // x[mm], y[mm], th[deg]
             void hajimeAccurateOneStep(float x, float y, float th) noexcept;       // x[mm], y[mm], th[deg]
             void hajimeCancel() noexcept;
             void hajimePan(int pan, int time) noexcept;
             void hajimeTilt(int tilt, int time) noexcept;
             void hajimeMotion(int no, int repeat, bool ignoresuspend = false) noexcept;
-            void hajimeVariableMotion(int no, int shift) noexcept;
             void hajimePanTilt(int pan, int tilt, int time) noexcept;
             void hajimePower(bool OnOff) noexcept;
             void hajimeSetSuspended(bool suspend) noexcept;
@@ -155,7 +155,7 @@ static_assert(false, "------------------------------cppzmq version is old!!!!---
             std::optional<RobotStatus_t> getStatusQuaternion() noexcept;
 
         private:
-            std::atomic_bool suspended_;
+            std::atomic_bool is_suspended_;
             inline static constexpr size_t buf_size_ = 512;
             zmq::context_t ctx_;
             zmq::socket_t pub_;
@@ -184,7 +184,8 @@ static_assert(false, "------------------------------cppzmq version is old!!!!---
                 return std::nullopt;
             };
             /**
-             * @brief swigを通すと例外を伝播出来ないっぽいのでこれの一つ上でハンドルする
+             * @brief 
+             * @attention swigを通すと例外を伝播出来ないっぽいのでこれの一つ上でハンドルする
              *
              * @param data 送るデータ
              * @param op ブロッキングか否か

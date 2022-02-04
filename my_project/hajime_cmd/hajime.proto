@@ -21,7 +21,7 @@ message RobotStatus {
 	repeated float  quaternion = 12; //size = 3
 }
 
-message walkCommand{
+message WalkCommand{
     enum CommandNum{
         WALK = 0;
         ACCURATE_WALK = 1;
@@ -67,6 +67,7 @@ message walkCommand{
     optional motion motion_args = 5;
     optional pan_or_tilt pantilt_args = 6;
     optional power power_args = 7;
+    optional accurate_walk accurate_walk_args = 9;
     optional google.protobuf.Timestamp timestamp = 8;
 }
 

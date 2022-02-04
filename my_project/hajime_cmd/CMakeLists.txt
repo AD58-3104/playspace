@@ -7,7 +7,8 @@ find_package(Protobuf REQUIRED)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS hajime.proto)
 
 add_executable(main main.cpp classes.hpp classes.cpp wrapperclass.hpp ${PROTO_SRCS} ${PROTO_HDRS})
-list(APPEND set_option_target main)
+add_executable(a check_error.cpp)
+list(APPEND set_option_target main a)
 
 foreach(target ${set_option_target})
     target_compile_features(${target} PUBLIC cxx_std_17)
