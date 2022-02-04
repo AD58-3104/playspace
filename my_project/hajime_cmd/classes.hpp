@@ -15,7 +15,11 @@
 
 */
 
-namespace Citbrains
+#ifndef ZMQ_CPP17
+static_assert(false, "------------------------------cppzmq version is old!!!!------------------------------")
+#endif // ZMQ_CPP17
+
+    namespace Citbrains
 {
     namespace walkCommunication
     {
@@ -44,7 +48,8 @@ namespace Citbrains
         };
 
         /**
-         * @brief recvとsendが両方ともアトミックな操作だと限定出来るならばbuf_data_を状態として良い.
+         * @brief
+         * @todo recvとsendが両方ともアトミックな操作だと限定出来るならばbuf_data_を状態として良い.
          *         正直それやるより素直に毎度構築する方がマシ。lockとかの方が遙かにコストが高そう.
          */
         class walkCommunicationServer
@@ -58,13 +63,11 @@ namespace Citbrains
             };
 
             /**
-             * @brief マルチスレッドで呼ばないなら安全.そんな事するくらいならbuf_dataいちいち作る方が良いかな...。
-             *
-             *
-             * @param op
-             * @return std::string
+             * @brief ブロッキングする。
+             * @exception zmq::error_t  cppzmqの例外.whatでconst char*を得られる
+             * @return 受信したバイト列。失敗時はnulloptが返る
+             * @todo マルチスレッドで呼んでも安全にする
              */
-
             std::optional<std::string> recv_command()
             {
                 // todo これで平気かな？？逆に作りまくられたらどうしよう...
@@ -82,15 +85,33 @@ namespace Citbrains
                 }
                 return std::nullopt;
             };
-            void send_state(std::string &&data, option op = option::nonblock)
+
+            /**
+             * @brief swigを通すと例外を伝播出来ないっぽいのでこれの一つ上でハンドルする
+             *
+             * @param data 送るデータ
+             * @param op ブロッキングか否か
+             * @exception zmq::error_t  cppzmqの例外.whatでconst char*を得られる
+             * @return 送った文字数.0の場合はソケットのキューが満杯で送れない時.
+             */
+            size_t send_state(std::string &&data, option op = option::nonblock)
             {
+                zmq::send_result_t result;
                 if (op == option::block)
                 {
-                    zmq::send_result_t result = pub_.send(zmq::buffer(data));
+                    result = pub_.send(zmq::buffer(data), zmq::send_flags::none);
                 }
                 else
                 {
-                    zmq::send_result_t result = pub_.send(zmq::buffer(data), zmq::send_flags::dontwait);
+                    result = pub_.send(zmq::buffer(data), zmq::send_flags::dontwait);
+                }
+                if (result.has_value())
+                {
+                    return 0;
+                }
+                else
+                {
+                    return result.value();
                 }
             };
 
@@ -118,17 +139,17 @@ namespace Citbrains
                 sub_.set(zmq::sockopt::subscribe, "");
             }
             // noexceptの変わりに失敗した時はログを残す。
-            void hajime_walk(int num, int angle, int stridex, int period, int stridey) noexcept;
-            void hajime_accurate_walk(int num, float x, float y, float th) noexcept; // x[mm], y[mm], th[deg]
-            void hajime_accurate_one_step(float x, float y, float th) noexcept;      // x[mm], y[mm], th[deg]
-            void hajime_cancel() noexcept;
-            void hajime_pan(int pan, int time) noexcept;
-            void hajime_tilt(int tilt, int time) noexcept;
-            void hajime_motion(int no, int repeat, bool ignoresuspend = false) noexcept;
-            void hajime_variable_motion(int no, int shift) noexcept;
-            void hajime_pantilt(int pan, int tilt, int time) noexcept;
-            void hajime_power(int OnOff) noexcept;
-            void hajime_set_suspended(bool suspend) noexcept;
+            void hajimeWalk(int num, int angle, int stridex, int period, int stridey) noexcept;
+            void hajimeAccurateWalk(int num, float x, float y, float th) noexcept; // x[mm], y[mm], th[deg]
+            void hajimeAccurateOneStep(float x, float y, float th) noexcept;       // x[mm], y[mm], th[deg]
+            void hajimeCancel() noexcept;
+            void hajimePan(int pan, int time) noexcept;
+            void hajimeTilt(int tilt, int time) noexcept;
+            void hajimeMotion(int no, int repeat, bool ignoresuspend = false) noexcept;
+            void hajimeVariableMotion(int no, int shift) noexcept;
+            void hajimePanTilt(int pan, int tilt, int time) noexcept;
+            void hajimePower(bool OnOff) noexcept;
+            void hajimeSetSuspended(bool suspend) noexcept;
             std::optional<float> getVoltage() noexcept;
             std::optional<RobotStatus_t> getStatus() noexcept;
             std::optional<RobotStatus_t> getStatusQuaternion() noexcept;
@@ -140,10 +161,10 @@ namespace Citbrains
             zmq::socket_t pub_;
             zmq::socket_t sub_;
             /**
-             * @brief マルチスレッドで呼ばないなら安全.そんな事するくらいならbuf_dataいちいち作る方が良いかな...。
-             *
-             * @param op
-             * @return std::string
+             * @brief ブロッキングする。
+             * @exception zmq::error_t  cppzmqの例外.whatでconst char*を得られる
+             * @return 受信したバイト列。失敗時はnulloptが返る
+             * @todo マルチスレッドで呼んでも安全にする
              */
             std::optional<std::string> recv_state()
             {
@@ -163,20 +184,31 @@ namespace Citbrains
                 return std::nullopt;
             };
             /**
-             * @brief swigを通すと例外を伝播出来ないっぽいので
+             * @brief swigを通すと例外を伝播出来ないっぽいのでこれの一つ上でハンドルする
              *
-             * @param data
-             * @param op
+             * @param data 送るデータ
+             * @param op ブロッキングか否か
+             * @exception zmq::error_t  cppzmqの例外.whatでconst char*を得られる
+             * @return 送った文字数.0の場合はソケットのキューが満杯で送れない時.
              */
-            void send_command(std::string &&data, option op = option::nonblock)
+            size_t send_command(std::string &&data, option op = option::nonblock)
             {
+                zmq::send_result_t result;
                 if (op == option::block)
                 {
-                    zmq::send_result_t result = pub_.send(zmq::buffer(data));
+                    result = pub_.send(zmq::buffer(data), zmq::send_flags::none); // return recv size
                 }
                 else
                 {
-                    zmq::send_result_t result = pub_.send(zmq::buffer(data), zmq::send_flags::dontwait);
+                    result = pub_.send(zmq::buffer(data), zmq::send_flags::dontwait);
+                }
+                if (result.has_value())
+                {
+                    return 0;
+                }
+                else
+                {
+                    return result.value();
                 }
             };
         };
