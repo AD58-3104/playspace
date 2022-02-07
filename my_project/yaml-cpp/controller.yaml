@@ -1,0 +1,6 @@
+robot:
+ controller: 0
+ device: /dev/ttyUSB0
+ baudrate: 460800 
+model: Accelite
+
