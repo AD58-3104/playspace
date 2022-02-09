@@ -7,8 +7,10 @@ add_executable(main main.cpp)
 add_executable(pub a.cpp)
 add_executable(sub b.cpp)
 add_executable(pub2 pub2.cpp)
+add_executable(repreq rep_req.cpp)
+add_executable(lcl thread_local.cpp)
 
-list(APPEND set_option_target main pub sub pub2)
+list(APPEND set_option_target main pub sub pub2 lcl repreq)
 
 foreach(target ${set_option_target})
     target_compile_features(${target} PUBLIC cxx_std_17)
