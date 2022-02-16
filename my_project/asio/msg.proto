@@ -1,0 +1,9 @@
+syntax = "proto2";
+import "google/protobuf/timestamp.proto";
+package asio;
+
+message test{
+    optional sint32 i = 1;
+    repeated double d = 2;
+    optional string str = 3;
+}
