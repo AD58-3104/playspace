@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package test;
+
+message data {
+  string str = 1;
+  double x_vec = 2;
+  double y_vec = 3;
+  double z_vec = 4;  
+  int32 cnt_i = 5;
+  int64 cnt_j = 6;
+}
