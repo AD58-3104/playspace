@@ -1,12 +1,28 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package test;
 
-message data {
-  string str = 1;
-  double x_vec = 2;
-  double y_vec = 3;
-  double z_vec = 4;  
-  int32 cnt_i = 5;
-  int64 cnt_j = 6;
+message Pos2D {
+  optional double pos_x = 1 ;  //intにして詰める。現在はミリ単位で、小数点以下は切り捨てて送信.つまり->3.12345mmは3mmに切り捨てられる.
+  optional double pos_y = 2 ;
+  optional double pos_theta = 3 ; //単位がラジアンなので小数点以下2桁まで送信. 3.1415->3.14に切り捨て.
 }
+
+message Pos2DCf {
+  optional Pos2D position = 1;
+  optional bytes confidence = 2; //0-100の整数にclampして送信
+  optional bool is_detect = 3;
+}
+
+
+message data {
+  optional string str = 1;
+  optional double x_vec = 2;
+  optional double y_vec = 3;
+  optional double z_vec = 4;  
+  optional int32 cnt_i = 5;
+  optional int64 cnt_j = 6;
+  optional Pos2D pos2d = 7;
+  optional Pos2DCf pos2dcf = 8;
+}
+
