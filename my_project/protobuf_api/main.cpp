@@ -22,23 +22,27 @@ void createMatchedProto(google::protobuf::FieldDescriptor *field, const test::da
 {
 }
 
+
+
 template <size_t N = 0>
-void iterate_proto_tuple(const proto_tuple &t,const google::protobuf::FieldDescriptor* field)
+void iterate_proto_tuple(const proto_tuple &t,const google::protobuf::FieldDescriptor* field,google::protobuf::Message& msg_instance)
 {
     if constexpr (N < std::tuple_size<proto_tuple>::value)
     {
-        const auto &message_instance = std::get<N>(t);
-        if (field->message_type() == message_instance.GetDescriptor())
+        const auto &reference_instance = std::get<N>(t);
+        if (field->message_type() == reference_instance.GetDescriptor())
         {
-            auto* new_ins = message_instance.New();
-            // new_ins = google::protobuf::DynamicCastToGenerated<decltype(new_ins)>(google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New()); //dynamiccastの方が良いかも.
-            new_ins->CopyFrom(*(google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New())); //dynamiccastの方が良いかも.
-            std::cout << new_ins->DebugString();
+            auto* new_ins = reference_instance.New();
+            // new_ins = google::protobuf::DynamicCastToGenerated<decltype(new_ins)>(google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New()); //無理.
+            // new_ins->CopyFrom(*(google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New())); //可能なやつ.
+            const auto rflc = msg_instance.GetReflection();
+            new_ins->CopyFrom(rflc->GetMessage(msg_instance,field,google::protobuf::MessageFactory::generated_factory()));
+            std::cout << "matched!!! "<< new_ins->DebugString() << std::endl;
         }
         else{
-            std::cout << "else | given type::" << field->message_type()->full_name() << " tuple list::" << message_instance.GetDescriptor()->full_name() << std::endl;
+            std::cout << "else | given ::" << field->message_type()->full_name() << " tuple ::" << reference_instance.GetDescriptor()->full_name() << std::endl;
         }
-        iterate_proto_tuple<N + 1>(t, field);
+        iterate_proto_tuple<N + 1>(t, field,msg_instance);
     }
 }
 
@@ -63,7 +67,7 @@ void iterate_proto(protobuf_type prt)
                     new_ins = google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New();
                 }
             };
-            iterate_proto_tuple<0>(PROTO_LIST,field);
+            iterate_proto_tuple<0>(PROTO_LIST,field,prt);
             // std::cout << " message " << field->message_type()->name();
         }
         else
