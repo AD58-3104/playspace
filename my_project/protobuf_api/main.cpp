@@ -25,7 +25,7 @@ int main(int argc, char const *argv[])
     for(const auto &field:listfield){
         std::cout << field->full_name() << "     " << field->name();
         if(field->type() == google::protobuf::FieldDescriptor::TYPE_MESSAGE){
-            const auto &aaa =  google::protobuf::DynamicMessageFactory(field->containing_type())->New();
+            const auto &aaa =  google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New();
             // const auto &aaa =  rflc->MutableMessage(&proto,field,rflc->GetMessageFactory());
             std::cout << "message "  << aaa->x_vec();
         }
