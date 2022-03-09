@@ -24,9 +24,21 @@ static const proto_tuple PROTO_LIST(test::data::default_instance(), test::Pos2DC
 struct ProcessWork
 {
     ProcessWork(boost::asio::io_context &io_ctx) : io_ctx_(io_ctx) {}
+    void operator()()
+    {
+        // io_ctx_.post(
+        // [data = data]() {
+        //-----------------------------------------------------
+
+        //ここに書く
+
+        //-----------------------------------------------------
+        // });
+    }
+
+
     void operator()(test::data data)
     {
-
         io_ctx_.post(
             [data = data]()
             { std::cout << data.DebugString(); });
@@ -37,7 +49,7 @@ struct ProcessWork
             [data = data]()
             {
                 if (data.has_pos_x())
-                    std::cout << "Pos2D  "<< data.pos_x() << std::endl;
+                    std::cout << "Pos2D  " << data.pos_x() << std::endl;
             });
     }
     void operator()(test::Pos2DCf data)
@@ -47,7 +59,7 @@ struct ProcessWork
             {
                 if (data.has_is_detect())
                 {
-                    std::cout << "Pos2DCf  "<< data.is_detect() << std::endl;
+                    std::cout << "Pos2DCf  " << data.is_detect() << std::endl;
                 }
             });
     }
