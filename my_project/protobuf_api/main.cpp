@@ -16,12 +16,10 @@ using proto_variant = std::variant<PROTOBUF_CLASS_LIST>;
 #undef PROTOBUF_CLASS_LIST
 static const proto_tuple PROTO_LIST(test::data::default_instance(), test::Pos2DCf::default_instance(), test::Pos2D::default_instance());
 
-
-
 /**
  * @brief オーバーロード解決が面倒なのでこの中でポストした方が良いかも?
  * でも寿命が相変わらず怪しい.コピーだから平気かな.コピーが多くなってるからここの一回だけでなんとかしたいね.
- * 
+ *
  */
 struct ProcessWork
 {
@@ -35,15 +33,23 @@ struct ProcessWork
     }
     void operator()(test::Pos2D data)
     {
-        if (data.has_pos_x())
-            std::cout << data.pos_x() << std::endl;
+        io_ctx_.post(
+            [data = data]()
+            {
+                if (data.has_pos_x())
+                    std::cout << "Pos2D  "<< data.pos_x() << std::endl;
+            });
     }
     void operator()(test::Pos2DCf data)
     {
-        if (data.has_is_detect())
-        {
-            std::cout << data.is_detect() << std::endl;
-        }
+        io_ctx_.post(
+            [data = data]()
+            {
+                if (data.has_is_detect())
+                {
+                    std::cout << "Pos2DCf  "<< data.is_detect() << std::endl;
+                }
+            });
     }
 
 private:
@@ -55,7 +61,7 @@ void createMatchedProto(google::protobuf::FieldDescriptor *field, const test::da
 }
 
 template <size_t N = 0>
-void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDescriptor *field, google::protobuf::Message &msg_instance, const ProcessWork &worker)
+void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDescriptor *field, google::protobuf::Message &msg_instance, boost::asio::io_context &io_ctx)
 {
     if constexpr (N < std::tuple_size<proto_tuple>::value)
     {
@@ -68,19 +74,19 @@ void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDesc
             const auto rflc = msg_instance.GetReflection();
             new_ins_ptr->CopyFrom(rflc->GetMessage(msg_instance, field));
             proto_variant new_instance(*new_ins_ptr);
-            // worker.io_ctx_.post(std::bind(std::visit, worker, new_instance)); //寿命がかなり怪しい
-            std::visit(worker,new_instance);
+            // io_ctx.io_ctx_.post(std::bind(std::visit, io_ctx, new_instance)); //寿命がかなり怪しい
+            std::visit(ProcessWork{io_ctx}, new_instance);
         }
         else
         {
-            std::cout << "else | given ::" << field->message_type()->full_name() << " tuple ::" << reference_instance.GetDescriptor()->full_name() << std::endl;
+            // std::cout << "else | given ::" << field->message_type()->full_name() << " tuple ::" << reference_instance.GetDescriptor()->full_name() << std::endl;
         }
-        iterate_proto_tuple<N + 1>(t, field, msg_instance, worker);
+        iterate_proto_tuple<N + 1>(t, field, msg_instance, io_ctx);
     }
 }
 
 template <class protobuf_type>
-void iterate_proto_and_post(protobuf_type prt, const ProcessWork &worker)
+void iterate_proto_and_post(protobuf_type prt, boost::asio::io_context &io_ctx)
 {
     const auto rflc = prt.GetReflection();
     std::vector<const google::protobuf::FieldDescriptor *> listfield;
@@ -100,7 +106,7 @@ void iterate_proto_and_post(protobuf_type prt, const ProcessWork &worker)
             //         new_ins = google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New();
             //     }
             // };
-            iterate_proto_tuple<0>(PROTO_LIST, field, prt, worker);
+            iterate_proto_tuple<0>(PROTO_LIST, field, prt, io_ctx);
             // std::cout << " message " << field->message_type()->name();
         }
         else
@@ -116,7 +122,7 @@ void iterate_proto_and_post(protobuf_type prt, const ProcessWork &worker)
 int main(int argc, char const *argv[])
 {
     boost::asio::io_context ioctx;
-    ProcessWork worker(ioctx);
+    // ProcessWork worker(ioctx);
     test::data proto;
     proto.set_str("aaaa");
     proto.set_x_vec(765);
@@ -126,8 +132,9 @@ int main(int argc, char const *argv[])
     proto.set_cnt_j(876);
     proto.mutable_pos2d()->set_pos_x(876);
     proto.mutable_pos2dcf()->set_is_detect(true);
-    iterate_proto_and_post(proto, worker);
-
+    iterate_proto_and_post(proto, ioctx);
+    std::cout << "----- run -----" << std::endl;
+    ioctx.run();
     return 0;
 }
 
