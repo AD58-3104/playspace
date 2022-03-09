@@ -1,3 +1,6 @@
+#ifndef GRAPH_H_
+#define GRAPH_H_
+
 #include <vector>
 #include <string>
 #include <queue>
@@ -6,14 +9,11 @@
 #include <utility>
 #include <algorithm>
 
-
-
-using coord = pair<double, double>;
+using coord = std::pair<int64_t, int64_t>;
 
 
 struct shape
 {
-    using namespace std;
     std::vector<coord> points;
     void print()
     {
@@ -30,6 +30,16 @@ struct shape
         // }
         // std::ofs << points[0].first << " " << points[0].second << std::endl;
     }
+    void sort(){
+        std::sort(points.begin(),points.end(),[](const std::pair<double,double>& lhs,const std::pair<double,double>& rhs){
+            if(lhs.second != rhs.second){
+                return lhs.second < rhs.second;
+            }
+            else{
+                return lhs.first < rhs.first;
+            }
+        });
+    }
 };
 
 class visibilityGraph
@@ -37,3 +47,5 @@ class visibilityGraph
 public:
     std::vector<shape> obstacles;
 };
+
+#endif // !GRAPH_H_
