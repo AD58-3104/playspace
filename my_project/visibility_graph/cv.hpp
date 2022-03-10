@@ -5,6 +5,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include "graph.hpp"
+#include <thread>
+#include <chrono>
 class drawing
 {
 public:
@@ -17,8 +19,11 @@ public:
     void display(const std::vector<shape>& obj)
     {
         writeShape(obj);
+        using namespace std::literals;
+        std::this_thread::sleep_for(400ms);
         cv::imshow("visibility graph", img);
-        cv::waitKey(1000000);
+        cv::moveWindow( "visibility graph", 0, 200 );
+        cv::waitKey(0);
     }
 
 private:
@@ -31,26 +36,17 @@ private:
             std::vector<cv::Point> tmp;
             for(const auto&point:itm.points){
                 tmp.push_back(cv::Point(static_cast<int>(point.first),static_cast<int>(point.second)));
-                std::cout << "point\n";
             }
             objects_points.emplace_back(std::move(tmp));
         }
         
         for(const std::vector<cv::Point> &obj:objects_points){
             cv::fillConvexPoly(img,obj,color);
-            // cv::polylines(img,obj,true,color);
-            std::cout << "write";
         }
 
     }
 };
 
-// int main(int argc, char const *argv[])
-// {
-//     drawing draw;
-//     draw.display();
-//     return 0;
-// }
 
 
 #endif // !CV_H_
