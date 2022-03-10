@@ -7,10 +7,10 @@
 #include <iostream>
 #include <fstream>
 #include <utility>
+#include <cmath>
 #include <algorithm>
 
-using coord = std::pair<int64_t, int64_t>;
-
+using coord = std::pair<double, double>;
 
 struct shape
 {
@@ -30,15 +30,14 @@ struct shape
         // }
         // std::ofs << points[0].first << " " << points[0].second << std::endl;
     }
-    void sort(){
-        std::sort(points.begin(),points.end(),[](const std::pair<double,double>& lhs,const std::pair<double,double>& rhs){
-            if(lhs.second != rhs.second){
-                return lhs.second < rhs.second;
-            }
-            else{
-                return lhs.first < rhs.first;
-            }
-        });
+    void declination_sort()
+    {
+        std::sort(points.begin(),points.end(),[](const std::pair<double, double> &lhs, const std::pair<double, double> &rhs)
+                { return lhs.second < rhs.second; });
+        auto [max_x,max_y] = *(points.begin());
+        std::cout << max_x << max_y << std::endl;
+        std::sort(points.begin(), points.end(), [max_x,max_y](const std::pair<double, double> &lhs, const std::pair<double, double> &rhs)
+                { return std::atan2(lhs.second - max_y, lhs.first - max_x) < std::atan2(rhs.second - max_y, rhs.first - max_x); });
     }
 };
 
