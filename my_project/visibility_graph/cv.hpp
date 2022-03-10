@@ -8,7 +8,7 @@
 class drawing
 {
 public:
-    drawing() : img(cv::Mat::zeros(700, 700, CV_8UC3)),color(255,50,50)
+    drawing() : img(cv::Mat::zeros(1000, 1000, CV_8UC3)),color(255,50,50)
     {
         // cv::line(img, cv::Point(100, 300), cv::Point(400, 305), cv::Scalar(200, 0, 0), 5, 8);
         // fillConvexPolyとpolylines
@@ -37,8 +37,8 @@ private:
         }
         
         for(const std::vector<cv::Point> &obj:objects_points){
-            // cv::fillConvexPoly(img,obj,color);
-            cv::polylines(img,obj,true,color);
+            cv::fillConvexPoly(img,obj,color);
+            // cv::polylines(img,obj,true,color);
             std::cout << "write";
         }
 

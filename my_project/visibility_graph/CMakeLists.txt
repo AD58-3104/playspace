@@ -7,6 +7,7 @@ add_executable(test test.cpp)
 
 target_include_directories(main PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(main ${OpenCV_LIBRARIES})
+target_compile_options(main PUBLIC "-std=c++17")
 
 target_include_directories(test PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(test ${OpenCV_LIBRARIES})
