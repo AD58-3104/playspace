@@ -10,7 +10,7 @@
 class drawing
 {
 public:
-    drawing() : img(cv::Mat::zeros(1000, 1000, CV_8UC3)),color(255,50,50)
+    drawing() : img(cv::Mat::zeros(1000, 1000, CV_8UC3)),color(125,50,50)
     {
         // cv::line(img, cv::Point(100, 300), cv::Point(400, 305), cv::Scalar(200, 0, 0), 5, 8);
         // fillConvexPolyとpolylines
@@ -22,7 +22,7 @@ public:
         using namespace std::literals;
         std::this_thread::sleep_for(400ms);
         cv::imshow("visibility graph", img);
-        cv::moveWindow( "visibility graph", 0, 200 );
+        // cv::moveWindow( "visibility graph", 0, 200 );
         cv::waitKey(0);
     }
 
