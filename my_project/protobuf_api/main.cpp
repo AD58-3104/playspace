@@ -24,26 +24,28 @@ static const proto_tuple PROTO_LIST(test::data::default_instance(), test::Pos2DC
 struct ProcessWork
 {
     ProcessWork(boost::asio::io_context &io_ctx) : io_ctx_(io_ctx) {}
-    void operator()()
-    {
+
+    //テンプレート
+    // void operator()(対象のメッセージ型)
+    // {
         // io_ctx_.post(
         // [data = data]() {
         //-----------------------------------------------------
 
-        //ここに書く
+    //ここに処理を書く
 
         //-----------------------------------------------------
         // });
-    }
+    // }
 
 
-    void operator()(test::data data)
+    void operator()(test::data&&  data)
     {
         io_ctx_.post(
             [data = data]()
             { std::cout << data.DebugString(); });
     }
-    void operator()(test::Pos2D data)
+    void operator()(test::Pos2D&&  data)
     {
         io_ctx_.post(
             [data = data]()
@@ -52,7 +54,7 @@ struct ProcessWork
                     std::cout << "Pos2D  " << data.pos_x() << std::endl;
             });
     }
-    void operator()(test::Pos2DCf data)
+    void operator()(test::Pos2DCf&&  data)
     {
         io_ctx_.post(
             [data = data]()
@@ -62,6 +64,9 @@ struct ProcessWork
                     std::cout << "Pos2DCf  " << data.is_detect() << std::endl;
                 }
             });
+    }
+    void operator()(test::walk_msg&& data){
+        
     }
 
 private:
@@ -87,7 +92,7 @@ void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDesc
             new_ins_ptr->CopyFrom(rflc->GetMessage(msg_instance, field));
             proto_variant new_instance(*new_ins_ptr);
             // io_ctx.io_ctx_.post(std::bind(std::visit, io_ctx, new_instance)); //寿命がかなり怪しい
-            std::visit(ProcessWork{io_ctx}, new_instance);
+            std::visit(ProcessWork{io_ctx}, std::move(new_instance));
         }
         else
         {

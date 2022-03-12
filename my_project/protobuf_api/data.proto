@@ -24,5 +24,23 @@ message data {
   optional int64 cnt_j = 6;
   optional Pos2D pos2d = 7;
   optional Pos2DCf pos2dcf = 8;
+  optional walk_msg walk = 9;
 }
 
+
+
+
+
+message walk_msg{
+  message lotation_msg{
+    required double roll = 1; 
+    required double pitch = 2; 
+    required double yaw = 3; 
+  };
+  message command_msg{ //はじめコマンドのやつインポートする.
+    required sint32 command_num = 1;  
+  }
+  repeated double motor_degs = 1;
+  required lotation_msg lotation = 2;
+  required double voltage = 3;
+}
