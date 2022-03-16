@@ -29,8 +29,6 @@ message data {
 
 
 
-
-
 message walk_msg{
   message lotation_msg{
     required double roll = 1; 

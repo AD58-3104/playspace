@@ -10,11 +10,26 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/text_format.h>
 
-#define PROTOBUF_CLASS_LIST test::data, test::Pos2DCf, test::Pos2D
+#define PROTOBUF_CLASS_LIST test::data, test::Pos2DCf, test::Pos2D , test::walk_msg
 using proto_tuple = std::tuple<PROTOBUF_CLASS_LIST>;
 using proto_variant = std::variant<PROTOBUF_CLASS_LIST>;
 #undef PROTOBUF_CLASS_LIST
-static const proto_tuple PROTO_LIST(test::data::default_instance(), test::Pos2DCf::default_instance(), test::Pos2D::default_instance());
+// static const proto_tuple PROTO_LIST(test::data::default_instance(), test::Pos2DCf::default_instance(), test::Pos2D::default_instance(),test::walk_msg::default_instance());
+static const  proto_tuple PROTO_LIST = {};
+template <typename... Ts>
+struct protobufTypeList
+{
+    using proto_tuple = std::tuple<Ts...>;
+    using proto_variant = std::variant<Ts...>;
+    static proto_tuple init(){
+
+    };
+    static inline constexpr size_t tuple_size = sizeof...(Ts);
+    static inline const proto_tuple List ;
+    
+};
+
+static const protobufTypeList<test::data, test::Pos2DCf, test::Pos2D , test::walk_msg> PRT_LIST;
 
 /**
  * @brief オーバーロード解決が面倒なのでこの中でポストした方が良いかも?
@@ -43,7 +58,9 @@ struct ProcessWork
     {
         io_ctx_.post(
             [data = data]()
-            { std::cout << data.DebugString(); });
+            { 
+                // std::cout << data.DebugString();
+            });
     }
     void operator()(test::Pos2D&&  data)
     {
@@ -66,7 +83,9 @@ struct ProcessWork
             });
     }
     void operator()(test::walk_msg&& data){
-        
+        io_ctx_.post([data=data](){
+            // std::cout << data.DebugString();
+        });
     }
 
 private:
@@ -82,7 +101,8 @@ void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDesc
 {
     if constexpr (N < std::tuple_size<proto_tuple>::value)
     {
-        const auto &reference_instance = std::get<N>(t);
+        auto type_ref = std::get<N>(t);
+        const auto &reference_instance = decltype(type_ref)::default_instance();
         if (field->message_type() == reference_instance.GetDescriptor())
         {
             auto *new_ins_ptr = reference_instance.New();
@@ -93,6 +113,7 @@ void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDesc
             proto_variant new_instance(*new_ins_ptr);
             // io_ctx.io_ctx_.post(std::bind(std::visit, io_ctx, new_instance)); //寿命がかなり怪しい
             std::visit(ProcessWork{io_ctx}, std::move(new_instance));
+            std::cout << "match! " <<  field->message_type()->full_name() << std::endl;
         }
         else
         {
@@ -123,7 +144,7 @@ void iterate_proto_and_post(protobuf_type prt, boost::asio::io_context &io_ctx)
             //         new_ins = google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New();
             //     }
             // };
-            iterate_proto_tuple<0>(PROTO_LIST, field, prt, io_ctx);
+            iterate_proto_tuple<0>(PRT_LIST.List, field, prt, io_ctx);
             // std::cout << " message " << field->message_type()->name();
         }
         else
@@ -149,6 +170,15 @@ int main(int argc, char const *argv[])
     proto.set_cnt_j(876);
     proto.mutable_pos2d()->set_pos_x(876);
     proto.mutable_pos2dcf()->set_is_detect(true);
+    test::walk_msg walk;
+    walk.set_voltage(12.9);
+    auto loc = walk.mutable_lotation();
+    loc->set_roll(32.1);
+    loc->set_pitch(123.1);
+    loc->set_yaw(98.0);
+    auto a = proto.mutable_walk();
+    *a = walk;
+    // std::cout << proto.DebugString();
     iterate_proto_and_post(proto, ioctx);
     std::cout << "----- run -----" << std::endl;
     ioctx.run();
