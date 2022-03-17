@@ -13,14 +13,13 @@
 template <typename... Ts>
 struct protobufTypeList
 {
-    using proto_tuple = std::tuple<Ts...>;
-    using proto_variant = std::variant<Ts...>;
-    static proto_tuple get(){
+    using proto_tuple_t = std::tuple<Ts...>;
+    using proto_variant_t = std::variant<Ts...>;
+    static proto_tuple_t get(){
 
     };
     static inline constexpr size_t tuple_size = sizeof...(Ts);
-    static inline const proto_tuple List ;
-    
+    static inline const proto_tuple_t List ;
 };
 
 
@@ -89,26 +88,26 @@ static const protobufTypeList<test::data, test::Pos2DCf, test::Pos2D , test::wal
 
 
 
-template <size_t N = 0>
-void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDescriptor *field,const google::protobuf::Message &posting_msg_instance, boost::asio::io_context &io_ctx)
+template <typename scoped_proto_tuple_t,typename scoped_proto_variant_t,size_t N = 0>
+void iterate_proto_tuple(const scoped_proto_tuple_t &t, const google::protobuf::FieldDescriptor *field,const google::protobuf::Message &posting_msg_instance, boost::asio::io_context &io_ctx)
 {
-    if constexpr (N < std::tuple_size<proto_tuple>::value)
+    if constexpr (N < std::tuple_size<scoped_proto_tuple_t>::value)
     {
         auto type_ref = std::get<N>(t);
         const auto &reference_instance = decltype(type_ref)::default_instance(); 
         if (field->message_type() == reference_instance.GetDescriptor())
         {
-            auto *new_ins_ptr = reference_instance.New();　//protobufのfactoryを使っていないので多分ちゃんとしたコピーが出来ている筈...。所有権も呼び出し元が持てる
+            auto *new_ins_ptr = reference_instance.New();//protobufのfactoryを使っていないので多分ちゃんとしたコピーが出来ている筈...。所有権も呼び出し元が持てる
             const auto rflc = posting_msg_instance.GetReflection();
             new_ins_ptr->CopyFrom(rflc->GetMessage(posting_msg_instance, field));
-            proto_variant new_instance(*new_ins_ptr);
+            scoped_proto_variant_t new_instance(*new_ins_ptr);
             std::visit(ProcessWork{io_ctx}, std::move(new_instance));
             std::cout << "match! " <<  field->message_type()->full_name() << std::endl;
         }
         else
         {
         }
-        iterate_proto_tuple<N + 1>(t, field, posting_msg_instance, io_ctx);
+        iterate_proto_tuple<scoped_proto_tuple_t,scoped_proto_variant_t   ,N + 1>(t, field, posting_msg_instance, io_ctx);
     }
 }
 
