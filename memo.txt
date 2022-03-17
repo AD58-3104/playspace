@@ -1,0 +1,483 @@
+==10199== Memcheck, a memory error detector
+==10199== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==10199== Using Valgrind-3.11.0 and LibVEX; rerun with -h for copyright info
+==10199== Command: ./main
+==10199== 
+----------------- command list ------------------------
+BallInGoal
+WalkingBackward
+FreeKick
+GoalKeepFromMovingBall
+Neutral
+KnowBallPos
+Keeper
+ReceiverHaveBall
+StandBetweenGoalAndBall
+SideEntry
+Attacker
+KnowSelfPos
+SearchBall
+Localization
+MovePos
+Defender
+ClearBallOutOfArea
+HaveBall
+TrackingBall
+MoveBall
+OnTargetPos
+KeepFormation
+Idling
+WaitKickoff
+----------------- behavior list ------------------------
+KickMode
+SearchMode
+DribbleBall
+KickBall
+DynamicApproach
+Root
+FreeKickReady
+ReadyToEnter
+FreeKick
+Set
+Defender
+Keeper
+Freeze
+SideEntry
+Paused
+Explore
+StaticApproach
+Attacker
+Ready
+WaitMode
+IdleKick
+FreeKickMode
+Neutral
+==10199== Syscall param epoll_ctl(event) points to uninitialised byte(s)
+==10199==    at 0x4E476D8: epoll_ctl (syscall-template.S:84)
+==10199==    by 0x41AB57: epoll_reactor (eventfd_select_interrupter.hpp:50)
+==10199==    by 0x41AB57: boost::asio::io_service::service* boost::asio::detail::service_registry::create<boost::asio::detail::epoll_reactor>(boost::asio::io_service&) (service_registry.hpp:81)
+==10199==    by 0x41554F: boost::asio::detail::service_registry::do_use_service(boost::asio::io_service::service::key const&, boost::asio::io_service::service* (*)(boost::asio::io_service&)) (service_registry.ipp:123)
+==10199==    by 0x415B3F: use_service<boost::asio::detail::epoll_reactor> (service_registry.hpp:78)
+==10199==    by 0x415B3F: use_service<boost::asio::detail::epoll_reactor> (io_service.hpp:33)
+==10199==    by 0x415B3F: reactive_socket_service_base (reactive_socket_service_base.ipp:33)
+==10199==    by 0x415B3F: reactive_socket_service (reactive_socket_service.hpp:77)
+==10199==    by 0x415B3F: datagram_socket_service (datagram_socket_service.hpp:95)
+==10199==    by 0x415B3F: boost::asio::io_service::service* boost::asio::detail::service_registry::create<boost::asio::datagram_socket_service<boost::asio::ip::udp> >(boost::asio::io_service&) (service_registry.hpp:81)
+==10199==    by 0x41554F: boost::asio::detail::service_registry::do_use_service(boost::asio::io_service::service::key const&, boost::asio::io_service::service* (*)(boost::asio::io_service&)) (service_registry.ipp:123)
+==10199==    by 0x41DB13: use_service<boost::asio::datagram_socket_service<boost::asio::ip::udp> > (udp.hpp:52)
+==10199==    by 0x41DB13: use_service<boost::asio::datagram_socket_service<boost::asio::ip::udp> > (io_service.hpp:33)
+==10199==    by 0x41DB13: basic_io_object (basic_io_object.hpp:183)
+==10199==    by 0x41DB13: basic_socket (basic_socket.hpp:71)
+==10199==    by 0x41DB13: basic_datagram_socket (basic_datagram_socket.hpp:70)
+==10199==    by 0x41DB13: Citbrains::Udpsocket::UDPClient::UDPClient(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, int) (sUDPSocket.hpp:68)
+==10199==    by 0x412803: make_unique<Citbrains::Udpsocket::UDPClient, char const (&)[16], int&, int const&> (infoshare.cpp:172)
+==10199==    by 0x412803: Citbrains::infosharemodule::InfoShare::setup(int const&, int const&, int const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, float (*)()) (infoshare.cpp:172)
+==10199==    by 0x4074A3: main (char_traits.h:285)
+==10199==  Address 0xffefffb6c is on thread 1's stack
+==10199==  in frame #1, created by boost::asio::io_service::service* boost::asio::detail::service_registry::create<boost::asio::detail::epoll_reactor>(boost::asio::io_service&) (eventfd_select_interrupter.hpp:78)
+==10199== 
+==10199== Syscall param epoll_ctl(event) points to uninitialised byte(s)
+==10199==    at 0x4E476D8: epoll_ctl (syscall-template.S:84)
+==10199==    by 0x41ABDB: epoll_reactor (epoll_reactor.ipp:59)
+==10199==    by 0x41ABDB: boost::asio::io_service::service* boost::asio::detail::service_registry::create<boost::asio::detail::epoll_reactor>(boost::asio::io_service&) (service_registry.hpp:81)
+==10199==    by 0x41554F: boost::asio::detail::service_registry::do_use_service(boost::asio::io_service::service::key const&, boost::asio::io_service::service* (*)(boost::asio::io_service&)) (service_registry.ipp:123)
+==10199==    by 0x415B3F: use_service<boost::asio::detail::epoll_reactor> (service_registry.hpp:78)
+==10199==    by 0x415B3F: use_service<boost::asio::detail::epoll_reactor> (io_service.hpp:33)
+==10199==    by 0x415B3F: reactive_socket_service_base (reactive_socket_service_base.ipp:33)
+==10199==    by 0x415B3F: reactive_socket_service (reactive_socket_service.hpp:77)
+==10199==    by 0x415B3F: datagram_socket_service (datagram_socket_service.hpp:95)
+==10199==    by 0x415B3F: boost::asio::io_service::service* boost::asio::detail::service_registry::create<boost::asio::datagram_socket_service<boost::asio::ip::udp> >(boost::asio::io_service&) (service_registry.hpp:81)
+==10199==    by 0x41554F: boost::asio::detail::service_registry::do_use_service(boost::asio::io_service::service::key const&, boost::asio::io_service::service* (*)(boost::asio::io_service&)) (service_registry.ipp:123)
+==10199==    by 0x41DB13: use_service<boost::asio::datagram_socket_service<boost::asio::ip::udp> > (udp.hpp:52)
+==10199==    by 0x41DB13: use_service<boost::asio::datagram_socket_service<boost::asio::ip::udp> > (io_service.hpp:33)
+==10199==    by 0x41DB13: basic_io_object (basic_io_object.hpp:183)
+==10199==    by 0x41DB13: basic_socket (basic_socket.hpp:71)
+==10199==    by 0x41DB13: basic_datagram_socket (basic_datagram_socket.hpp:70)
+==10199==    by 0x41DB13: Citbrains::Udpsocket::UDPClient::UDPClient(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, int) (sUDPSocket.hpp:68)
+==10199==    by 0x412803: make_unique<Citbrains::Udpsocket::UDPClient, char const (&)[16], int&, int const&> (infoshare.cpp:172)
+==10199==    by 0x412803: Citbrains::infosharemodule::InfoShare::setup(int const&, int const&, int const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, float (*)()) (infoshare.cpp:172)
+==10199==    by 0x4074A3: main (char_traits.h:285)
+==10199==  Address 0xffefffb6c is on thread 1's stack
+==10199==  in frame #1, created by boost::asio::io_service::service* boost::asio::detail::service_registry::create<boost::asio::detail::epoll_reactor>(boost::asio::io_service&) (epoll_reactor.ipp:78)
+==10199== 
+==10199== Syscall param epoll_ctl(event) points to uninitialised byte(s)
+==10199==    at 0x4E476D8: epoll_ctl (syscall-template.S:84)
+==10199==    by 0x41CBDF: register_descriptor (epoll_reactor.ipp:165)
+==10199==    by 0x41CBDF: do_open (reactive_socket_service_base.ipp:153)
+==10199==    by 0x41CBDF: open (reactive_socket_service.hpp:118)
+==10199==    by 0x41CBDF: open (datagram_socket_service.hpp:146)
+==10199==    by 0x41CBDF: basic_socket (basic_socket.hpp:116)
+==10199==    by 0x41CBDF: basic_datagram_socket (basic_datagram_socket.hpp:110)
+==10199==    by 0x41CBDF: Citbrains::Udpsocket::UDPServer::UDPServer(int, std::function<void (std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (sUDPSocket.hpp:243)
+==10199==    by 0x41288F: make_unique<Citbrains::Udpsocket::UDPServer, int&, Citbrains::infosharemodule::InfoShare::setup(const udpsocketmode_t&, const int32_t&, const int32_t&, const string&, float (*)())::<lambda(std::__cxx11::string&&)>, int const&, int, const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&> (new:169)
+==10199==    by 0x41288F: Citbrains::infosharemodule::InfoShare::setup(int const&, int const&, int const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, float (*)()) (infoshare.cpp:173)
+==10199==    by 0x4074A3: main (char_traits.h:285)
+==10199==  Address 0xffefffd44 is on thread 1's stack
+==10199==  in frame #1, created by Citbrains::Udpsocket::UDPServer::UDPServer(int, std::function<void (std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (epoll_reactor.ipp:237)
+==10199== 
+==10199== Thread 3:
+==10199== Syscall param epoll_pwait(sigmask) points to unaddressable byte(s)
+==10199==    at 0x4E47474: epoll_pwait (epoll_pwait.c:42)
+==10199==    by 0x41565B: boost::asio::detail::epoll_reactor::run(bool, boost::asio::detail::op_queue<boost::asio::detail::task_io_service_operation>&) (epoll_reactor.ipp:392)
+==10199==    by 0x4171B7: do_run_one (task_io_service.ipp:356)
+==10199==    by 0x4171B7: boost::asio::detail::task_io_service::run(boost::system::error_code&) (task_io_service.ipp:149)
+==10199==    by 0x41B233: run (io_service.ipp:59)
+==10199==    by 0x41B233: operator() (sUDPSocket.hpp:264)
+==10199==    by 0x41B233: __invoke_impl<void, Citbrains::Udpsocket::UDPServer::UDPServer(int32_t, std::function<void(std::__cxx11::basic_string<char>&&)>, Citbrains::Udpsocket::SocketMode::udpsocketmode_t, int32_t, std::__cxx11::string)::<lambda()> > (invoke.h:60)
+==10199==    by 0x41B233: __invoke<Citbrains::Udpsocket::UDPServer::UDPServer(int32_t, std::function<void(std::__cxx11::basic_string<char>&&)>, Citbrains::Udpsocket::SocketMode::udpsocketmode_t, int32_t, std::__cxx11::string)::<lambda()> > (invoke.h:95)
+==10199==    by 0x41B233: _M_invoke<0> (thread:234)
+==10199==    by 0x41B233: operator() (thread:243)
+==10199==    by 0x41B233: std::thread::_State_impl<std::thread::_Invoker<std::tuple<Citbrains::Udpsocket::UDPServer::UDPServer(int, std::function<void (std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)>, int, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)::{lambda()#1}> > >::_M_run() (thread:186)
+==10199==    by 0x4C3FEC3: ??? (in /usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.26)
+==10199==    by 0x488CFC3: start_thread (pthread_create.c:335)
+==10199==    by 0x4E472DF: thread_start (clone.S:89)
+==10199==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==10199== 
+==10199== Thread 2:
+==10199== Syscall param epoll_pwait(sigmask) points to unaddressable byte(s)
+==10199==    at 0x4E47474: epoll_pwait (epoll_pwait.c:42)
+==10199==    by 0x41565B: boost::asio::detail::epoll_reactor::run(bool, boost::asio::detail::op_queue<boost::asio::detail::task_io_service_operation>&) (epoll_reactor.ipp:392)
+==10199==    by 0x4171B7: do_run_one (task_io_service.ipp:356)
+==10199==    by 0x4171B7: boost::asio::detail::task_io_service::run(boost::system::error_code&) (task_io_service.ipp:149)
+==10199==    by 0x41AFB3: run (io_service.ipp:59)
+==10199==    by 0x41AFB3: operator() (sUDPSocket.hpp:106)
+==10199==    by 0x41AFB3: __invoke_impl<void, Citbrains::Udpsocket::UDPClient::UDPClient(std::__cxx11::string, int32_t, Citbrains::Udpsocket::SocketMode::udpsocketmode_t)::<lambda()> > (invoke.h:60)
+==10199==    by 0x41AFB3: __invoke<Citbrains::Udpsocket::UDPClient::UDPClient(std::__cxx11::string, int32_t, Citbrains::Udpsocket::SocketMode::udpsocketmode_t)::<lambda()> > (invoke.h:95)
+==10199==    by 0x41AFB3: _M_invoke<0> (thread:234)
+==10199==    by 0x41AFB3: operator() (thread:243)
+==10199==    by 0x41AFB3: std::thread::_State_impl<std::thread::_Invoker<std::tuple<Citbrains::Udpsocket::UDPClient::UDPClient(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, int)::{lambda()#1}> > >::_M_run() (thread:186)
+==10199==    by 0x4C3FEC3: ??? (in /usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.26)
+==10199==    by 0x488CFC3: start_thread (pthread_create.c:335)
+==10199==    by 0x4E472DF: thread_start (clone.S:89)
+==10199==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==10199== 
+4
+size is 104
+==10199== Thread 1:
+==10199== Syscall param sendmsg(msg.msg_iov[0]) points to uninitialised byte(s)
+==10199==    at 0x489703C: sendmsg (syscall-template.S:86)
+==10199==    by 0x414F47: sendto (socket_ops.ipp:1299)
+==10199==    by 0x414F47: non_blocking_sendto (socket_ops.ipp:1349)
+==10199==    by 0x414F47: boost::asio::detail::reactive_socket_sendto_op_base<boost::asio::const_buffers_1, boost::asio::ip::basic_endpoint<boost::asio::ip::udp> >::do_perform(boost::asio::detail::reactor_op*) (reactive_socket_sendto_op.hpp:55)
+==10199==    by 0x41688B: perform (reactor_op.hpp:40)
+==10199==    by 0x41688B: start_op (epoll_reactor.ipp:231)
+==10199==    by 0x41688B: boost::asio::detail::reactive_socket_service_base::start_op(boost::asio::detail::reactive_socket_service_base::base_implementation_type&, int, boost::asio::detail::reactor_op*, bool, bool, bool) (reactive_socket_service_base.ipp:213)
+==10199==    by 0x41380F: async_send_to<boost::asio::const_buffers_1, Citbrains::Udpsocket::UDPClient::send(std::__cxx11::string&&, std::chrono::milliseconds)::<lambda(const boost::system::error_code&, size_t)> > (new:169)
+==10199==    by 0x41380F: async_send_to<boost::asio::const_buffers_1, Citbrains::Udpsocket::UDPClient::send(std::__cxx11::string&&, std::chrono::milliseconds)::<lambda(const boost::system::error_code&, size_t)> > (datagram_socket_service.hpp:356)
+==10199==    by 0x41380F: async_send_to<boost::asio::const_buffers_1, Citbrains::Udpsocket::UDPClient::send(std::__cxx11::string&&, std::chrono::milliseconds)::<lambda(const boost::system::error_code&, size_t)> > (basic_datagram_socket.hpp:531)
+==10199==    by 0x41380F: send (sUDPSocket.hpp:127)
+==10199==    by 0x41380F: Citbrains::infosharemodule::InfoShare::sendCommonInfo(Pos2DCf const&, Pos2DCf const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, int const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, RobotStatus_t) (infoshare.cpp:291)
+==10199==    by 0x407603: main (main.cpp:43)
+==10199==  Address 0x4fe9b81 is 81 bytes inside a block of size 105 alloc'd
+==10199==    at 0x4845108: operator new(unsigned long) (in /usr/lib/valgrind/vgpreload_memcheck-arm64-linux.so)
+==10199== 
+receive size is 104
+number of received ==10199== Syscall param epoll_ctl(event) points to uninitialised byte(s)
+==10199==    at 0x4E476D8: epoll_ctl (syscall-template.S:84)
+==10199==    by 0x415F8B: interrupt (eventfd_select_interrupter.hpp:50)
+==10199==    by 0x415F8B: wake_one_thread_and_unlock (task_io_service.ipp:462)
+==10199==    by 0x415F8B: boost::asio::detail::task_io_service::post_immediate_completion(boost::asio::detail::task_io_service_operation*, bool) (task_io_service.ipp:269)
+==10199==    by 0x41680F: start_op (epoll_reactor.hpp:110)
+==10199==    by 0x41680F: boost::asio::detail::reactive_socket_service_base::start_op(boost::asio::detail::reactive_socket_service_base::base_implementation_type&, int, boost::asio::detail::reactor_op*, bool, bool, bool) (reactive_socket_service_base.ipp:213)
+==10199==    by 0x41380F: async_send_to<boost::asio::const_buffers_1, Citbrains::Udpsocket::UDPClient::send(std::__cxx11::string&&, std::chrono::milliseconds)::<lambda(const boost::system::error_code&, size_t)> > (new:169)
+==10199==    by 0x41380F: async_send_to<boost::asio::const_buffers_1, Citbrains::Udpsocket::UDPClient::send(std::__cxx11::string&&, std::chrono::milliseconds)::<lambda(const boost::system::error_code&, size_t)> > (datagram_socket_service.hpp:356)
+==10199==    by 0x41380F: async_send_to<boost::asio::const_buffers_1, Citbrains::Udpsocket::UDPClient::send(std::__cxx11::string&&, std::chrono::milliseconds)::<lambda(const boost::system::error_code&, size_t)> > (basic_datagram_socket.hpp:531)
+==10199==    by 0x41380F: send (sUDPSocket.hpp:127)
+==10199==    by 0x41380F: Citbrains::infosharemodule::InfoShare::sendCommonInfo(Pos2DCf const&, Pos2DCf const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, int const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<Pos2D, std::allocator<Pos2D> > const&, RobotStatus_t) (infoshare.cpp:291)
+==10199==    by 0x407603: main (main.cpp:43)
+==10199==  Address 0xffefffb4c is on thread 1's stack
+==10199==  in frame #1, created by boost::asio::detail::task_io_service::post_immediate_completion(boost::asio::detail::task_io_service_operation*, bool) (eventfd_select_interrupter.hpp:251)
+==10199== 
+2
+id: "\002"
+status: "\000"
+fps: "\024"
+voltage: "\014"
+temperature: "\036"
+highest_servo: "-"
+command: "\023"
+current_behavior_name: "\020"
+our_robot_gl {
+  pos_x: 50
+  pos_y: 50
+  pos_theta: 9006
+}
+enemy_robot_gl {
+  pos_x: 50
+  pos_y: 50
+  pos_theta: 9006
+}
+black_pole_gl {
+  pos_x: 50
+  pos_y: 50
+  pos_theta: 9006
+}
+target_pos_vec {
+  pos_x: 50
+  pos_y: 50
+  pos_theta: 9006
+}
+ball_gl_cf {
+  position {
+    pos_x: 50
+    pos_y: 50
+    pos_theta: 9006
+  }
+  confidence: "\036"
+  is_detect: true
+}
+self_pos_cf {
+  position {
+    pos_x: 50
+    pos_y: 50
+    pos_theta: 9006
+  }
+  confidence: "\036"
+  is_detect: true
+}
+team_color: "\004"
+
+my infomation
+------------this is no 1 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+------------this is no 2 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+------------this is no 3 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+------------this is no 4 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+------------this is no 5 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+------------this is no 6 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+------------this is no 7 infomation --------------------
+voltage :0
+fps :0
+status :0
+temperature :0
+highest servo :0
+command :
+current_behavior_name :
+^^^^^^^^^^^^^^^^^^^^^^our_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^enemy_robot_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^black_pole_gl :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^target_pos_vec :
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^self_pos_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+^^^^^^^^^^^^^^^^^^^^^^ball_gl_cf :
+Pos2DCf internal data is 
+cf is 0 || is_detect false
+POS2D internal data is
+x is 0 || y is  0 || theta is 0
+==10199== Syscall param epoll_ctl(event) points to uninitialised byte(s)
+==10199==    at 0x4E476D8: epoll_ctl (syscall-template.S:84)
+==10199==    by 0x41610B: interrupt (eventfd_select_interrupter.hpp:50)
+==10199==    by 0x41610B: wake_one_thread_and_unlock (task_io_service.ipp:462)
+==10199==    by 0x41610B: boost::asio::detail::task_io_service::post_deferred_completions(boost::asio::detail::op_queue<boost::asio::detail::task_io_service_operation>&) (task_io_service.ipp:308)
+==10199==    by 0x416FB3: boost::asio::detail::epoll_reactor::deregister_descriptor(int, boost::asio::detail::epoll_reactor::descriptor_state*&, bool) (epoll_reactor.ipp:341)
+==10199==    by 0x41A5A3: close (reactive_socket_service_base.ipp:103)
+==10199==    by 0x41A5A3: close (datagram_socket_service.hpp:170)
+==10199==    by 0x41A5A3: close (basic_socket.hpp:356)
+==10199==    by 0x41A5A3: Citbrains::Udpsocket::UDPServer::terminate() (sUDPSocket.hpp:349)
+==10199==    by 0x411977: Citbrains::infosharemodule::InfoShare::terminate() (infoshare.cpp:123)
+==10199==    by 0x407B4B: main (main.cpp:82)
+==10199==  Address 0xffefffd8c is on thread 1's stack
+==10199==  in frame #1, created by boost::asio::detail::task_io_service::post_deferred_completions(boost::asio::detail::op_queue<boost::asio::detail::task_io_service_operation>&) (eventfd_select_interrupter.hpp:292)
+==10199== 
+server is terminated!!
+==10199== Syscall param epoll_ctl(event) points to uninitialised byte(s)
+==10199==    at 0x4E476D8: epoll_ctl (syscall-template.S:84)
+==10199==    by 0x4153BB: interrupt (eventfd_select_interrupter.hpp:50)
+==10199==    by 0x4153BB: stop_all_threads (task_io_service.ipp:450)
+==10199==    by 0x4153BB: stop (task_io_service.ipp:234)
+==10199==    by 0x4153BB: work_finished (task_io_service.hpp:88)
+==10199==    by 0x4153BB: ~work (io_service.hpp:138)
+==10199==    by 0x4153BB: destroy<boost::asio::io_service::work> (new_allocator.h:140)
+==10199==    by 0x4153BB: destroy<boost::asio::io_service::work> (alloc_traits.h:487)
+==10199==    by 0x4153BB: std::_Sp_counted_ptr_inplace<boost::asio::io_service::work, std::allocator<boost::asio::io_service::work>, (__gnu_cxx::_Lock_policy)2>::_M_dispose() (shared_ptr_base.h:558)
+==10199==    by 0x417D53: std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release() (atomicity.h:69)
+==10199==    by 0x41A79B: ~__shared_count (sUDPSocket.hpp:194)
+==10199==    by 0x41A79B: ~__shared_ptr (shared_ptr_base.h:1151)
+==10199==    by 0x41A79B: reset (shared_ptr_base.h:1269)
+==10199==    by 0x41A79B: Citbrains::Udpsocket::UDPClient::terminate() (sUDPSocket.hpp:194)
+==10199==    by 0x407B4B: main (main.cpp:82)
+==10199==  Address 0xffefffe0c is on thread 1's stack
+==10199==  in frame #1, created by std::_Sp_counted_ptr_inplace<boost::asio::io_service::work, std::allocator<boost::asio::io_service::work>, (__gnu_cxx::_Lock_policy)2>::_M_dispose() (eventfd_select_interrupter.hpp:556)
+==10199== 
+client is terminated!!
+==10199== 
+==10199== HEAP SUMMARY:
+==10199==     in use at exit: 92,747 bytes in 199 blocks
+==10199==   total heap usage: 2,194 allocs, 1,995 frees, 232,504 bytes allocated
+==10199== 
+==10199== 20,043 bytes in 198 blocks are still reachable in loss record 1 of 2
+==10199==    at 0x4845108: operator new(unsigned long) (in /usr/lib/valgrind/vgpreload_memcheck-arm64-linux.so)
+==10199== 
+==10199== 72,704 bytes in 1 blocks are still reachable in loss record 2 of 2
+==10199==    at 0x4844B88: malloc (in /usr/lib/valgrind/vgpreload_memcheck-arm64-linux.so)
+==10199== 
+==10199== LEAK SUMMARY:
+==10199==    definitely lost: 0 bytes in 0 blocks
+==10199==    indirectly lost: 0 bytes in 0 blocks
+==10199==      possibly lost: 0 bytes in 0 blocks
+==10199==    still reachable: 92,747 bytes in 199 blocks
+==10199==         suppressed: 0 bytes in 0 blocks
+==10199== 
+==10199== For counts of detected and suppressed errors, rerun with: -v
+==10199== Use --track-origins=yes to see where uninitialised values come from
+==10199== ERROR SUMMARY: 16 errors from 9 contexts (suppressed: 0 from 0)
