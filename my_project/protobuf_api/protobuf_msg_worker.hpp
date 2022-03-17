@@ -40,7 +40,7 @@ struct ProcessWork
         // [data = data]() {
         //-----------------------------------------------------
 
-    //ここに処理を書く
+    //ここにdataに対する処理を書く
 
         //-----------------------------------------------------
         // });
@@ -90,17 +90,17 @@ static const protobufTypeList<test::data, test::Pos2DCf, test::Pos2D , test::wal
 
 
 template <size_t N = 0>
-void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDescriptor *field, google::protobuf::Message &msg_instance, boost::asio::io_context &io_ctx)
+void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDescriptor *field,const google::protobuf::Message &posting_msg_instance, boost::asio::io_context &io_ctx)
 {
     if constexpr (N < std::tuple_size<proto_tuple>::value)
     {
         auto type_ref = std::get<N>(t);
-        const auto &reference_instance = decltype(type_ref)::default_instance();
+        const auto &reference_instance = decltype(type_ref)::default_instance(); 
         if (field->message_type() == reference_instance.GetDescriptor())
         {
-            auto *new_ins_ptr = reference_instance.New();
-            const auto rflc = msg_instance.GetReflection();
-            new_ins_ptr->CopyFrom(rflc->GetMessage(msg_instance, field));
+            auto *new_ins_ptr = reference_instance.New();　//protobufのfactoryを使っていないので多分ちゃんとしたコピーが出来ている筈...。所有権も呼び出し元が持てる
+            const auto rflc = posting_msg_instance.GetReflection();
+            new_ins_ptr->CopyFrom(rflc->GetMessage(posting_msg_instance, field));
             proto_variant new_instance(*new_ins_ptr);
             std::visit(ProcessWork{io_ctx}, std::move(new_instance));
             std::cout << "match! " <<  field->message_type()->full_name() << std::endl;
@@ -108,21 +108,21 @@ void iterate_proto_tuple(const proto_tuple &t, const google::protobuf::FieldDesc
         else
         {
         }
-        iterate_proto_tuple<N + 1>(t, field, msg_instance, io_ctx);
+        iterate_proto_tuple<N + 1>(t, field, posting_msg_instance, io_ctx);
     }
 }
 
 template <class protobuf_type>
-void iterate_proto_and_post(protobuf_type prt, boost::asio::io_context &io_ctx)
+void iterate_proto_and_post(protobuf_type posting_msg, boost::asio::io_context &io_ctx)
 {
-    const auto rflc = prt.GetReflection();
-    std::vector<const google::protobuf::FieldDescriptor *> listfield;
-    rflc->ListFields(prt, &listfield);
-    for (const auto &field : listfield)
+    const auto rflc = posting_msg.GetReflection();
+    std::vector<const google::protobuf::FieldDescriptor *> fieldlist;
+    rflc->ListFields(posting_msg, &fieldlist);
+    for (const auto &field : fieldlist)
     {
         if (field->type() == google::protobuf::FieldDescriptor::TYPE_MESSAGE)
         {
-            iterate_proto_tuple<0>(PROTO_MSG_LIST.List, field, prt, io_ctx);
+            iterate_proto_tuple<0>(PROTO_MSG_LIST.List, field, posting_msg, io_ctx);
         }
         else
         { 

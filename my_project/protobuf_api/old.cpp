@@ -21,7 +21,7 @@ struct protobufTypeList
 {
     using proto_tuple = std::tuple<Ts...>;
     using proto_variant = std::variant<Ts...>;
-    static proto_tuple init(){
+    static proto_tuple get(){
 
     };
     static inline constexpr size_t tuple_size = sizeof...(Ts);
@@ -29,7 +29,7 @@ struct protobufTypeList
     
 };
 
-static const protobufTypeList<test::data, test::Pos2DCf, test::Pos2D , test::walk_msg> PRT_LIST;
+static const protobufTypeList<test::data, test::Pos2DCf, test::Pos2D , test::walk_msg> PROTO_MSG_LIST;
 
 /**
  * @brief オーバーロード解決が面倒なのでこの中でポストした方が良いかも?
@@ -144,8 +144,7 @@ void iterate_proto_and_post(protobuf_type prt, boost::asio::io_context &io_ctx)
             //         new_ins = google::protobuf::MessageFactory::generated_factory()->GetPrototype(field->message_type())->New();
             //     }
             // };
-            iterate_proto_tuple<0>(PRT_LIST.List, field, prt, io_ctx);
-            // std::cout << " message " << field->message_type()->name();
+            iterate_proto_tuple<0>(PROTO_MSG_LIST.List, field, prt, io_ctx);
         }
         else
         { // fieldの場合
