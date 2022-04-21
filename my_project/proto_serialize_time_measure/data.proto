@@ -9,3 +9,12 @@ message data {
   double d = 4;  
   int64  e = 6;
 }
+
+message caseone{
+  repeated sint32 a = 1;
+}
+
+message casetwo{
+  repeated int32 a = 1;
+}
+
