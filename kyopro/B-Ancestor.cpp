@@ -99,9 +99,8 @@ int main(int argc, char const *argv[])
     int64_t ans = 0;
     while(true){
         int64_t parent = p[child-2];
-        // if(child != parent)
-            ans++;
-        std::cerr << child << "<-";
+        ans++;
+        std::cerr << child << "->";
         child = parent;
         if(parent < 2)
             break;
