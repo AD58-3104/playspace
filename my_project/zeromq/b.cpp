@@ -35,7 +35,7 @@ void Subbind(zmq::context_t &ctx)
     zmq::socket_t subscriber(ctx, zmq::socket_type::sub);
     subscriber.bind("ipc:///tmp/connect");
     subscriber.set(zmq::sockopt::subscribe, "");
-    size_t buf_size = 256; //byte
+    constexpr size_t buf_size = 256; //byte
     std::array<uint8_t,buf_size> data;
     // void * buf_data = reinterpret_cast<void*>(malloc(buf_size));
     zmq::mutable_buffer buf(data.data(),data.size());
