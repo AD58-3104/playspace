@@ -13,8 +13,11 @@
 void Subbind(zmq::context_t &ctx)
 {
     zmq::socket_t subscriber(ctx, zmq::socket_type::sub);
-    subscriber.bind("tcp://127.0.0.1:9544");
+    std::cout << "start\n";
+    subscriber.bind("tcp://172.22.80.1:14811");
+    std::cout << "bound" << std::endl;
     subscriber.set(zmq::sockopt::subscribe, "");
+    std::cout << "sub\n";
     constexpr size_t buf_size = 256; //byte
     std::array<uint8_t,buf_size> data;
     zmq::mutable_buffer buf(data.data(),data.size());
