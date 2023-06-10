@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(proto)
 
 find_package(Protobuf REQUIRED)
+message("protobuffffffffffffffffff")
+message("${PROTOBUF_INCLUDE_DIRS}")
 find_package(Boost REQUIRED system date_time )
 include_directories(${Protobuf_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

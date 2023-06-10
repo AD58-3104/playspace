@@ -43,11 +43,36 @@ void PubConnect(zmq::context_t &ctx)
 int main(int argc, char const *argv[])
 {
     zmq::context_t ctx;
-    
+    std::cout << "start" << std::endl;
+    zmq::socket_t   socket(ctx, zmq::socket_type::pub);
+    zmq::socket_ref ref = socket;
+    if(ctx.handle() != nullptr){
+        std::cout << "ctx is valid" << std::endl;
+    }
+    else{
+        std::cout << "ctx is invalid" << std::endl;
+    }
+    std::cout << "shutdown" << std::endl;
+    ctx.shutdown();
+    if(ctx.handle() != nullptr){
+        std::cout << "ctx is valid" << std::endl;
+    }
+    else{
+        std::cout << "ctx is invalid" << std::endl;
+    }
+    // std::cout << "close" << std::endl;
+    // ctx.close();
+    // if(ctx.handle() != nullptr){
+    //     std::cout << "ctx is valid" << std::endl;
+    // }
+    // else{
+    //     std::cout << "ctx is invalid" << std::endl;
+    // }
+    ref.close();
     // auto pubthread = std::async(std::launch::async, [&ctx](){Pub(ctx);});
-    auto subthread = std::async(std::launch::async, [&ctx](){PubConnect(ctx);});
+    // auto subthread = std::async(std::launch::async, [&ctx](){PubConnect(ctx);});
 
     // pubthread.wait();
-    subthread.wait();
+    // subthread.wait();
     return 0;
 }
