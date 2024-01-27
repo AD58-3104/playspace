@@ -39,7 +39,7 @@ struct CanvasSize
 CanvasSize lenderCanvas(const uint32_t &x, const uint32_t &y)
 {
     constexpr uint32_t width = 60;
-    constexpr uint32_t height = 15;
+    constexpr uint32_t height = 30;
     drawTopLine(x, y, width);
     for (int i = 0; i < height; i += 1)
     {

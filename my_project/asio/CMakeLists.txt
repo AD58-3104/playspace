@@ -9,8 +9,9 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS msg.proto)
 add_executable(main main.cpp ${PROTO_SRCS} ${PROTO_HDRS})
 add_executable(mq mq.cpp)
 add_executable(io_cxt test_io_context_behavior.cpp)
+add_executable(play play.cpp)
 
-list(APPEND set_option_target main mq io_cxt)
+list(APPEND set_option_target main mq io_cxt play)
 
 foreach(target ${set_option_target})
     target_compile_features(${target} PUBLIC cxx_std_17)
