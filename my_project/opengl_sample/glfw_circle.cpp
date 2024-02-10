@@ -3,12 +3,11 @@
 #include <iostream>
 #include <cmath>
 
-constexpr float SCREEN_X = 480.0f; // 縦
-constexpr float SCREEN_Y = 480.0f; // 横
-
 struct Paint
 {
     static bool initialized;
+    const float SCREEN_X = 480.0f; // 縦
+    const float SCREEN_Y = 480.0f; // 横
     GLFWwindow *window;
     Paint()
     {
@@ -54,10 +53,22 @@ struct Paint
         glEnd();
     }
 
+    void drawCenterCross()
+    {
+        const float line_length = 0.05f; // Line length
+
+        glBegin(GL_LINES);
+        glVertex2f(-line_length, 0.0f); // Left point
+        glVertex2f(line_length, 0.0f);  // Right point
+        glVertex2f(0.0f, -line_length); // Bottom point
+        glVertex2f(0.0f, line_length);  // Top point
+        glEnd();
+    }
+
     bool drawDisplay()
     {
         static float count = 0.0f;
-        if (!glfwWindowShouldClose(window))
+        if (glfwWindowShouldClose(window))
         {
             // 終了しなくてはいけない状況ならfalseを返す
             std::cout << "Finish drawing" << std::endl;
@@ -69,7 +80,8 @@ struct Paint
             count += 0.01f;
             float off_x = std::sin(count) * 60;
             float off_y = std::cos(count) * 60;
-            drawRectangle(50 + off_x, 50 + off_y);
+            drawRectangle(off_x, off_y);
+            drawCenterCross();
             glfwSwapBuffers(window);
             glfwPollEvents();
             return true;
@@ -87,11 +99,11 @@ int main()
     {
         while (true)
         {
-            if(!paint.drawDisplay()){
+            if (!paint.drawDisplay())
+            {
                 std::cout << "break" << std::endl;
                 break;
             }
-            std::cout << "a" << std::endl;
         }
     }
     catch (const std::exception &e)
